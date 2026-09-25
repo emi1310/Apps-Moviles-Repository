@@ -8,14 +8,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.estudia.ui.theme.colorDesdeHex
 
-// Fila que muestra una tarea pendiente dentro de la pantalla de Inicio:
-// un círculo de color (según la materia), el título de la tarea,
-// el nombre de la materia, y la fecha límite a la derecha.
 @Composable
-fun TarjetaTareaPendiente(titulo: String, nombreMateria: String, fechaLimite: String, colorMateria: String) {
+fun TarjetaTareaPendiente(titulo: String, nombreMateria: String, fechaLimite: String, colorMateria: Color) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -25,7 +22,7 @@ fun TarjetaTareaPendiente(titulo: String, nombreMateria: String, fechaLimite: St
         Box(
             modifier = Modifier
                 .size(14.dp)
-                .background(colorDesdeHex(colorMateria), shape = CircleShape)
+                .background(colorMateria, shape = CircleShape)
         )
 
         Spacer(modifier = Modifier.width(10.dp))

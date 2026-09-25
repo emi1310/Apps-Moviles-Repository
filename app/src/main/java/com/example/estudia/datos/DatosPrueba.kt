@@ -1,21 +1,18 @@
 package com.example.estudia.datos
 
+import androidx.compose.ui.graphics.Color
 import com.example.estudia.modelo.*
-
-// Este archivo genera un Usuario de prueba con Materias, Tareas, Eventos y
-// Notas ya cargadas, para poder ver la app funcionando con datos reales
-// sin necesidad de una base de datos todavía.
-//
-// Más adelante, cuando el usuario pueda crear sus propios datos desde la
-// app, este archivo se va a dejar de usar (o solo va a servir para testing).
+import com.example.estudia.util.obtenerFechaHoyComoTexto
+import com.example.estudia.util.obtenerFechaMananaComoTexto
 
 fun crearUsuarioDePrueba(): Usuario {
+    val hoy = obtenerFechaHoyComoTexto()
+    val manana = obtenerFechaMananaComoTexto()
 
-    // ---------- Materia: Matemática II ----------
     val matematica = Materia(
         id = 1,
         nombre = "Matemática II",
-        color = "#6C5CE7"
+        color = Color(0xFF6C5CE7)
     )
     matematica.tareas.add(Tarea(id = 1, titulo = "Ejercicios 3 y 4", fechaLimite = "Hoy"))
     matematica.tareas.add(Tarea(id = 2, titulo = "Repasar teoría", fechaLimite = "25 May", completada = true))
@@ -24,7 +21,7 @@ fun crearUsuarioDePrueba(): Usuario {
             id = 1,
             titulo = "Definición de estadística",
             contenido = "La estadística permite analizar datos y obtener conclusiones...",
-            fechaCreacion = "4 de junio de 2026",
+            fechaCreacion = "04/06/2026",
             esFavorita = true
         )
     )
@@ -33,69 +30,95 @@ fun crearUsuarioDePrueba(): Usuario {
             id = 1,
             titulo = "Clase: Ecuaciones diferenciales",
             tipo = TipoEvento.CLASE,
-            fecha = "17/06/2026",
+            fecha = hoy,
             horaInicio = "10:00",
             horaFin = "11:30"
         )
     )
+    matematica.eventos.add(
+        Evento(
+            id = 2,
+            titulo = "Examen parcial",
+            tipo = TipoEvento.EXAMEN,
+            fecha = manana,
+            horaInicio = "09:00",
+            horaFin = "11:00"
+        )
+    )
+    matematica.eventos.add(
+        Evento(
+            id = 3,
+            titulo = "Estudio: Ecuaciones",
+            tipo = TipoEvento.BLOQUE_ESTUDIO,
+            fecha = hoy,
+            horaInicio = "18:00",
+            horaFin = "20:00"
+        )
+    )
 
-    // ---------- Materia: Física I ----------
     val fisica = Materia(
         id = 2,
         nombre = "Física I",
-        color = "#00B894"
+        color = Color(0xFF00B894)
     )
     fisica.tareas.add(Tarea(id = 3, titulo = "Entregar Figma", fechaLimite = "Mañana"))
     fisica.eventos.add(
         Evento(
-            id = 2,
+            id = 4,
             titulo = "Laboratorio: Ondas",
             tipo = TipoEvento.CLASE,
-            fecha = "17/06/2026",
+            fecha = hoy,
             horaInicio = "14:00",
             horaFin = "15:30"
         )
     )
+    fisica.eventos.add(
+        Evento(
+            id = 5,
+            titulo = "Entrega: informe de laboratorio",
+            tipo = TipoEvento.ENTREGA,
+            fecha = manana,
+            horaInicio = "23:00",
+            horaFin = "23:59"
+        )
+    )
 
-    // ---------- Materia: Diseño Web ----------
-    val diseñoWeb = Materia(
+    val diseno = Materia(
         id = 3,
         nombre = "Diseño web",
-        color = "#FDA43C"
+        color = Color(0xFFFDA43C)
     )
-    diseñoWeb.notas.add(
+    diseno.notas.add(
         Nota(
-            id = 2,
+            id = 1,
             titulo = "Diseños de páginas web con CSS",
             contenido = "Para las páginas web usar html y para el estilo usar CSS...",
-            fechaCreacion = "17 de Noviembre de 2025",
+            fechaCreacion = "17/11/2025",
             esFavorita = true
         )
     )
 
-    // ---------- Materia: Matemáticas I (archivada, para probar el filtro) ----------
     val matematicaI = Materia(
         id = 4,
         nombre = "Matemáticas I",
-        color = "#E74C3C",
+        color = Color(0xFFE74C3C),
         archivada = true
     )
 
-    // ---------- Usuario ----------
     val usuario = Usuario(
         id = 1,
-        nombreUsuario = "lucasardanza",
-        contrasena = "1234",
+        nombreUsuario = "demo",
+        contrasena = "demo",
         metodoAuth = MetodoAuth.LOCAL,
-        nombre = "Lucas Ardanza",
+        nombre = "Usuario Demo",
         carrera = "Desarrollo de Software",
         anio = 2,
-        email = "lucasardanza777@gmail.com"
+        email = "demo@ejemplo.com"
     )
 
     usuario.materias.add(matematica)
     usuario.materias.add(fisica)
-    usuario.materias.add(diseñoWeb)
+    usuario.materias.add(diseno)
     usuario.materias.add(matematicaI)
 
     return usuario

@@ -1,43 +1,58 @@
 package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.ui.componentes.GraficoBarrasProgreso
+import com.example.estudia.ui.componentes.GraficoTortaHoras
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
+import com.example.estudia.util.minutosDelDia
 
-// Pantalla "Inicio": junta información de todas las materias del usuario
-// en un solo resumen — tareas pendientes, próximos eventos, una nota
-// destacada y las horas de estudio semanales.
+private data class TareaPendiente(
+    val titulo: String,
+    val nombreMateria: String,
+    val fechaLimite: String,
+    val colorMateria: Color
+)
+
 @Composable
 fun InicioScreen(usuario: Usuario) {
 
-    // Junta las tareas pendientes de TODAS las materias en una sola lista,
-    // guardando también el nombre y color de la materia a la que pertenecen
-    // (porque Tarea por sí sola no sabe de qué materia es).
     val tareasPendientes = usuario.materias.flatMap { materia ->
         materia.tareas
             .filter { !it.completada }
-            .map { tarea -> Triple(tarea.titulo, materia.nombre, materia.color to tarea.fechaLimite) }
+            .map { tarea ->
+                TareaPendiente(tarea.titulo, materia.nombre, tarea.fechaLimite, materia.color)
+            }
     }
 
-    // Junta los eventos de tipo EXAMEN o ENTREGA de todas las materias
-    // (dejamos afuera las CLASE y BLOQUE_ESTUDIO para no saturar esta sección).
     val proximosEventos = usuario.materias.flatMap { materia ->
         materia.eventos.filter { it.tipo == TipoEvento.EXAMEN || it.tipo == TipoEvento.ENTREGA }
     }
 
-    // Busca la primera nota marcada como favorita, de cualquier materia.
     val notaDestacada = usuario.materias.flatMap { it.notas }.firstOrNull { it.esFavorita }
+
+    val materiasActivas = usuario.materias.filter { !it.archivada }
+
+    val minutosPorMateria = materiasActivas.map { materia ->
+        val minutos = materia.eventos
+            .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO }
+            .sumOf { minutosDelDia(it.horaFin) - minutosDelDia(it.horaInicio) }
+        materia to minutos
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Text(text = "¡Hola, ${usuario.nombre.substringBefore(" ")}!", style = MaterialTheme.typography.headlineSmall)
@@ -45,8 +60,7 @@ fun InicioScreen(usuario: Usuario) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ---------- Tareas pendientes ----------
-        Card(shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -61,12 +75,12 @@ fun InicioScreen(usuario: Usuario) {
                 if (tareasPendientes.isEmpty()) {
                     Text(text = "No tenés tareas pendientes", style = MaterialTheme.typography.bodySmall)
                 } else {
-                    tareasPendientes.take(4).forEach { (titulo, nombreMateria, colorYFecha) ->
+                    tareasPendientes.take(4).forEach { tarea ->
                         TarjetaTareaPendiente(
-                            titulo = titulo,
-                            nombreMateria = nombreMateria,
-                            fechaLimite = colorYFecha.second,
-                            colorMateria = colorYFecha.first
+                            titulo = tarea.titulo,
+                            nombreMateria = tarea.nombreMateria,
+                            fechaLimite = tarea.fechaLimite,
+                            colorMateria = tarea.colorMateria
                         )
                     }
                 }
@@ -75,8 +89,7 @@ fun InicioScreen(usuario: Usuario) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ---------- Próximos eventos ----------
-        Card(shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(text = "Próximos eventos", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -93,9 +106,8 @@ fun InicioScreen(usuario: Usuario) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ---------- Nota destacada ----------
         if (notaDestacada != null) {
-            Card(shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(text = "Nota destacada", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -106,9 +118,30 @@ fun InicioScreen(usuario: Usuario) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ---------- Horas de estudio ----------
+        if (materiasActivas.isNotEmpty()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(text = "Progreso por materia", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    GraficoBarrasProgreso(materias = materiasActivas)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(text = "Horas de estudio por materia", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    GraficoTortaHoras(datos = minutosPorMateria)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         Text(
-            text = "Horas de estudio esta semana: ${usuario.calcularHorasEstudioSemanal()}h",
+            text = "Horas de estudio planificadas: ${usuario.calcularHorasEstudio()}h",
             style = MaterialTheme.typography.bodyMedium
         )
     }

@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-// Fila clickeable del menú de perfil (ej: "Editar perfil", "Recordatorios").
 @Composable
 fun OpcionPerfil(texto: String, esDestructiva: Boolean = false, alTocar: () -> Unit) {
     Row(

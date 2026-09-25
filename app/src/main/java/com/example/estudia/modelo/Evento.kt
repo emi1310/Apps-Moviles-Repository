@@ -1,12 +1,10 @@
 package com.example.estudia.modelo
 
-// Representa un evento del calendario: puede ser una clase, un examen,
-// una entrega o un bloque de estudio (ver enum TipoEvento).
 data class Evento(
     val id: Int,
     val titulo: String,
     val tipo: TipoEvento,
-    val fecha: String,       // formato simple: "17/06/2026"
-    val horaInicio: String,  // formato simple: "18:00"
+    val fecha: String,
+    val horaInicio: String,
     val horaFin: String
 )

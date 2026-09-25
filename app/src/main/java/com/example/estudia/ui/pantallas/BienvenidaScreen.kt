@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-// Primera pantalla que ve el usuario al abrir la app.
 @Composable
 fun BienvenidaScreen(onComenzar: () -> Unit) {
     Column(

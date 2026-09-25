@@ -7,8 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-// Muestra un número grande con una etiqueta debajo, usado para las
-// estadísticas del perfil (materias, horas de estudio, notas, racha).
 @Composable
 fun TarjetaEstadistica(valor: String, etiqueta: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

@@ -5,38 +5,56 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 
-// Ventana emergente (dialog) que pide el nombre de una materia nueva.
-// onConfirmar se ejecuta cuando el usuario toca "Agregar", pasándole
-// el texto escrito. onCancelar se ejecuta si cierra sin confirmar.
 @Composable
 fun DialogoNuevaMateria(
+    nombreYaExiste: (String) -> Boolean,
     onConfirmar: (String) -> Unit,
-    onCancelar: () -> Unit
+    onCancelar: () -> Unit,
+    nombreInicial: String = "",
+    titulo: String = "Nueva materia",
+    textoConfirmar: String = "Agregar"
 ) {
-    var nombre by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf(nombreInicial) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    val mensajeError = error
 
     AlertDialog(
         onDismissRequest = onCancelar,
-        title = { Text("Nueva materia") },
+        title = { Text(titulo) },
         text = {
-            OutlinedTextField(
+            TextField(
                 value = nombre,
-                onValueChange = { nombre = it },
+                onValueChange = {
+                    nombre = it
+                    error = null
+                },
                 label = { Text("Nombre de la materia") },
+                isError = mensajeError != null,
+                supportingText = {
+                    if (mensajeError != null) {
+                        Text(mensajeError)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
-            TextButton(onClick = {
-                if (nombre.isNotBlank()) {
-                    onConfirmar(nombre)
+            Button(onClick = {
+                val nombreLimpio = nombre.trim()
+                if (nombreLimpio.isBlank()) {
+                    error = "Ingresá un nombre para la materia."
+                } else if (nombreYaExiste(nombreLimpio)) {
+                    error = "Ya existe una materia con ese nombre."
+                } else {
+                    onConfirmar(nombreLimpio)
                 }
             }) {
-                Text("Agregar")
+                Text(textoConfirmar)
             }
         },
         dismissButton = {
-            TextButton(onClick = onCancelar) {
+            Button(onClick = onCancelar) {
                 Text("Cancelar")
             }
         }

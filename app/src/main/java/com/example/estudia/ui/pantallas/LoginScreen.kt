@@ -8,8 +8,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.estudia.modelo.Usuario
 
-// Pantalla de inicio de sesión. Busca, dentro de la lista de usuarios
-// registrados en memoria, uno cuyas credenciales coincidan.
 @Composable
 fun LoginScreen(
     usuariosRegistrados: List<Usuario>,
@@ -27,7 +25,7 @@ fun LoginScreen(
         Text(text = "Iniciar sesión", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
+        TextField(
             value = nombreUsuario,
             onValueChange = { nombreUsuario = it },
             label = { Text("Usuario") },
@@ -35,7 +33,7 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
+        TextField(
             value = contrasena,
             onValueChange = { contrasena = it },
             label = { Text("Contraseña") },
@@ -43,17 +41,21 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (error != null) {
+        val mensajeError = error
+        if (mensajeError != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = error!!, color = MaterialTheme.colorScheme.error)
+            Text(text = mensajeError, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-                val usuarioEncontrado = usuariosRegistrados.firstOrNull {
-                    it.iniciarSesion(nombreUsuario, contrasena)
+                var usuarioEncontrado: Usuario? = null
+                for (usuario in usuariosRegistrados) {
+                    if (usuario.iniciarSesion(nombreUsuario, contrasena)) {
+                        usuarioEncontrado = usuario
+                    }
                 }
                 if (usuarioEncontrado != null) {
                     onLoginExitoso(usuarioEncontrado)
@@ -66,31 +68,9 @@ fun LoginScreen(
             Text("Iniciar sesión")
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = {
-                // Simulación: no hay conexión real con Google (requeriría
-                // una librería externa). Se crea/usa un usuario de prueba
-                // marcado como autenticado por Google.
-                val usuarioGoogle = usuariosRegistrados.firstOrNull { it.metodoAuth == com.example.estudia.modelo.MetodoAuth.GOOGLE }
-                    ?: Usuario(
-                        id = usuariosRegistrados.size + 1,
-                        nombreUsuario = "usuario_google",
-                        contrasena = null,
-                        metodoAuth = com.example.estudia.modelo.MetodoAuth.GOOGLE,
-                        nombre = "Usuario de Google"
-                    )
-                onLoginExitoso(usuarioGoogle)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Continuar con Google")
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = onIrARegistro, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = onIrARegistro, modifier = Modifier.fillMaxWidth()) {
             Text("¿No tenés cuenta? Creá una")
         }
     }

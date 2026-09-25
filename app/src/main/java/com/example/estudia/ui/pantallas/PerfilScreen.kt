@@ -2,39 +2,40 @@ package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.estudia.modelo.Usuario
-import com.example.estudia.ui.componentes.DialogoInfo
+import com.example.estudia.ui.componentes.DialogoConfirmacion
+import com.example.estudia.ui.componentes.DialogoEditarPerfil
 import com.example.estudia.ui.componentes.OpcionPerfil
 import com.example.estudia.ui.componentes.TarjetaEstadistica
 
-// Pantalla "Mi Perfil": datos del usuario, estadísticas calculadas, y
-// un menú de opciones. Las opciones que todavía no tienen pantalla propia
-// muestran un aviso de "función en desarrollo" en vez de no hacer nada.
 @Composable
-fun PerfilScreen(usuario: Usuario, onCerrarSesion: () -> Unit) {
-    var mensajeDialogo by remember { mutableStateOf<String?>(null) }
+fun PerfilScreen(
+    usuario: Usuario,
+    onMostrarMensaje: (String) -> Unit,
+    onEditarPerfil: (nombre: String, carrera: String?, anio: Int?, email: String?) -> Unit,
+    onCerrarSesion: () -> Unit
+) {
+    var confirmarCierreSesion by remember { mutableStateOf(false) }
+    var mostrarEditarPerfil by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = "Mi perfil", style = MaterialTheme.typography.headlineSmall)
-        }
+        Text(text = "Mi perfil", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ---------- Avatar + datos principales ----------
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -55,9 +56,14 @@ fun PerfilScreen(usuario: Usuario, onCerrarSesion: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = usuario.nombre, style = MaterialTheme.typography.titleLarge)
 
-            val carreraTexto = usuario.carrera ?: "Carrera no especificada"
-            val anioTexto = usuario.anio?.let { "$it° año" } ?: ""
-            Text(text = "$anioTexto - $carreraTexto", style = MaterialTheme.typography.bodyMedium)
+            val carrera = usuario.carrera
+            val carreraTexto = if (carrera != null) carrera else "Carrera no especificada"
+            val anio = usuario.anio
+            if (anio != null) {
+                Text(text = "$anio° año - $carreraTexto", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Text(text = carreraTexto, style = MaterialTheme.typography.bodyMedium)
+            }
 
             Text(
                 text = usuario.email ?: "Email no especificado",
@@ -67,36 +73,43 @@ fun PerfilScreen(usuario: Usuario, onCerrarSesion: () -> Unit) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ---------- Estadísticas ----------
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             TarjetaEstadistica(valor = usuario.contarMaterias().toString(), etiqueta = "Materias")
-            TarjetaEstadistica(valor = "${usuario.calcularHorasEstudioSemanal()}h", etiqueta = "Estudio")
+            TarjetaEstadistica(valor = "${usuario.calcularHorasEstudio()}h", etiqueta = "Estudio")
             TarjetaEstadistica(valor = usuario.contarNotas().toString(), etiqueta = "Notas")
-            TarjetaEstadistica(valor = usuario.calcularDiasRacha().toString(), etiqueta = "Días racha")
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ---------- Menú de opciones ----------
-        OpcionPerfil(texto = "Editar perfil") { mensajeDialogo = "La edición de perfil todavía está en desarrollo." }
-        Divider()
-        OpcionPerfil(texto = "Metas de estudio") { mensajeDialogo = "Las metas de estudio todavía están en desarrollo." }
-        Divider()
-        OpcionPerfil(texto = "Recordatorios") { mensajeDialogo = "Los recordatorios todavía están en desarrollo." }
-        Divider()
-        OpcionPerfil(texto = "Respaldo y datos") { mensajeDialogo = "El respaldo de datos todavía está en desarrollo." }
-        Divider()
-        OpcionPerfil(texto = "Ayuda y soporte") { mensajeDialogo = "La ayuda y soporte todavía está en desarrollo." }
-        Divider()
+        OpcionPerfil(texto = "Editar perfil") { mostrarEditarPerfil = true }
+        OpcionPerfil(texto = "Metas de estudio") { onMostrarMensaje("Las metas de estudio todavía están en desarrollo.") }
+        OpcionPerfil(texto = "Recordatorios") { onMostrarMensaje("Los recordatorios todavía están en desarrollo.") }
+        OpcionPerfil(texto = "Ayuda y soporte") { onMostrarMensaje("La ayuda y soporte todavía está en desarrollo.") }
         OpcionPerfil(texto = "Cerrar sesión", esDestructiva = true) {
-            onCerrarSesion()
+            confirmarCierreSesion = true
         }
     }
 
-    mensajeDialogo?.let { mensaje ->
-        DialogoInfo(mensaje = mensaje, onCerrar = { mensajeDialogo = null })
+    if (confirmarCierreSesion) {
+        DialogoConfirmacion(
+            mensaje = "¿Seguro que querés cerrar sesión?",
+            textoConfirmar = "Cerrar sesión",
+            onConfirmar = onCerrarSesion,
+            onCancelar = { confirmarCierreSesion = false }
+        )
+    }
+
+    if (mostrarEditarPerfil) {
+        DialogoEditarPerfil(
+            usuario = usuario,
+            onConfirmar = { nombre, carrera, anio, email ->
+                onEditarPerfil(nombre, carrera, anio, email)
+                mostrarEditarPerfil = false
+            },
+            onCancelar = { mostrarEditarPerfil = false }
+        )
     }
 }

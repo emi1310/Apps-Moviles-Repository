@@ -8,8 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-// Fila que muestra un evento próximo (examen o entrega) en la pantalla
-// de Inicio: título del evento y su fecha.
 @Composable
 fun TarjetaEventoResumen(titulo: String, fecha: String) {
     Row(

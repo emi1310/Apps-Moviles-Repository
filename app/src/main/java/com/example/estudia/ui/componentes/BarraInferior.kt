@@ -4,43 +4,35 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import com.example.estudia.ui.navegacion.PantallaApp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.example.estudia.ui.navegacion.Screen
+import com.example.estudia.ui.navegacion.pantallasConBarra
 
-// Barra de navegación inferior con los 5 accesos principales de la app.
-// pantallaSeleccionada indica cuál está activa ahora; onSeleccionar se
-// llama cuando el usuario toca un ícono distinto.
 @Composable
-fun BarraInferior(pantallaSeleccionada: PantallaApp, onSeleccionar: (PantallaApp) -> Unit) {
+fun BarraInferior(rutaActual: String?, onSeleccionar: (Screen) -> Unit) {
+    val etiquetas = mapOf(
+        Screen.Inicio.ruta to Pair("🏠", "Inicio"),
+        Screen.Materias.ruta to Pair("📚", "Materias"),
+        Screen.Calendario.ruta to Pair("📅", "Calendario"),
+        Screen.Notas.ruta to Pair("📝", "Notas"),
+        Screen.Perfil.ruta to Pair("👤", "Perfil")
+    )
+
     NavigationBar {
-        NavigationBarItem(
-            selected = pantallaSeleccionada == PantallaApp.INICIO,
-            onClick = { onSeleccionar(PantallaApp.INICIO) },
-            icon = { Text("🏠") },
-            label = { Text("Inicio") }
-        )
-        NavigationBarItem(
-            selected = pantallaSeleccionada == PantallaApp.MATERIAS,
-            onClick = { onSeleccionar(PantallaApp.MATERIAS) },
-            icon = { Text("📚") },
-            label = { Text("Materias") }
-        )
-        NavigationBarItem(
-            selected = pantallaSeleccionada == PantallaApp.CALENDARIO,
-            onClick = { onSeleccionar(PantallaApp.CALENDARIO) },
-            icon = { Text("📅") },
-            label = { Text("Calendario") }
-        )
-        NavigationBarItem(
-            selected = pantallaSeleccionada == PantallaApp.NOTAS,
-            onClick = { onSeleccionar(PantallaApp.NOTAS) },
-            icon = { Text("📝") },
-            label = { Text("Notas") }
-        )
-        NavigationBarItem(
-            selected = pantallaSeleccionada == PantallaApp.PERFIL,
-            onClick = { onSeleccionar(PantallaApp.PERFIL) },
-            icon = { Text("👤") },
-            label = { Text("Perfil") }
-        )
+        pantallasConBarra.forEach { destino ->
+            val (icono, etiqueta) = etiquetas.getValue(destino.ruta)
+            NavigationBarItem(
+                selected = rutaActual == destino.ruta,
+                onClick = { onSeleccionar(destino) },
+                icon = {
+                    Text(icono, modifier = Modifier.clearAndSetSemantics {})
+                },
+                label = { Text(etiqueta) },
+                modifier = Modifier.semantics { contentDescription = etiqueta }
+            )
+        }
     }
 }
