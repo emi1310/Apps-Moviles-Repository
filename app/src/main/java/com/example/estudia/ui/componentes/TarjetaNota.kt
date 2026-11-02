@@ -1,83 +1,79 @@
 package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.estudia.R
+import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Nota
+import com.example.estudia.util.aTexto
 
 // Tarjeta que muestra una nota: título, materia, contenido (recortado
-// a 2 líneas), fecha, una estrella para marcar/desmarcar favorita y un
-// menú "⋮" con las opciones Editar y Eliminar (mismo patrón que el menú
-// de TarjetaMateria). Los botones están dentro de un IconButton para
-// que el área táctil tenga el tamaño mínimo recomendado (48x48dp).
+// a 3 líneas), fecha, estrella de favorita, archivos adjuntos y un menú
+// con Adjuntar, Editar y Eliminar. Los íconos están dentro de un
+// IconButton para que el área táctil tenga el tamaño mínimo (48x48dp).
 @Composable
 fun TarjetaNota(
-    titulo: String,
+    nota: Nota,
     nombreMateria: String,
-    contenido: String,
-    fecha: String,
-    esFavorita: Boolean,
     alTocarEstrella: () -> Unit,
+    alAdjuntar: () -> Unit,
     alEditar: () -> Unit,
-    alTocarEliminar: () -> Unit
+    alEliminar: () -> Unit,
+    alAbrirArchivo: (Archivo) -> Unit,
+    alEliminarArchivo: (Archivo) -> Unit
 ) {
-    var menuAbierto by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = nota.titulo, style = MaterialTheme.typography.titleMedium)
+                    Text(text = nombreMateria, style = MaterialTheme.typography.bodySmall)
+                }
                 IconButton(onClick = alTocarEstrella) {
-                    Text(
-                        text = if (esFavorita) "★" else "☆",
-                        style = MaterialTheme.typography.titleLarge
+                    Icon(
+                        imageVector = if (nota.esFavorita) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        contentDescription = stringResource(if (nota.esFavorita) R.string.quitar_favorita else R.string.marcar_favorita),
+                        tint = if (nota.esFavorita) Color(0xFFF5B400) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Box {
-                    IconButton(onClick = { menuAbierto = true }) {
-                        Text("⋮", style = MaterialTheme.typography.titleLarge)
-                    }
-                    DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
-                        DropdownMenuItem(
-                            text = { Text("Editar") },
-                            onClick = {
-                                menuAbierto = false
-                                alEditar()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Eliminar") },
-                            onClick = {
-                                menuAbierto = false
-                                alTocarEliminar()
-                            }
-                        )
-                    }
-                }
+                MenuOpciones(
+                    listOf(
+                        OpcionMenu(stringResource(R.string.adjuntar_archivo), Icons.Filled.AttachFile, alAdjuntar),
+                        OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alEditar),
+                        OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, alEliminar)
+                    ),
+                    descripcion = stringResource(R.string.opciones_de, nota.titulo)
+                )
             }
-
-            Text(text = nombreMateria, style = MaterialTheme.typography.bodySmall)
+            if (nota.contenido.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(text = nota.contenido, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+            }
+            if (nota.archivos.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                ListaArchivos(nota.archivos, MaterialTheme.colorScheme.primary, alAbrirArchivo, alEliminarArchivo)
+            }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = contenido, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = fecha, style = MaterialTheme.typography.bodySmall)
+            Text(text = nota.fechaCreacion.aTexto(), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

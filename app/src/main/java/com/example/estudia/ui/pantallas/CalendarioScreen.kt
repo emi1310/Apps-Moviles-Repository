@@ -3,170 +3,149 @@ package com.example.estudia.ui.pantallas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.estudia.modelo.Evento
-import com.example.estudia.modelo.Materia
-import com.example.estudia.modelo.TipoEvento
-import com.example.estudia.modelo.Usuario
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.estudia.R
 import com.example.estudia.ui.componentes.CasillaDia
-import com.example.estudia.ui.componentes.DialogoNuevoEvento
+import com.example.estudia.ui.componentes.DialogoEvento
+import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaEventoCalendario
-import com.example.estudia.util.*
+import com.example.estudia.ui.componentes.textoFecha
+import com.example.estudia.viewmodel.CalendarioViewModel
+import com.example.estudia.viewmodel.EventoConMateria
 
-// Representa un Evento junto con el nombre de la materia a la que
-// pertenece (Evento por sí solo no lo sabe, hay que buscarlo a
-// través de la Materia dueña).
-private data class EventoConMateria(val evento: Evento, val nombreMateria: String)
-
-// Pantalla "Mi Calendario": muestra los días del mes ordenados por semanas y,
-// debajo, los eventos del día seleccionado.
+// Pantalla "Mi Calendario": la grilla del mes y, debajo, los eventos del
+// día elegido (con opción de editarlos o eliminarlos).
 @Composable
-fun CalendarioScreen(
-    usuario: Usuario,
-    onAgregarEvento: (Materia, String, TipoEvento, String, String, String) -> Unit
-) {
-    var anioMostrado by remember { mutableStateOf(obtenerAnioActual()) }
-    var mesMostrado by remember { mutableStateOf(obtenerMesActual()) }
-    var diaSeleccionado by remember { mutableStateOf(obtenerDiaActual()) }
-    var mostrarDialogoNuevoEvento by remember { mutableStateOf(false) }
+fun CalendarioScreen(viewModel: CalendarioViewModel) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    RecolectarAvisos(viewModel.avisos)
 
-    val diasDelMes = obtenerDiasDelMes(anioMostrado, mesMostrado)
-    val diasSemana = listOf("D", "L", "M", "M", "J", "V", "S")
+    // Diálogo de evento: eventoParaEditar == null significa "nuevo evento".
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var eventoParaEditar by remember { mutableStateOf<EventoConMateria?>(null) }
 
-    // Parte la lista de días en semanas de 7 casilleros.
-    val semanas = mutableListOf<List<Int?>>()
-    var semana = mutableListOf<Int?>()
-    for (dia in diasDelMes) {
-        semana.add(dia)
-        if (semana.size == 7) {
-            semanas.add(semana)
-            semana = mutableListOf()
-        }
-    }
-    if (semana.isNotEmpty()) {
-        while (semana.size < 7) {
-            semana.add(null)
-        }
-        semanas.add(semana)
-    }
+    val meses = stringArrayResource(R.array.meses)
+    val diasSemana = stringArrayResource(R.array.dias_semana_corto)
 
-    val esMesActual = anioMostrado == obtenerAnioActual() && mesMostrado == obtenerMesActual()
-
-    val todosLosEventos: List<EventoConMateria> = usuario.materias.flatMap { materia ->
-        materia.eventos.map { evento -> EventoConMateria(evento, materia.nombre) }
-    }
-
-    val fechaSeleccionada = formatearFecha(anioMostrado, mesMostrado, diaSeleccionado)
-    val eventosSeleccionados = todosLosEventos
-        .filter { it.evento.fecha == fechaSeleccionada }
-        .sortedBy { it.evento.horaInicio }
-
-    // Días del mes mostrado que tienen al menos un evento (llevan un puntito).
-    // La fecha es "dd/MM/yyyy": lo que está después de la primera "/" es "MM/yyyy".
-    val mesYAnioMostrados = formatearFecha(anioMostrado, mesMostrado, 1).substringAfter('/')
-    val diasConEventos = mutableListOf<Int>()
-    for (eventoConMateria in todosLosEventos) {
-        val fecha = eventoConMateria.evento.fecha
-        if (fecha.substringAfter('/') == mesYAnioMostrados) {
-            diasConEventos.add(fecha.substringBefore('/').toInt())
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp)
-    ) {
-        item {
-            Text(text = "Mi Calendario", style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = {
-                    if (mesMostrado == 0) { mesMostrado = 11; anioMostrado-- }
-                    else mesMostrado--
-                    diaSeleccionado = 1
-                }) { Text("‹", style = MaterialTheme.typography.headlineSmall) }
-
-                Text(text = "${nombreDelMes(mesMostrado)} $anioMostrado", style = MaterialTheme.typography.titleMedium)
-
-                IconButton(onClick = {
-                    if (mesMostrado == 11) { mesMostrado = 0; anioMostrado++ }
-                    else mesMostrado++
-                    diaSeleccionado = 1
-                }) { Text("›", style = MaterialTheme.typography.headlineSmall) }
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                eventoParaEditar = null
+                mostrarDialogo = true
+            }) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.nuevo_evento))
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                diasSemana.forEach { letra ->
+        }
+    ) { relleno ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(relleno),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
+        ) {
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = letra,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
+                        text = stringResource(R.string.mi_calendario),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = viewModel::irAHoy) {
+                        Icon(Icons.Filled.Today, contentDescription = stringResource(R.string.ir_a_hoy))
+                    }
                 }
-            }
-        }
-
-        items(semanas) { diasDeLaSemana ->
-            Row(modifier = Modifier.fillMaxWidth()) {
-                diasDeLaSemana.forEach { dia ->
-                    CasillaDia(
-                        dia = dia,
-                        esHoy = esMesActual && dia == obtenerDiaActual(),
-                        seleccionado = dia == diaSeleccionado,
-                        tieneEventos = dia in diasConEventos,
-                        modifier = Modifier.weight(1f),
-                        onSeleccionar = { if (dia != null) diaSeleccionado = dia }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = viewModel::mesAnterior) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
+                    }
+                    Text(
+                        text = "${meses[estado.mes.monthValue - 1]} ${estado.mes.year}",
+                        style = MaterialTheme.typography.titleMedium
                     )
+                    IconButton(onClick = viewModel::mesSiguiente) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    diasSemana.forEach { letra ->
+                        Text(
+                            text = letra,
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = fechaSeleccionada, style = MaterialTheme.typography.titleMedium)
-            if (eventosSeleccionados.isEmpty()) {
-                Text(text = "No hay eventos para esta fecha", style = MaterialTheme.typography.bodySmall)
-            } else {
-                eventosSeleccionados.forEach {
-                    TarjetaEventoCalendario(it.evento.titulo, it.nombreMateria, it.evento.horaInicio, it.evento.horaFin)
+            items(estado.semanas) { semana ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    semana.forEach { fecha ->
+                        CasillaDia(
+                            fecha = fecha,
+                            esHoy = fecha == estado.hoy,
+                            seleccionado = fecha == estado.seleccionado,
+                            tieneEventos = fecha in estado.diasConEventos,
+                            modifier = Modifier.weight(1f),
+                            onSeleccionar = { if (fecha != null) viewModel.seleccionar(fecha) }
+                        )
+                    }
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = textoFecha(estado.seleccionado, estado.hoy), style = MaterialTheme.typography.titleMedium)
+                if (estado.eventosDelDia.isEmpty()) {
+                    Text(text = stringResource(R.string.sin_eventos_fecha), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            items(estado.eventosDelDia, key = { it.evento.id }) { item ->
+                TarjetaEventoCalendario(
+                    item = item,
+                    onEditar = {
+                        eventoParaEditar = item
+                        mostrarDialogo = true
+                    },
+                    onEliminar = { viewModel.eliminarEvento(item) }
+                )
             }
         }
     }
 
-    FloatingActionButton(
-        onClick = { mostrarDialogoNuevoEvento = true },
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(16.dp)
-    ) {
-        Text("+", style = MaterialTheme.typography.headlineSmall)
-    }
-    }
-
-    if (mostrarDialogoNuevoEvento) {
-        DialogoNuevoEvento(
-            materiasDisponibles = usuario.materias.filter { !it.archivada },
-            fechaInicial = fechaSeleccionada,
-            onConfirmar = { materiaElegida, titulo, tipo, fecha, horaInicio, horaFin ->
-                onAgregarEvento(materiaElegida, titulo, tipo, fecha, horaInicio, horaFin)
-                mostrarDialogoNuevoEvento = false
+    if (mostrarDialogo) {
+        val editando = eventoParaEditar
+        DialogoEvento(
+            evento = editando?.evento,
+            materiaIdInicial = editando?.materiaId,
+            // Al editar se puede mover el evento a otra materia activa.
+            materias = estado.materiasActivas,
+            fechaInicial = estado.seleccionado,
+            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin ->
+                val error = viewModel.guardarEvento(materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin)
+                if (error == null) mostrarDialogo = false
+                error
             },
-            onCancelar = { mostrarDialogoNuevoEvento = false }
+            onCancelar = { mostrarDialogo = false }
         )
     }
 }

@@ -1,162 +1,201 @@
 package com.example.estudia.ui.pantallas
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
-import com.example.estudia.modelo.Usuario
+import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.DialogoConfirmacion
-import com.example.estudia.ui.componentes.DialogoNuevaMateria
-import com.example.estudia.ui.componentes.DialogoNuevaTarea
+import com.example.estudia.ui.componentes.DialogoMateria
+import com.example.estudia.ui.componentes.DialogoTarea
+import com.example.estudia.ui.componentes.FilaTarea
+import com.example.estudia.ui.componentes.LocalAvisos
+import com.example.estudia.ui.componentes.OpcionMenu
+import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.TIPOS_ARCHIVO
 import com.example.estudia.ui.componentes.TarjetaMateria
+import com.example.estudia.ui.componentes.abrirArchivo
+import com.example.estudia.viewmodel.MateriasViewModel
+import java.time.LocalDate
 
-// Pantalla "Mis Materias": muestra la lista de materias del usuario,
-// filtradas entre Activas/Archivadas, y permite agregar una nueva con el
-// botón flotante (FAB). También permite, dentro de cada tarjeta, cargar
-// y completar tareas, y archivar o eliminar la materia. Todas estas
-// operaciones se hacen en el ViewModel (los onXxx que llegan desde
-// AppNavegacion), que también guarda los cambios.
+// Pantalla "Mis Materias": materias activas o archivadas, con sus tareas y
+// archivos, y un buscador de tareas. Todas las operaciones las hace
+// MateriasViewModel; esta pantalla solo dibuja y avisa de los eventos.
 @Composable
-fun MateriasScreen(
-    usuario: Usuario,
-    onAgregarMateria: (String) -> Unit,
-    onAgregarTarea: (Materia, String, String) -> Unit,
-    onAlternarTarea: (Materia, Tarea) -> Unit,
-    onEditarMateria: (Materia, String) -> Unit,
-    onArchivarMateria: (Materia) -> Unit,
-    onEliminarMateria: (Materia) -> Unit
-) {
-    var tabSeleccionada by remember { mutableStateOf(0) } // 0 = Activas, 1 = Archivadas
-    var mostrarDialogo by remember { mutableStateOf(false) }
-    var materiaParaNuevaTarea by remember { mutableStateOf<Materia?>(null) }
+fun MateriasScreen(viewModel: MateriasViewModel) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    RecolectarAvisos(viewModel.avisos)
+    val context = LocalContext.current
+    val avisos = LocalAvisos.current
+    val textoSinApp = stringResource(R.string.sin_app_para_abrir)
+
+    var crearMateria by rememberSaveable { mutableStateOf(false) }
     var materiaParaEditar by remember { mutableStateOf<Materia?>(null) }
     var materiaParaEliminar by remember { mutableStateOf<Materia?>(null) }
+    // Tarea a crear (tarea == null) o editar, junto con su materia.
+    var tareaEnDialogo by remember { mutableStateOf<Pair<Int, Tarea?>?>(null) }
+    // rememberSaveable: si Android recrea la pantalla mientras el usuario
+    // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
+    var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    val materiasFiltradas: List<Materia> = usuario.materias.filter {
-        it.archivada == (tabSeleccionada == 1)
+    // Selector de archivos del sistema (Storage Access Framework): no
+    // necesita permisos de almacenamiento, la app recibe acceso solo al
+    // archivo elegido.
+    val selectorArchivos = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val id = idMateriaParaAdjuntar
+        if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri)
+        idMateriaParaAdjuntar = null
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text(text = "Mis Materias", style = MaterialTheme.typography.headlineSmall)
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Button(onClick = { tabSeleccionada = 0 }) {
-                    Text(if (tabSeleccionada == 0) "✓ Activas" else "Activas")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { tabSeleccionada = 1 }) {
-                    Text(if (tabSeleccionada == 1) "✓ Archivadas" else "Archivadas")
-                }
+    // contentWindowInsets en 0: el Scaffold de AppNavegacion ya dejó lugar
+    // para las barras del sistema (si no, el espacio se duplica).
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        floatingActionButton = {
+            FloatingActionButton(onClick = { crearMateria = true }) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.nueva_materia))
+            }
+        }
+    ) { relleno ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(relleno),
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
+        ) {
+            item {
+                Text(text = stringResource(R.string.mis_materias), style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(12.dp))
+                Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_tareas))
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            if (materiasFiltradas.isEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = if (tabSeleccionada == 1) "No hay materias archivadas" else "No hay materias activas",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            // El espacio de abajo evita que el botón flotante tape la última tarjeta.
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(top = 8.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                items(materiasFiltradas, key = { it.id }) { materia ->
-                    var visible by remember { mutableStateOf(false) }
-                    LaunchedEffect(Unit) { visible = true }
-
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { alto -> alto / 4 })
-                    ) {
-                        TarjetaMateria(
-                            materia = materia,
-                            onAlternarTarea = { tarea -> onAlternarTarea(materia, tarea) },
-                            onAgregarTarea = { materiaParaNuevaTarea = materia },
-                            onEditar = { materiaParaEditar = materia },
-                            onArchivar = { onArchivarMateria(materia) },
-                            onEliminar = { materiaParaEliminar = materia }
+            if (estado.buscando) {
+                // ---------- Resultados del buscador ----------
+                if (estado.resultadosBusqueda.isEmpty()) {
+                    item { Text(stringResource(R.string.sin_resultados), style = MaterialTheme.typography.bodyMedium) }
+                }
+                items(estado.resultadosBusqueda, key = { "t" + it.tarea.id }) { encontrada ->
+                    FilaTarea(
+                        tarea = encontrada.tarea,
+                        hoy = LocalDate.now(),
+                        subtitulo = encontrada.nombreMateria,
+                        onAlternar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
+                        opciones = listOf(
+                            OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
+                                tareaEnDialogo = encontrada.materiaId to encontrada.tarea
+                            },
+                            OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) {
+                                viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
+                            }
+                        )
+                    )
+                }
+            } else {
+                // ---------- Filtro Activas / Archivadas ----------
+                item {
+                    Row {
+                        FilterChip(
+                            selected = !estado.mostrarArchivadas,
+                            onClick = { viewModel.mostrarArchivadas(false) },
+                            label = { Text(stringResource(R.string.activas)) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilterChip(
+                            selected = estado.mostrarArchivadas,
+                            onClick = { viewModel.mostrarArchivadas(true) },
+                            label = { Text(stringResource(R.string.archivadas)) }
+                        )
+                    }
+                    if (estado.materias.isEmpty() && !estado.cargando) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(if (estado.mostrarArchivadas) R.string.sin_materias_archivadas else R.string.sin_materias_activas),
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
+                items(estado.materias, key = { it.id }) { materia ->
+                    TarjetaMateria(
+                        materia = materia,
+                        onAlternarTarea = { viewModel.alternarTarea(materia.id, it) },
+                        onAgregarTarea = { tareaEnDialogo = materia.id to null },
+                        onEditarTarea = { tareaEnDialogo = materia.id to it },
+                        onEliminarTarea = { viewModel.eliminarTarea(materia.id, it) },
+                        onAdjuntarArchivo = {
+                            idMateriaParaAdjuntar = materia.id
+                            selectorArchivos.launch(TIPOS_ARCHIVO)
+                        },
+                        onAbrirArchivo = { archivo ->
+                            if (!abrirArchivo(context, viewModel.uriParaAbrir(archivo), archivo.tipoMime)) {
+                                avisos.mostrarTexto(textoSinApp)
+                            }
+                        },
+                        onEliminarArchivo = { viewModel.eliminarArchivo(materia.id, it) },
+                        onEditar = { materiaParaEditar = materia },
+                        onArchivar = { viewModel.alternarArchivada(materia) },
+                        onEliminar = { materiaParaEliminar = materia }
+                    )
+                }
             }
         }
-
-        FloatingActionButton(
-            onClick = { mostrarDialogo = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Text("+", style = MaterialTheme.typography.headlineSmall)
-        }
     }
 
-    if (mostrarDialogo) {
-        DialogoNuevaMateria(
-            nombreYaExiste = { nombreNuevo ->
-                usuario.materias.any { materia ->
-                    materia.nombre.equals(nombreNuevo, ignoreCase = true)
-                }
+    if (crearMateria) {
+        DialogoMateria(
+            nombreInicial = "",
+            nombreDisponible = { viewModel.nombreDisponible(it) },
+            onConfirmar = {
+                viewModel.agregarMateria(it)
+                crearMateria = false
             },
-            onConfirmar = { nombreNuevo ->
-                onAgregarMateria(nombreNuevo)
-                mostrarDialogo = false
-            },
-            onCancelar = { mostrarDialogo = false }
+            onCancelar = { crearMateria = false }
         )
     }
 
-    val materiaTarea = materiaParaNuevaTarea
-    if (materiaTarea != null) {
-        DialogoNuevaTarea(
-            onConfirmar = { titulo, fechaLimite ->
-                onAgregarTarea(materiaTarea, titulo, fechaLimite)
-                materiaParaNuevaTarea = null
-            },
-            onCancelar = { materiaParaNuevaTarea = null }
-        )
-    }
-
-    val materiaEditar = materiaParaEditar
-    if (materiaEditar != null) {
-        DialogoNuevaMateria(
-            nombreYaExiste = { nombreNuevo ->
-                usuario.materias.any { materia ->
-                    materia.id != materiaEditar.id && materia.nombre.equals(nombreNuevo, ignoreCase = true)
-                }
-            },
-            onConfirmar = { nombreNuevo ->
-                onEditarMateria(materiaEditar, nombreNuevo)
+    materiaParaEditar?.let { materia ->
+        DialogoMateria(
+            nombreInicial = materia.nombre,
+            nombreDisponible = { viewModel.nombreDisponible(it, exceptoId = materia.id) },
+            onConfirmar = {
+                viewModel.renombrarMateria(materia, it)
                 materiaParaEditar = null
             },
-            onCancelar = { materiaParaEditar = null },
-            nombreInicial = materiaEditar.nombre,
-            titulo = "Editar materia",
-            textoConfirmar = "Guardar"
+            onCancelar = { materiaParaEditar = null }
         )
     }
 
-    val materiaEliminar = materiaParaEliminar
-    if (materiaEliminar != null) {
+    tareaEnDialogo?.let { (materiaId, tarea) ->
+        DialogoTarea(
+            tarea = tarea,
+            onConfirmar = { titulo, fecha ->
+                viewModel.guardarTarea(materiaId, tarea, titulo, fecha)
+                tareaEnDialogo = null
+            },
+            onCancelar = { tareaEnDialogo = null }
+        )
+    }
+
+    materiaParaEliminar?.let { materia ->
         DialogoConfirmacion(
-            mensaje = "¿Eliminar \"${materiaEliminar.nombre}\"? Se van a borrar también sus tareas, eventos y notas.",
-            textoConfirmar = "Eliminar",
+            mensaje = stringResource(R.string.confirmar_eliminar_materia, materia.nombre),
+            textoConfirmar = stringResource(R.string.eliminar),
             onConfirmar = {
-                onEliminarMateria(materiaEliminar)
+                viewModel.eliminarMateria(materia)
                 materiaParaEliminar = null
             },
             onCancelar = { materiaParaEliminar = null }

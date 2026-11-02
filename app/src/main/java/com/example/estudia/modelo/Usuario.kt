@@ -1,28 +1,26 @@
 package com.example.estudia.modelo
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.example.estudia.util.minutosDelDia
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 // Representa al usuario de la app. Es dueño de todas sus Materias,
 // y a través de ellas llega indirectamente a sus tareas, eventos y notas.
+// Modelo de dominio inmutable: el Repository lo arma a partir de las
+// entidades de Room (ver datos/local/Mapeos.kt).
+// La contraseña NO forma parte del modelo: solo existe (como hash) en la
+// base de datos, así nunca llega al ViewModel ni a la UI.
 data class Usuario(
     val id: Int,
     val nombreUsuario: String,
-    var contrasena: String? = null,   // null si la cuenta no usa contraseña
     val metodoAuth: MetodoAuth,
-    var nombre: String,
-    var carrera: String? = null,
-    var anio: Int? = null,
-    var email: String? = null,
-    val materias: SnapshotStateList<Materia> = mutableStateListOf()
+    val nombre: String,
+    val carrera: String? = null,
+    val anio: Int? = null,
+    val email: String? = null,
+    val metaHorasSemanales: Int? = null,
+    val materias: List<Materia> = emptyList()
 ) {
-
-    // Compara las credenciales ingresadas contra las de este usuario.
-    // Devuelve true si coinciden (login exitoso).
-    fun iniciarSesion(usuarioIngresado: String, contrasenaIngresada: String): Boolean {
-        return nombreUsuario == usuarioIngresado && contrasena == contrasenaIngresada
-    }
 
     // Cuenta el total de notas sumando las notas de todas las materias.
     fun contarNotas(): Int {
@@ -34,17 +32,22 @@ data class Usuario(
         return materias.count { !it.archivada }
     }
 
-    // Suma la duración real (horaFin - horaInicio) de todos los bloques
-    // de estudio de todas las materias y la devuelve en horas.
+    // Suma la duración de todos los bloques de estudio de todas las
+    // materias y la devuelve en horas.
     fun calcularHorasEstudio(): Int {
-        var totalMinutos = 0
-        for (materia in materias) {
-            for (evento in materia.eventos) {
-                if (evento.tipo == TipoEvento.BLOQUE_ESTUDIO) {
-                    totalMinutos += minutosDelDia(evento.horaFin) - minutosDelDia(evento.horaInicio)
-                }
-            }
-        }
-        return totalMinutos / 60
+        return (minutosDeEstudio { true } / 60).toInt()
+    }
+
+    // Horas de estudio planificadas en la semana (lunes a domingo) de "hoy".
+    fun horasEstudioDeLaSemana(hoy: LocalDate): Int {
+        val lunes = hoy.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val domingo = lunes.plusDays(6)
+        return (minutosDeEstudio { !it.isBefore(lunes) && !it.isAfter(domingo) } / 60).toInt()
+    }
+
+    private fun minutosDeEstudio(incluirFecha: (LocalDate) -> Boolean): Long {
+        return materias.flatMap { it.eventos }
+            .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO && incluirFecha(it.fecha) }
+            .sumOf { it.duracionMinutos() }
     }
 }

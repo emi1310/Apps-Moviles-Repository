@@ -4,16 +4,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.estudia.R
 import com.example.estudia.modelo.Usuario
 
 // Ventana emergente para editar los datos del perfil. Carrera, año y
-// email son opcionales (si se dejan vacíos, se guardan como null,
-// igual que hace RegistroScreen).
+// email son opcionales (si se dejan vacíos, se guardan como null).
 @Composable
 fun DialogoEditarPerfil(
     usuario: Usuario,
@@ -24,84 +33,101 @@ fun DialogoEditarPerfil(
     var carrera by remember { mutableStateOf(usuario.carrera ?: "") }
     var anio by remember { mutableStateOf(usuario.anio?.toString() ?: "") }
     var email by remember { mutableStateOf(usuario.email ?: "") }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    val mensajeError = error
+    var error by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onCancelar,
-        title = { Text("Editar perfil") },
+        title = { Text(stringResource(R.string.editar_perfil)) },
         text = {
             Column {
-                TextField(
+                OutlinedTextField(
                     value = nombre,
-                    onValueChange = {
-                        nombre = it
-                        error = null
-                    },
-                    label = { Text("Nombre") },
-                    isError = mensajeError != null,
+                    onValueChange = { nombre = it; error = false },
+                    label = { Text(stringResource(R.string.nombre)) },
+                    isError = error,
+                    supportingText = { if (error) Text(stringResource(R.string.error_nombre)) },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextField(
+                OutlinedTextField(
                     value = carrera,
                     onValueChange = { carrera = it },
-                    label = { Text("Carrera") },
+                    label = { Text(stringResource(R.string.carrera)) },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextField(
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
                     value = anio,
-                    onValueChange = { nuevoValor ->
-                        if (nuevoValor.all { it.isDigit() }) anio = nuevoValor
-                    },
-                    label = { Text("Año") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                    onValueChange = { nuevo -> if (nuevo.all { it.isDigit() } && nuevo.length <= 2) anio = nuevo },
+                    label = { Text(stringResource(R.string.anio)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextField(
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Email),
+                    label = { Text(stringResource(R.string.email)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                if (mensajeError != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(mensajeError, color = MaterialTheme.colorScheme.error)
-                }
             }
         },
         confirmButton = {
-            Button(onClick = {
-                val nombreLimpio = nombre.trim()
-                if (nombreLimpio.isBlank()) {
-                    error = "Ingresá tu nombre."
+            TextButton(onClick = {
+                if (nombre.isBlank()) {
+                    error = true
                 } else {
                     onConfirmar(
-                        nombreLimpio,
+                        nombre.trim(),
                         carrera.trim().ifBlank { null },
                         anio.trim().toIntOrNull(),
                         email.trim().ifBlank { null }
                     )
                 }
-            }) {
-                Text("Guardar")
-            }
+            }) { Text(stringResource(R.string.guardar)) }
         },
         dismissButton = {
-            Button(onClick = onCancelar) {
-                Text("Cancelar")
+            TextButton(onClick = onCancelar) { Text(stringResource(R.string.cancelar)) }
+        }
+    )
+}
+
+// Ventana emergente para fijar la meta semanal de horas de estudio.
+// Si se deja vacía, se quita la meta.
+@Composable
+fun DialogoMeta(
+    metaActual: Int?,
+    onConfirmar: (Int?) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var horas by remember { mutableStateOf(metaActual?.toString() ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(stringResource(R.string.meta_semanal)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.meta_explicacion))
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = horas,
+                    onValueChange = { nuevo -> if (nuevo.all { it.isDigit() } && nuevo.length <= 3) horas = nuevo },
+                    label = { Text(stringResource(R.string.horas_por_semana)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirmar(horas.toIntOrNull()) }) { Text(stringResource(R.string.guardar)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) { Text(stringResource(R.string.cancelar)) }
         }
     )
 }

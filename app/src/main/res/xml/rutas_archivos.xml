@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpetas que el FileProvider puede compartir con otras apps.
+     Solo se expone filesDir/archivos (los adjuntos), nada más. -->
+<paths>
+    <files-path name="archivos" path="archivos/" />
+</paths>

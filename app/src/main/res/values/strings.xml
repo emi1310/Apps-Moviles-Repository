@@ -1,3 +1,256 @@
 <resources>
+    <!-- Todos los textos de la app. Tenerlos acá (y no escritos en el código)
+         permite traducir la app agregando, por ejemplo, values-en/strings.xml,
+         sin tocar el código Kotlin. -->
+
     <string name="app_name">Estudia+</string>
+    <string name="lema">Organizá. Estudiá. Lográ.</string>
+    <string name="comenzar">Comenzar</string>
+
+    <!-- Generales -->
+    <string name="aceptar">Aceptar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="guardar">Guardar</string>
+    <string name="crear">Crear</string>
+    <string name="agregar">Agregar</string>
+    <string name="editar">Editar</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="archivar">Archivar</string>
+    <string name="desarchivar">Desarchivar</string>
+    <string name="deshacer">Deshacer</string>
+    <string name="continuar">Continuar</string>
+    <string name="ahora_no">Ahora no</string>
+    <string name="volver">Volver</string>
+    <string name="mas_opciones">Más opciones</string>
+    <string name="opciones_de">Opciones de %1$s</string>
+    <string name="expandir">Expandir</string>
+    <string name="contraer">Contraer</string>
+    <string name="titulo">Título</string>
+    <string name="contenido">Contenido</string>
+    <string name="sin_resultados">No se encontraron resultados</string>
+    <string name="borrar_busqueda">Borrar búsqueda</string>
+    <string name="hoy">Hoy</string>
+    <string name="manana">Mañana</string>
+    <string name="ayer">Ayer</string>
+    <string name="sin_fecha">Sin fecha</string>
+    <string name="quitar_fecha">Quitar fecha</string>
+    <string name="desde">Desde</string>
+    <string name="hasta">Hasta</string>
+    <string name="horas_corto">%1$dh</string>
+
+    <!-- Barra inferior -->
+    <string name="inicio">Inicio</string>
+    <string name="materias">Materias</string>
+    <string name="calendario">Calendario</string>
+    <string name="notas">Notas</string>
+    <string name="perfil">Perfil</string>
+
+    <!-- Login y registro -->
+    <string name="iniciar_sesion">Iniciar sesión</string>
+    <string name="usuario">Usuario</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="ir_a_registro">¿No tenés cuenta? Creá una</string>
+    <string name="crear_cuenta">Crear cuenta</string>
+    <string name="nombre_completo">Nombre completo</string>
+    <string name="nombre_usuario">Nombre de usuario</string>
+    <string name="contrasena_minimo">Mínimo %1$d caracteres</string>
+    <string name="ir_a_login">¿Ya tenés cuenta? Iniciá sesión</string>
+    <string name="error_completar_campos">Completá todos los campos</string>
+    <string name="error_credenciales">Usuario o contraseña incorrectos</string>
+    <string name="error_usuario_existe">Ese nombre de usuario ya existe</string>
+    <string name="error_usuario_espacios">El nombre de usuario no puede tener espacios</string>
+    <string name="error_contrasena_corta">La contraseña es demasiado corta</string>
+
+    <!-- Inicio -->
+    <string name="saludo">¡Hola, %1$s!</string>
+    <string name="saludo_subtitulo">Vamos por un día productivo</string>
+    <string name="tareas_pendientes_titulo">Tareas pendientes</string>
+    <string name="sin_tareas_pendientes">No hay tareas pendientes</string>
+    <string name="proximos_eventos">Próximos exámenes y entregas</string>
+    <string name="sin_eventos_proximos">No hay exámenes ni entregas próximas</string>
+    <string name="nota_destacada">Nota destacada</string>
+    <string name="progreso_por_materia">Progreso por materia</string>
+    <string name="horas_por_materia">Horas de estudio por materia</string>
+    <string name="horas_planificadas">Horas de estudio planificadas: %1$dh</string>
+    <string name="sin_bloques_estudio">Todavía no hay bloques de estudio cargados</string>
+    <string name="materia_horas">%1$s (%2$dh)</string>
+    <plurals name="tareas_pendientes">
+        <item quantity="one">%1$d tarea pendiente</item>
+        <item quantity="other">%1$d tareas pendientes</item>
+    </plurals>
+
+    <!-- Materias -->
+    <string name="mis_materias">Mis Materias</string>
+    <string name="buscar_tareas">Buscar tareas…</string>
+    <string name="activas">Activas</string>
+    <string name="archivadas">Archivadas</string>
+    <string name="sin_materias_activas">No hay materias activas</string>
+    <string name="sin_materias_archivadas">No hay materias archivadas</string>
+    <string name="nueva_materia">Nueva materia</string>
+    <string name="editar_materia">Editar materia</string>
+    <string name="nombre_materia">Nombre de la materia</string>
+    <string name="error_nombre_materia">Ingresá un nombre para la materia</string>
+    <string name="error_materia_repetida">Ya existe una materia con ese nombre</string>
+    <string name="progreso">Progreso: %1$d%%</string>
+    <string name="sin_tareas">Todavía no hay tareas cargadas</string>
+    <string name="agregar_tarea">Agregar tarea</string>
+    <string name="nueva_tarea">Nueva tarea</string>
+    <string name="editar_tarea">Editar tarea</string>
+    <string name="fecha_limite">Fecha límite (opcional)</string>
+    <string name="error_titulo_tarea">Escribí un título para la tarea</string>
+    <string name="confirmar_eliminar_materia">¿Eliminar \"%1$s\"? Se van a borrar también sus tareas, eventos, notas y archivos.</string>
+    <string name="aviso_materia_archivada">Materia archivada</string>
+    <string name="aviso_materia_desarchivada">Materia desarchivada</string>
+    <string name="aviso_tarea_eliminada">Tarea eliminada</string>
+
+    <!-- Archivos -->
+    <string name="archivos_cantidad">Archivos (%1$d)</string>
+    <string name="sin_archivos">Todavía no hay archivos guardados</string>
+    <string name="adjuntar_archivo">Adjuntar archivo</string>
+    <string name="eliminar_archivo">Eliminar %1$s</string>
+    <string name="abrir_con">Abrir con</string>
+    <string name="sin_app_para_abrir">No hay ninguna app para abrir este archivo</string>
+    <string name="aviso_archivo_guardado">Archivo guardado</string>
+    <string name="aviso_archivo_guardado_nota">Archivo adjuntado a la nota</string>
+    <string name="aviso_archivo_error">No se pudo guardar el archivo (máximo 20 MB)</string>
+    <string name="aviso_archivo_eliminado">Archivo eliminado</string>
+
+    <!-- Calendario -->
+    <string name="mi_calendario">Mi Calendario</string>
+    <string name="ir_a_hoy">Ir a hoy</string>
+    <string name="mes_anterior">Mes anterior</string>
+    <string name="mes_siguiente">Mes siguiente</string>
+    <string name="sin_eventos_fecha">No hay eventos para esta fecha</string>
+    <string name="nuevo_evento">Nuevo evento</string>
+    <string name="editar_evento">Editar evento</string>
+    <string name="elegir_materia">Elegí una materia</string>
+    <string name="elegir_tipo">Elegí el tipo de evento</string>
+    <string name="tipo_clase">Clase</string>
+    <string name="tipo_examen">Examen</string>
+    <string name="tipo_entrega">Entrega</string>
+    <string name="tipo_bloque_estudio">Bloque de estudio</string>
+    <string name="error_elegir_materia">Elegí una materia para continuar</string>
+    <string name="error_elegir_tipo">Elegí un tipo de evento</string>
+    <string name="error_titulo_evento">Escribí un título para el evento</string>
+    <string name="error_hora_fin">La hora de fin tiene que ser posterior a la de inicio</string>
+    <string name="aviso_evento_eliminado">Evento eliminado</string>
+    <string-array name="meses">
+        <item>Enero</item>
+        <item>Febrero</item>
+        <item>Marzo</item>
+        <item>Abril</item>
+        <item>Mayo</item>
+        <item>Junio</item>
+        <item>Julio</item>
+        <item>Agosto</item>
+        <item>Septiembre</item>
+        <item>Octubre</item>
+        <item>Noviembre</item>
+        <item>Diciembre</item>
+    </string-array>
+    <string-array name="dias_semana_corto">
+        <item>D</item>
+        <item>L</item>
+        <item>M</item>
+        <item>M</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+    </string-array>
+
+    <!-- Notas -->
+    <string name="mis_notas">Mis Notas</string>
+    <string name="buscar_notas">Buscar en tus notas…</string>
+    <string name="todas">Todas</string>
+    <string name="recientes">Recientes</string>
+    <string name="favoritas">Favoritas</string>
+    <string name="sin_notas">No hay notas para mostrar</string>
+    <string name="nueva_nota">Nueva nota</string>
+    <string name="editar_nota">Editar nota</string>
+    <string name="error_titulo_nota">Escribí un título para la nota</string>
+    <string name="marcar_favorita">Marcar como favorita</string>
+    <string name="quitar_favorita">Quitar de favoritas</string>
+    <string name="aviso_nota_eliminada">Nota eliminada</string>
+
+    <!-- Perfil -->
+    <string name="mi_perfil">Mi perfil</string>
+    <string name="carrera_no_especificada">Carrera no especificada</string>
+    <string name="email_no_especificado">Email no especificado</string>
+    <string name="anio_carrera">%1$d° año - %2$s</string>
+    <string name="estudio">Estudio</string>
+    <string name="editar_perfil">Editar perfil</string>
+    <string name="nombre">Nombre</string>
+    <string name="carrera">Carrera</string>
+    <string name="anio">Año</string>
+    <string name="email">Email</string>
+    <string name="error_nombre">Ingresá tu nombre</string>
+    <string name="aviso_perfil_guardado">Perfil actualizado</string>
+    <string name="metas_de_estudio">Metas de estudio</string>
+    <string name="meta_semanal">Meta semanal de estudio</string>
+    <string name="meta_explicacion">¿Cuántas horas querés estudiar por semana? Se cuentan los bloques de estudio del calendario. Dejalo vacío para no tener meta.</string>
+    <string name="horas_por_semana">Horas por semana</string>
+    <string name="sin_meta">Todavía no fijaste una meta. Tocá \"Metas de estudio\" para crear una.</string>
+    <string name="meta_progreso">Esta semana: %1$dh de %2$dh planificadas</string>
+    <string name="meta_cumplida">¡Meta cumplida! 🎉</string>
+    <string name="tema">Tema</string>
+    <string name="tema_sistema">Sistema</string>
+    <string name="tema_claro">Claro</string>
+    <string name="tema_oscuro">Oscuro</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="confirmar_cerrar_sesion">¿Seguro que querés cerrar sesión?</string>
+
+    <!-- Recordatorios y permiso de notificaciones -->
+    <string name="recordatorios">Recordatorios</string>
+    <string name="recordatorios_descripcion">Resumen diario a las 8:00 y aviso antes de cada examen o entrega</string>
+    <string name="sin_permiso_notificaciones">Sin permiso de notificaciones</string>
+    <string name="desactivados">Desactivados</string>
+    <string name="activar_recordatorios">Activar recordatorios</string>
+    <string name="explicacion_permiso_notificaciones">Para avisarte de tus tareas pendientes y de tus exámenes y entregas, Estudia+ necesita permiso para mostrar notificaciones. Podés desactivarlo cuando quieras.</string>
+    <string name="notificaciones_desactivadas">Notificaciones desactivadas</string>
+    <string name="notificaciones_bloqueadas">Las notificaciones de Estudia+ están bloqueadas. Podés activarlas desde los Ajustes del teléfono.</string>
+    <string name="ir_a_ajustes">Ir a Ajustes</string>
+    <string name="aviso_recordatorios_activados">Recordatorios activados</string>
+    <string name="aviso_recordatorios_desactivados">Recordatorios desactivados</string>
+    <string name="aviso_sin_permiso_notificaciones">Sin permiso de notificaciones no podemos enviarte recordatorios</string>
+
+    <!-- Notificaciones -->
+    <string name="canal_recordatorios_nombre">Recordatorios de estudio</string>
+    <string name="canal_recordatorios_descripcion">Tareas pendientes, exámenes y entregas</string>
+    <string name="notificacion_resumen_titulo">Tu día de estudio</string>
+    <string name="notificacion_hoy">Hoy: %1$s</string>
+    <string name="notificacion_manana">Mañana: %1$s</string>
+    <string name="notificacion_evento_titulo">%1$s de %2$s</string>
+    <string name="notificacion_evento_hoy">hoy a las %1$s</string>
+    <string name="notificacion_evento_manana">mañana a las %1$s</string>
+    <plurals name="notificacion_tareas_pendientes">
+        <item quantity="one">Tenés %1$d tarea pendiente.</item>
+        <item quantity="other">Tenés %1$d tareas pendientes.</item>
+    </plurals>
+
+    <!-- Ayuda y soporte -->
+    <string name="ayuda_y_soporte">Ayuda y soporte</string>
+    <string name="preguntas_frecuentes">Preguntas frecuentes</string>
+    <string name="no_encontraste_respuesta">¿No encontraste lo que buscabas?</string>
+    <string name="escribir_a_soporte">Escribir a soporte</string>
+    <string name="soporte_email" translatable="false">soporte@ejemplo.com</string>
+    <string name="soporte_asunto">Consulta sobre Estudia+</string>
+    <string name="sin_app_mail">No hay ninguna app de correo instalada</string>
+    <string-array name="ayuda_preguntas">
+        <item>¿Cómo agrego una tarea?</item>
+        <item>¿Cómo adjunto un PDF o una foto?</item>
+        <item>¿Por qué la app pide permiso de notificaciones?</item>
+        <item>¿La app puede ver mis otros archivos?</item>
+        <item>¿Qué es la meta semanal?</item>
+        <item>¿Borré algo sin querer, lo puedo recuperar?</item>
+        <item>¿Dónde se guardan mis datos?</item>
+    </string-array>
+    <string-array name="ayuda_respuestas">
+        <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
+        <item>En Materias, expandí la materia y tocá \"Adjuntar archivo\". En Notas, usá el menú de la nota. El archivo se copia dentro de la app, así que no se pierde aunque borres el original.</item>
+        <item>Solo para los recordatorios: un resumen diario y un aviso antes de cada examen o entrega. El permiso se pide recién cuando activás \"Recordatorios\" en tu perfil, y podés quitarlo cuando quieras.</item>
+        <item>No. La app no tiene permisos de almacenamiento: solo puede leer el archivo que vos elegís en el selector del sistema.</item>
+        <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio que cargaste en el calendario para esa semana.</item>
+        <item>Sí: al eliminar una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
+        <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
+    </string-array>
 </resources>

@@ -1,80 +1,23 @@
 package com.example.estudia.util
 
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
-// Funciones auxiliares para trabajar con fechas usando el formato
-// "dd/MM/yyyy" que usamos en toda la app (ej: "17/06/2026").
-// Se apoyan en java.util.Calendar, que viene incluido en el lenguaje,
-// no es una librería externa.
+// Funciones auxiliares para mostrar fechas y horas. Las fechas se guardan
+// como LocalDate / LocalTime (java.time); acá solo se convierten a texto
+// para mostrarlas, con el formato que usa la app: "17/06/2026" y "18:30".
 
-private val formato = SimpleDateFormat("dd/MM/yyyy", Locale("es", "AR"))
+private val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+private val formatoHora = DateTimeFormatter.ofPattern("HH:mm")
 
-private val nombresMeses = listOf(
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-)
+fun LocalDate.aTexto(): String = format(formatoFecha)
 
-fun nombreDelMes(mes: Int): String = nombresMeses[mes]
+fun LocalTime.aTexto(): String = format(formatoHora)
 
-// Devuelve la fecha de hoy como texto, ej: "14/08/2026"
-fun obtenerFechaHoyComoTexto(): String {
-    return formato.format(Calendar.getInstance().time)
-}
+// El DatePicker de Material 3 trabaja con milisegundos en UTC.
+fun LocalDate.aMilisUtc(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
-// Devuelve la fecha de mañana como texto.
-fun obtenerFechaMananaComoTexto(): String {
-    val calendar = Calendar.getInstance()
-    calendar.add(Calendar.DAY_OF_MONTH, 1)
-    return formato.format(calendar.time)
-}
-
-// Devuelve una fecha puntual (año, mes, día) como texto "dd/MM/yyyy".
-// Ojo: "mes" acá va de 0 (Enero) a 11 (Diciembre), como maneja Calendar.
-fun formatearFecha(anio: Int, mes: Int, dia: Int): String {
-    val calendar = Calendar.getInstance()
-    calendar.set(anio, mes, dia)
-    return formato.format(calendar.time)
-}
-
-// Devuelve la lista de días de un mes para dibujar la grilla del
-// calendario. Incluye "null" al principio para representar los
-// espacios vacíos antes de que empiece el día 1 (ej: si el mes
-// empieza un miércoles, los primeros 3 casilleros van vacíos).
-fun obtenerDiasDelMes(anio: Int, mes: Int): List<Int?> {
-    val calendar = Calendar.getInstance()
-    calendar.set(anio, mes, 1)
-
-    val primerDiaSemana = calendar.get(Calendar.DAY_OF_WEEK) // 1 = Domingo ... 7 = Sábado
-    val diasEnElMes = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
-
-    val dias = mutableListOf<Int?>()
-    repeat(primerDiaSemana - 1) { dias.add(null) }
-    for (dia in 1..diasEnElMes) dias.add(dia)
-    return dias
-}
-
-// Año, mes (0 a 11) y día actuales, para arrancar el calendario
-// mostrando el mes de hoy por defecto.
-fun obtenerAnioActual(): Int = Calendar.getInstance().get(Calendar.YEAR)
-fun obtenerMesActual(): Int = Calendar.getInstance().get(Calendar.MONTH)
-fun obtenerDiaActual(): Int = Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
-
-// Convierte una fecha en formato "dd/MM/yyyy" a milisegundos, para poder
-// ordenar por fecha real (ej. en "Recientes" de Notas) en vez de por el
-// orden en que se fueron agregando. Si el texto no tiene ese formato,
-// devuelve 0 para que quede al final al ordenar de más reciente a más vieja.
-fun parsearFechaAMilisegundos(fecha: String): Long {
-    return try {
-        formato.parse(fecha)?.time ?: 0L
-    } catch (e: Exception) {
-        0L
-    }
-}
-
-// Convierte una hora "HH:mm" en minutos desde la medianoche.
-// Ej: "18:30" -> 1110. Sirve para calcular duraciones.
-fun minutosDelDia(hora: String): Int {
-    return hora.substringBefore(':').toInt() * 60 + hora.substringAfter(':').toInt()
-}
+fun fechaDesdeMilisUtc(milis: Long): LocalDate = Instant.ofEpochMilli(milis).atZone(ZoneOffset.UTC).toLocalDate()

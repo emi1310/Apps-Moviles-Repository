@@ -1,0 +1,353 @@
+package com.example.estudia.datos
+
+import android.content.Context
+import android.net.Uri
+import com.example.estudia.datos.local.AppDatabase
+import com.example.estudia.datos.local.ArchivoDao
+import com.example.estudia.datos.local.EventoDao
+import com.example.estudia.datos.local.MateriaDao
+import com.example.estudia.datos.local.NotaDao
+import com.example.estudia.datos.local.TareaDao
+import com.example.estudia.datos.local.UsuarioDao
+import com.example.estudia.datos.local.UsuarioEntity
+import com.example.estudia.datos.local.aEntidad
+import com.example.estudia.datos.local.aModelo
+import com.example.estudia.datos.local.metodoAuthATexto
+import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.MetodoAuth
+import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.PreferenciaTema
+import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.Usuario
+import com.example.estudia.notificaciones.ProgramadorRecordatorios
+import com.example.estudia.util.Contrasenas
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.LocalDateTime
+
+// Implementación real del Repository. Combina varias fuentes:
+//  - Room (DAOs): usuarios, materias, tareas, eventos, notas y archivos.
+//  - DataStore: el id del usuario con la sesión abierta y las preferencias.
+//  - AlmacenamientoArchivos: el contenido de los adjuntos (filesDir).
+//  - ProgramadorRecordatorios: los recordatorios (WorkManager).
+// También convierte entidades de Room <-> modelo de dominio (Mapeos.kt).
+// Arquitectura: UI -> ViewModel -> Repository -> Room / DataStore / archivos.
+class RepositorioEstudiaImpl(
+    private val usuarioDao: UsuarioDao,
+    private val materiaDao: MateriaDao,
+    private val tareaDao: TareaDao,
+    private val eventoDao: EventoDao,
+    private val notaDao: NotaDao,
+    private val archivoDao: ArchivoDao,
+    private val sesion: SesionDataStore,
+    private val preferencias: PreferenciasDataStore,
+    private val almacenamiento: AlmacenamientoArchivos,
+    private val programador: ProgramadorRecordatorios
+) : RepositorioEstudia {
+
+    companion object {
+        // Arma el Repository con todas sus dependencias (lo usa EstudiaApp).
+        fun crear(context: Context): RepositorioEstudiaImpl {
+            val db = AppDatabase.obtenerInstancia(context)
+            val app = context.applicationContext
+            return RepositorioEstudiaImpl(
+                usuarioDao = db.usuarioDao(),
+                materiaDao = db.materiaDao(),
+                tareaDao = db.tareaDao(),
+                eventoDao = db.eventoDao(),
+                notaDao = db.notaDao(),
+                archivoDao = db.archivoDao(),
+                sesion = SesionDataStore(app),
+                preferencias = PreferenciasDataStore(app),
+                almacenamiento = AlmacenamientoArchivos(app),
+                programador = ProgramadorRecordatorios(app)
+            )
+        }
+    }
+
+    // ---------- Observables ----------
+
+    // Cada vez que cambia el id guardado en DataStore, se pasa a observar ese
+    // usuario en Room (flatMapLatest). Como ambos son Flow, la UI se actualiza
+    // sola después de cada inserción, edición o borrado.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val usuarioActual: Flow<Usuario?> = sesion.idUsuarioActivo.flatMapLatest { id ->
+        if (id == null) {
+            flowOf(null)
+        } else {
+            usuarioDao.observarConMaterias(id).map { it?.aModelo() }
+        }
+    }
+
+    override val recordatoriosActivos: Flow<Boolean> = preferencias.recordatoriosActivos
+
+    override val tema: Flow<PreferenciaTema> = preferencias.tema
+
+    override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> =
+        notaDao.buscar(usuarioId, texto).map { filas ->
+            filas.map { NotaEncontrada(it.nota.aModelo(), it.nota.materiaId, it.nombreMateria) }
+        }
+
+    override fun buscarTareas(usuarioId: Int, texto: String): Flow<List<TareaEncontrada>> =
+        tareaDao.buscar(usuarioId, texto).map { filas ->
+            filas.map { TareaEncontrada(it.tarea.aModelo(), it.tarea.materiaId, it.nombreMateria, it.colorMateria) }
+        }
+
+    // ---------- Sesión y perfil ----------
+
+    // La primera vez que se abre la app (base vacía) carga el usuario de
+    // demostración. Cuenta de prueba: usuario "demo" / contraseña "demo".
+    // También aprovecha para borrar adjuntos que quedaron sin fila en la base.
+    override suspend fun crearDatosDePruebaSiHaceFalta() {
+        if (usuarioDao.contar() == 0) {
+            insertarUsuarioCompleto(crearUsuarioDePrueba(), contrasena = "demo")
+        }
+        almacenamiento.limpiarHuerfanos(archivoDao.todasLasRutas().toSet())
+    }
+
+    // Se busca el usuario por nombre y se verifica la contraseña contra el hash.
+    // PBKDF2 es lento a propósito: se calcula en Dispatchers.Default.
+    override suspend fun iniciarSesion(nombreUsuario: String, contrasena: String): Boolean {
+        val usuario = usuarioDao.buscarPorNombreUsuario(nombreUsuario) ?: return false
+        val correcta = withContext(Dispatchers.Default) { Contrasenas.verificar(contrasena, usuario.contrasenaHash) }
+        if (!correcta) return false
+        sesion.guardarSesion(usuario.id)
+        reprogramarEventosSiCorresponde()
+        return true
+    }
+
+    // Devuelve false si el nombre de usuario ya existe.
+    override suspend fun registrarUsuario(nombre: String, nombreUsuario: String, contrasena: String): Boolean {
+        if (usuarioDao.contarPorNombreUsuario(nombreUsuario) > 0) return false
+        val hash = withContext(Dispatchers.Default) { Contrasenas.hashear(contrasena) }
+        val id = usuarioDao.insertar(
+            UsuarioEntity(
+                nombreUsuario = nombreUsuario,
+                contrasenaHash = hash,
+                metodoAuth = metodoAuthATexto(MetodoAuth.LOCAL),
+                nombre = nombre
+            )
+        )
+        sesion.guardarSesion(id.toInt())
+        return true
+    }
+
+    override suspend fun cerrarSesion() {
+        sesion.borrarSesion()
+    }
+
+    override suspend fun editarPerfil(usuarioId: Int, nombre: String, carrera: String?, anio: Int?, email: String?) {
+        usuarioDao.actualizarPerfil(usuarioId, nombre, carrera, anio, email)
+    }
+
+    override suspend fun cambiarMetaSemanal(usuarioId: Int, horas: Int?) {
+        usuarioDao.actualizarMetaSemanal(usuarioId, horas)
+    }
+
+    // ---------- Materias ----------
+
+    override suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long) {
+        materiaDao.insertar(Materia(id = 0, nombre = nombre, color = color).aEntidad(usuarioId))
+    }
+
+    override suspend fun actualizarMateria(usuarioId: Int, materia: Materia) {
+        materiaDao.actualizar(materia.aEntidad(usuarioId))
+    }
+
+    // El CASCADE de Room borra sus tareas, eventos, notas y filas de archivos;
+    // el contenido de los archivos en disco y los recordatorios se borran a mano.
+    override suspend fun eliminarMateria(usuarioId: Int, materia: Materia) {
+        materia.eventos.forEach { programador.cancelarEvento(it.id) }
+        borrarArchivosDelDisco(materia.todosLosArchivos())
+        materiaDao.eliminar(materia.aEntidad(usuarioId))
+    }
+
+    // ---------- Tareas ----------
+
+    override suspend fun agregarTarea(materiaId: Int, titulo: String, fechaLimite: LocalDate?) {
+        tareaDao.insertar(Tarea(id = 0, titulo = titulo, fechaLimite = fechaLimite).aEntidad(materiaId))
+    }
+
+    override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea) {
+        tareaDao.actualizar(tarea.aEntidad(materiaId))
+    }
+
+    override suspend fun eliminarTarea(materiaId: Int, tarea: Tarea) {
+        tareaDao.eliminar(tarea.aEntidad(materiaId))
+    }
+
+    // Se inserta con el mismo id que tenía, así queda igual que antes.
+    override suspend fun restaurarTarea(materiaId: Int, tarea: Tarea) {
+        tareaDao.insertar(tarea.aEntidad(materiaId))
+    }
+
+    // ---------- Eventos ----------
+    // Cada cambio en un examen o entrega actualiza su recordatorio.
+
+    override suspend fun agregarEvento(materiaId: Int, evento: Evento) {
+        val id = eventoDao.insertar(evento.copy(id = 0).aEntidad(materiaId)).toInt()
+        programarSiCorresponde(evento.copy(id = id))
+    }
+
+    override suspend fun actualizarEvento(materiaId: Int, evento: Evento) {
+        eventoDao.actualizar(evento.aEntidad(materiaId))
+        programarSiCorresponde(evento)
+    }
+
+    override suspend fun eliminarEvento(materiaId: Int, evento: Evento) {
+        eventoDao.eliminar(evento.aEntidad(materiaId))
+        programador.cancelarEvento(evento.id)
+    }
+
+    override suspend fun restaurarEvento(materiaId: Int, evento: Evento) {
+        eventoDao.insertar(evento.aEntidad(materiaId))
+        programarSiCorresponde(evento)
+    }
+
+    // ---------- Notas ----------
+
+    override suspend fun agregarNota(materiaId: Int, titulo: String, contenido: String) {
+        notaDao.insertar(
+            Nota(id = 0, titulo = titulo, contenido = contenido, fechaCreacion = LocalDate.now()).aEntidad(materiaId)
+        )
+    }
+
+    override suspend fun actualizarNota(materiaId: Int, nota: Nota) {
+        notaDao.actualizar(nota.aEntidad(materiaId))
+    }
+
+    override suspend fun eliminarNota(materiaId: Int, nota: Nota) {
+        notaDao.eliminar(nota.aEntidad(materiaId))
+    }
+
+    override suspend fun restaurarNota(materiaId: Int, nota: Nota) {
+        notaDao.insertar(nota.aEntidad(materiaId))
+        archivoDao.insertarTodos(nota.archivos.map { it.aEntidad(materiaId) })
+    }
+
+    // ---------- Archivos adjuntos ----------
+
+    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: Uri): Boolean {
+        val copiado = almacenamiento.copiarDesde(uri) ?: return false
+        archivoDao.insertar(
+            Archivo(
+                id = 0,
+                nombre = copiado.nombre,
+                tipoMime = copiado.tipoMime,
+                ruta = copiado.ruta,
+                tamanoBytes = copiado.tamanoBytes,
+                fechaAgregado = LocalDate.now(),
+                notaId = notaId
+            ).aEntidad(materiaId)
+        )
+        return true
+    }
+
+    // Solo borra la fila: el archivo en disco se borra después de que pasa
+    // el "Deshacer" (borrarArchivosDelDisco).
+    override suspend fun eliminarArchivo(materiaId: Int, archivo: Archivo) {
+        archivoDao.eliminar(archivo.aEntidad(materiaId))
+    }
+
+    override suspend fun restaurarArchivo(materiaId: Int, archivo: Archivo) {
+        archivoDao.insertar(archivo.aEntidad(materiaId))
+    }
+
+    override suspend fun borrarArchivosDelDisco(archivos: List<Archivo>) {
+        archivos.forEach { almacenamiento.eliminar(it.ruta) }
+    }
+
+    override fun uriParaAbrir(archivo: Archivo): Uri = almacenamiento.uriParaAbrir(archivo.ruta)
+
+    // ---------- Preferencias y recordatorios ----------
+
+    override suspend fun cambiarRecordatorios(activos: Boolean) {
+        preferencias.guardarRecordatoriosActivos(activos)
+        if (activos) {
+            programador.programarDiario()
+            reprogramarEventosSiCorresponde()
+        } else {
+            programador.cancelarTodo()
+        }
+    }
+
+    override suspend fun cambiarTema(tema: PreferenciaTema) {
+        preferencias.guardarTema(tema)
+    }
+
+    // ---------- Para los Workers (no forman parte de la interfaz) ----------
+
+    data class ResumenDia(val tareasPendientes: Int, val eventosHoy: List<Evento>, val eventosManana: List<Evento>)
+
+    // Tareas pendientes y eventos de hoy y mañana del usuario con sesión
+    // abierta. null si no hay nada que avisar, si nadie inició sesión o si
+    // el usuario desactivó los recordatorios.
+    suspend fun resumenDelDia(hoy: LocalDate = LocalDate.now()): ResumenDia? {
+        if (!preferencias.recordatoriosActivos.first()) return null
+        val usuario = usuarioActual.first() ?: return null
+        val materias = usuario.materias.filter { !it.archivada }
+        val pendientes = materias.sumOf { materia -> materia.tareas.count { !it.completada } }
+        val eventos = materias.flatMap { it.eventos }
+        val eventosHoy = eventos.filter { it.fecha == hoy }
+        val eventosManana = eventos.filter { it.fecha == hoy.plusDays(1) }
+        if (pendientes == 0 && eventosHoy.isEmpty() && eventosManana.isEmpty()) return null
+        return ResumenDia(pendientes, eventosHoy, eventosManana)
+    }
+
+    data class EventoParaAviso(val evento: Evento, val nombreMateria: String)
+
+    // El evento a recordar, solo si sigue existiendo, es del usuario con
+    // sesión abierta, todavía no pasó y los recordatorios están activos.
+    suspend fun eventoParaRecordatorio(eventoId: Int): EventoParaAviso? {
+        if (!preferencias.recordatoriosActivos.first()) return null
+        val fila = eventoDao.buscarConMateria(eventoId) ?: return null
+        if (sesion.idUsuarioActivo.first() != fila.usuarioId) return null
+        val evento = fila.evento.aModelo()
+        if (evento.inicio.isBefore(LocalDateTime.now())) return null
+        return EventoParaAviso(evento, fila.nombreMateria)
+    }
+
+    // ---------- Privados ----------
+
+    private suspend fun programarSiCorresponde(evento: Evento) {
+        if (preferencias.recordatoriosActivos.first()) programador.programarEvento(evento)
+    }
+
+    private suspend fun reprogramarEventosSiCorresponde() {
+        if (!preferencias.recordatoriosActivos.first()) return
+        val usuario = usuarioActual.first() ?: return
+        usuario.materias.flatMap { it.eventos }.forEach { programador.programarEvento(it) }
+    }
+
+    // Inserta un usuario con todo su contenido. Los id del objeto se ignoran
+    // (se insertan como 0) y SQLite genera los nuevos.
+    private suspend fun insertarUsuarioCompleto(usuario: Usuario, contrasena: String) {
+        val usuarioId = usuarioDao.insertar(
+            UsuarioEntity(
+                nombreUsuario = usuario.nombreUsuario,
+                contrasenaHash = withContext(Dispatchers.Default) { Contrasenas.hashear(contrasena) },
+                metodoAuth = metodoAuthATexto(usuario.metodoAuth),
+                nombre = usuario.nombre,
+                carrera = usuario.carrera,
+                anio = usuario.anio,
+                email = usuario.email,
+                metaHorasSemanales = usuario.metaHorasSemanales
+            )
+        ).toInt()
+        for (materia in usuario.materias) {
+            val materiaId = materiaDao.insertar(materia.aEntidad(usuarioId).copy(id = 0)).toInt()
+            materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.eventos.forEach { eventoDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.notas.forEach { notaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+        }
+    }
+}

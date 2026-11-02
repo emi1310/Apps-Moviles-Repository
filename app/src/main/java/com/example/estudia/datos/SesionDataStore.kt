@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 // DataStore de preferencias clave-valor donde guardamos únicamente el id
-// del usuario con la sesión activa. A diferencia del RepositorioDatos
-// (que guarda todos los usuarios con sus materias en un archivo JSON),
+// del usuario con la sesión activa. A diferencia de Room
+// (donde se guardan los usuarios con sus materias, tareas, eventos y notas),
 // esto es solo "quién está logueado ahora", y se conecta con Flow.
 private val Context.sesionDataStore by preferencesDataStore(name = "sesion")
 

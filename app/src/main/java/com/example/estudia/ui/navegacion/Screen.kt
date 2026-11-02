@@ -12,6 +12,7 @@ sealed class Screen(val ruta: String) {
     object Calendario : Screen("calendario")
     object Notas : Screen("notas")
     object Perfil : Screen("perfil")
+    object Ayuda : Screen("ayuda")
 }
 
 // Pantallas que muestran la barra inferior.

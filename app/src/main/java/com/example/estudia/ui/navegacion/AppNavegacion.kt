@@ -8,20 +8,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.estudia.datos.SesionDataStore
 import com.example.estudia.ui.componentes.BarraInferior
+import com.example.estudia.ui.componentes.ControladorAvisos
+import com.example.estudia.ui.componentes.LocalAvisos
+import com.example.estudia.ui.pantallas.AyudaScreen
 import com.example.estudia.ui.pantallas.BienvenidaScreen
 import com.example.estudia.ui.pantallas.CalendarioScreen
 import com.example.estudia.ui.pantallas.InicioScreen
@@ -30,15 +34,19 @@ import com.example.estudia.ui.pantallas.MateriasScreen
 import com.example.estudia.ui.pantallas.NotasScreen
 import com.example.estudia.ui.pantallas.PerfilScreen
 import com.example.estudia.ui.pantallas.RegistroScreen
-import com.example.estudia.viewmodel.AppViewModel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import com.example.estudia.viewmodel.AppViewModelProvider
+import com.example.estudia.viewmodel.SesionUiState
+import com.example.estudia.viewmodel.SesionViewModel
 
-// Grafo de navegación de la app: rutas, barra inferior y transiciones
-// con navigate / popUpTo / popBackStack. También tiene el Snackbar
-// que usan las pantallas para mostrar avisos cortos.
+// Grafo de navegación de la app: rutas, barra inferior y el Snackbar.
+// Cada pantalla pide su propio ViewModel con viewModel(factory = ...):
+// queda asociado a esa entrada de la navegación y se destruye al salir.
+// La sesión la maneja SesionViewModel, que vive mientras vive la Activity.
 @Composable
-fun AppNavegacion(viewModel: AppViewModel, sesionDataStore: SesionDataStore) {
+fun AppNavegacion(sesionViewModel: SesionViewModel) {
+    val sesionUiState by sesionViewModel.sesionUiState.collectAsStateWithLifecycle()
+    val authUiState by sesionViewModel.authUiState.collectAsStateWithLifecycle()
+
     val navController = rememberNavController()
     val entradaActual by navController.currentBackStackEntryAsState()
     val rutaActual = entradaActual?.destination?.route
@@ -46,180 +54,113 @@ fun AppNavegacion(viewModel: AppViewModel, sesionDataStore: SesionDataStore) {
 
     val snackbarHostState = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
-    val mostrarMensaje: (String) -> Unit = { mensaje ->
-        alcance.launch {
-            snackbarHostState.showSnackbar(mensaje)
-        }
-    }
+    val recursos = LocalContext.current.resources
+    val avisos = remember { ControladorAvisos(snackbarHostState, alcance, recursos) }
 
-    // Antes de armar la navegación, se lee una sola vez el id de usuario
-    // guardado en el DataStore. Si hay uno y coincide con un usuario
-    // registrado, arrancamos directo en Inicio en vez de en Bienvenida.
-    var sesionLista by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        val idGuardado = sesionDataStore.idUsuarioActivo.first()
-        if (idGuardado != null) {
-            val usuarioGuardado = viewModel.usuariosRegistrados.firstOrNull { it.id == idGuardado }
-            if (usuarioGuardado != null) {
-                viewModel.guardarSesion(usuarioGuardado)
-            }
-        }
-        sesionLista = true
-    }
-
-    if (!sesionLista) {
+    // Mientras se lee la sesión guardada, se muestra un indicador de carga.
+    if (sesionUiState is SesionUiState.Cargando) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    val destinoInicial = if (viewModel.usuarioActual != null) Screen.Inicio.ruta else Screen.Bienvenida.ruta
+    // Se decide una sola vez (remember): si había sesión guardada se arranca
+    // directo en Inicio; si no, en Bienvenida.
+    val destinoInicial = remember {
+        if (sesionUiState is SesionUiState.Activa) Screen.Inicio.ruta else Screen.Bienvenida.ruta
+    }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        bottomBar = {
-            if (mostrarBarra) {
-                BarraInferior(
-                    rutaActual = rutaActual,
-                    onSeleccionar = { destino ->
-                        navController.navigate(destino.ruta) {
-                            popUpTo(Screen.Inicio.ruta)
-                        }
-                    }
-                )
+    // Cuando el login o el registro salen bien, se navega a Inicio una vez.
+    LaunchedEffect(authUiState.sesionIniciada) {
+        if (authUiState.sesionIniciada) {
+            navController.navigate(Screen.Inicio.ruta) {
+                popUpTo(navController.graph.id) { inclusive = true }
             }
+            sesionViewModel.consumirSesionIniciada()
         }
-    ) { espacioInterno ->
-        NavHost(
-            navController = navController,
-            startDestination = destinoInicial,
-            modifier = Modifier.padding(espacioInterno)
-        ) {
-            composable(Screen.Bienvenida.ruta) {
-                BienvenidaScreen(
-                    onComenzar = {
-                        navController.navigate(Screen.Login.ruta)
-                    }
-                )
-            }
+    }
 
-            composable(Screen.Login.ruta) {
-                LoginScreen(
-                    usuariosRegistrados = viewModel.usuariosRegistrados,
-                    onLoginExitoso = { usuario ->
-                        viewModel.guardarSesion(usuario)
-                        alcance.launch { sesionDataStore.guardarSesion(usuario.id) }
-                        navController.navigate(Screen.Inicio.ruta) {
-                            popUpTo(Screen.Bienvenida.ruta) { inclusive = true }
-                        }
-                    },
-                    onIrARegistro = {
-                        navController.navigate(Screen.Registro.ruta)
-                    }
-                )
-            }
-
-            composable(Screen.Registro.ruta) {
-                RegistroScreen(
-                    usuariosRegistrados = viewModel.usuariosRegistrados,
-                    onRegistroExitoso = { usuario ->
-                        viewModel.registrarUsuario(usuario)
-                        alcance.launch { sesionDataStore.guardarSesion(usuario.id) }
-                        navController.navigate(Screen.Inicio.ruta) {
-                            popUpTo(Screen.Bienvenida.ruta) { inclusive = true }
-                        }
-                    },
-                    onVolverALogin = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-
-            composable(Screen.Inicio.ruta) {
-                val usuario = viewModel.usuarioActual
-                if (usuario != null) {
-                    InicioScreen(usuario)
-                }
-            }
-
-            composable(Screen.Materias.ruta) {
-                val usuario = viewModel.usuarioActual
-                if (usuario != null) {
-                    MateriasScreen(
-                        usuario = usuario,
-                        onAgregarMateria = { nombre ->
-                            viewModel.agregarMateria(usuario, nombre)
-                        },
-                        onAgregarTarea = { materia, titulo, fechaLimite ->
-                            viewModel.agregarTarea(materia, titulo, fechaLimite)
-                        },
-                        onAlternarTarea = { materia, tarea ->
-                            viewModel.alternarTareaCompletada(materia, tarea)
-                        },
-                        onEditarMateria = { materia, nuevoNombre ->
-                            viewModel.editarMateria(usuario, materia, nuevoNombre)
-                        },
-                        onArchivarMateria = { materia ->
-                            viewModel.alternarArchivadaMateria(usuario, materia)
-                        },
-                        onEliminarMateria = { materia ->
-                            viewModel.eliminarMateria(usuario, materia)
-                        }
-                    )
-                }
-            }
-
-            composable(Screen.Calendario.ruta) {
-                val usuario = viewModel.usuarioActual
-                if (usuario != null) {
-                    CalendarioScreen(
-                        usuario = usuario,
-                        onAgregarEvento = { materia, titulo, tipo, fecha, horaInicio, horaFin ->
-                            viewModel.agregarEvento(materia, titulo, tipo, fecha, horaInicio, horaFin)
-                        }
-                    )
-                }
-            }
-
-            composable(Screen.Notas.ruta) {
-                val usuario = viewModel.usuarioActual
-                if (usuario != null) {
-                    NotasScreen(
-                        usuario = usuario,
-                        onAgregarNota = { materia, titulo, contenido ->
-                            viewModel.agregarNota(materia, titulo, contenido)
-                        },
-                        onAlternarFavorita = { materia, nota ->
-                            viewModel.alternarFavorita(materia, nota)
-                        },
-                        onEditarNota = { materia, nota, titulo, contenido ->
-                            viewModel.editarNota(materia, nota, titulo, contenido)
-                        },
-                        onEliminarNota = { materia, nota ->
-                            viewModel.eliminarNota(materia, nota)
-                        }
-                    )
-                }
-            }
-
-            composable(Screen.Perfil.ruta) {
-                val usuario = viewModel.usuarioActual
-                if (usuario != null) {
-                    PerfilScreen(
-                        usuario = usuario,
-                        onMostrarMensaje = mostrarMensaje,
-                        onEditarPerfil = { nombre, carrera, anio, email ->
-                            viewModel.editarPerfil(usuario, nombre, carrera, anio, email)
-                        },
-                        onCerrarSesion = {
-                            viewModel.cerrarSesion()
-                            alcance.launch { sesionDataStore.borrarSesion() }
-                            navController.navigate(Screen.Login.ruta) {
-                                popUpTo(Screen.Inicio.ruta) { inclusive = true }
+    CompositionLocalProvider(LocalAvisos provides avisos) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            bottomBar = {
+                if (mostrarBarra) {
+                    BarraInferior(
+                        rutaActual = rutaActual,
+                        onSeleccionar = { destino ->
+                            navController.navigate(destino.ruta) {
+                                popUpTo(Screen.Inicio.ruta) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
+                }
+            }
+        ) { espacioInterno ->
+            NavHost(
+                navController = navController,
+                startDestination = destinoInicial,
+                modifier = Modifier.padding(espacioInterno)
+            ) {
+                composable(Screen.Bienvenida.ruta) {
+                    BienvenidaScreen(onComenzar = { navController.navigate(Screen.Login.ruta) })
+                }
+
+                composable(Screen.Login.ruta) {
+                    LoginScreen(
+                        estado = authUiState,
+                        onIniciarSesion = sesionViewModel::iniciarSesion,
+                        onIrARegistro = {
+                            sesionViewModel.limpiarErrorAuth()
+                            navController.navigate(Screen.Registro.ruta)
+                        }
+                    )
+                }
+
+                composable(Screen.Registro.ruta) {
+                    RegistroScreen(
+                        estado = authUiState,
+                        onRegistrar = sesionViewModel::registrarUsuario,
+                        onVolverALogin = {
+                            sesionViewModel.limpiarErrorAuth()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(Screen.Inicio.ruta) {
+                    InicioScreen(viewModel(factory = AppViewModelProvider.Factory))
+                }
+
+                composable(Screen.Materias.ruta) {
+                    MateriasScreen(viewModel(factory = AppViewModelProvider.Factory))
+                }
+
+                composable(Screen.Calendario.ruta) {
+                    CalendarioScreen(viewModel(factory = AppViewModelProvider.Factory))
+                }
+
+                composable(Screen.Notas.ruta) {
+                    NotasScreen(viewModel(factory = AppViewModelProvider.Factory))
+                }
+
+                composable(Screen.Perfil.ruta) {
+                    PerfilScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onAbrirAyuda = { navController.navigate(Screen.Ayuda.ruta) },
+                        onCerrarSesion = {
+                            sesionViewModel.cerrarSesion()
+                            navController.navigate(Screen.Login.ruta) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+                composable(Screen.Ayuda.ruta) {
+                    AyudaScreen(onVolver = { navController.popBackStack() })
                 }
             }
         }

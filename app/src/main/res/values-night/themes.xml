@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de la ventana en modo oscuro: evita el "flash" blanco al abrir
+         la app con el teléfono en modo oscuro (Compose pinta el resto). -->
+    <style name="Theme.Estudia" parent="android:Theme.Material.NoActionBar" />
+</resources>

@@ -5,61 +5,30 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.estudia.modelo.TipoEvento
-import com.example.estudia.modelo.Usuario
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.estudia.R
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
-import com.example.estudia.util.minutosDelDia
+import com.example.estudia.viewmodel.InicioViewModel
 
-// Una tarea pendiente junto con el nombre y el color de su materia
-// (Tarea por sí sola no sabe de qué materia es).
-private data class TareaPendiente(
-    val titulo: String,
-    val nombreMateria: String,
-    val fechaLimite: String,
-    val colorMateria: Color
-)
-
-// Pantalla "Inicio": junta información de todas las materias del usuario
-// en un solo resumen — tareas pendientes, próximos eventos, una nota
-// destacada y las horas de estudio.
+// Pantalla "Inicio": resumen de todas las materias — tareas pendientes,
+// próximos exámenes y entregas, una nota destacada y las horas de estudio.
+// Solo dibuja el UiState: los cálculos los hace InicioViewModel.
 @Composable
-fun InicioScreen(usuario: Usuario) {
+fun InicioScreen(viewModel: InicioViewModel) {
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Junta las tareas pendientes de TODAS las materias en una sola lista.
-    val tareasPendientes = usuario.materias.flatMap { materia ->
-        materia.tareas
-            .filter { !it.completada }
-            .map { tarea ->
-                TareaPendiente(tarea.titulo, materia.nombre, tarea.fechaLimite, materia.color)
-            }
-    }
-
-    // Junta los eventos de tipo EXAMEN o ENTREGA de todas las materias
-    // (dejamos afuera las CLASE y BLOQUE_ESTUDIO para no saturar esta sección).
-    val proximosEventos = usuario.materias.flatMap { materia ->
-        materia.eventos.filter { it.tipo == TipoEvento.EXAMEN || it.tipo == TipoEvento.ENTREGA }
-    }
-
-    // Busca la primera nota marcada como favorita, de cualquier materia.
-    val notaDestacada = usuario.materias.flatMap { it.notas }.firstOrNull { it.esFavorita }
-
-    // Materias activas, para los gráficos (no tiene sentido graficar
-    // el progreso o las horas de una materia archivada).
-    val materiasActivas = usuario.materias.filter { !it.archivada }
-
-    // Minutos de estudio (bloques BLOQUE_ESTUDIO) de cada materia activa,
-    // para el gráfico de torta.
-    val minutosPorMateria = materiasActivas.map { materia ->
-        val minutos = materia.eventos
-            .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO }
-            .sumOf { minutosDelDia(it.horaFin) - minutosDelDia(it.horaInicio) }
-        materia to minutos
+    if (estado.cargando) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        return
     }
 
     Column(
@@ -68,100 +37,68 @@ fun InicioScreen(usuario: Usuario) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(text = "¡Hola, ${usuario.nombre.substringBefore(" ")}!", style = MaterialTheme.typography.headlineSmall)
-        Text(text = "Vamos por un día productivo", style = MaterialTheme.typography.bodyMedium)
-
+        Text(text = stringResource(R.string.saludo, estado.nombre), style = MaterialTheme.typography.headlineSmall)
+        Text(text = stringResource(R.string.saludo_subtitulo), style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- Tareas pendientes ----------
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = "Tareas pendientes", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "${tareasPendientes.size} pendientes", style = MaterialTheme.typography.bodySmall)
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (tareasPendientes.isEmpty()) {
-                    Text(text = "No tenés tareas pendientes", style = MaterialTheme.typography.bodySmall)
-                } else {
-                    tareasPendientes.take(4).forEach { tarea ->
-                        TarjetaTareaPendiente(
-                            titulo = tarea.titulo,
-                            nombreMateria = tarea.nombreMateria,
-                            fechaLimite = tarea.fechaLimite,
-                            colorMateria = tarea.colorMateria
-                        )
-                    }
-                }
+        Seccion(
+            titulo = stringResource(R.string.tareas_pendientes_titulo),
+            detalle = pluralStringResource(R.plurals.tareas_pendientes, estado.tareasPendientes.size, estado.tareasPendientes.size)
+        ) {
+            if (estado.tareasPendientes.isEmpty()) {
+                Text(text = stringResource(R.string.sin_tareas_pendientes), style = MaterialTheme.typography.bodySmall)
+            }
+            estado.tareasPendientes.take(5).forEach { item ->
+                TarjetaTareaPendiente(item, estado.hoy, onAlternar = { viewModel.alternarTarea(item) })
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // ---------- Próximos eventos ----------
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = "Próximos eventos", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (proximosEventos.isEmpty()) {
-                    Text(text = "No hay eventos próximos", style = MaterialTheme.typography.bodySmall)
-                } else {
-                    proximosEventos.take(3).forEach { evento ->
-                        TarjetaEventoResumen(titulo = evento.titulo, fecha = evento.fecha)
-                    }
-                }
+        // ---------- Próximos exámenes y entregas ----------
+        Seccion(titulo = stringResource(R.string.proximos_eventos)) {
+            if (estado.proximosEventos.isEmpty()) {
+                Text(text = stringResource(R.string.sin_eventos_proximos), style = MaterialTheme.typography.bodySmall)
             }
+            estado.proximosEventos.take(3).forEach { TarjetaEventoResumen(it, estado.hoy) }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- Nota destacada ----------
-        if (notaDestacada != null) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Nota destacada", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = notaDestacada.titulo, style = MaterialTheme.typography.bodyLarge)
-                    Text(text = notaDestacada.contenido, style = MaterialTheme.typography.bodySmall, maxLines = 2)
-                }
+        val nota = estado.notaDestacada
+        if (nota != null) {
+            Seccion(titulo = stringResource(R.string.nota_destacada)) {
+                Text(text = nota.titulo, style = MaterialTheme.typography.bodyLarge)
+                Text(text = nota.contenido, style = MaterialTheme.typography.bodySmall, maxLines = 2)
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ---------- Progreso por materia (gráfico de barras) ----------
-        if (materiasActivas.isNotEmpty()) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Progreso por materia", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    GraficoBarrasProgreso(materias = materiasActivas)
-                }
+        if (estado.materiasActivas.isNotEmpty()) {
+            Seccion(titulo = stringResource(R.string.progreso_por_materia)) {
+                GraficoBarrasProgreso(materias = estado.materiasActivas)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ---------- Distribución de horas de estudio (gráfico de torta) ----------
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Horas de estudio por materia", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    GraficoTortaHoras(datos = minutosPorMateria)
-                }
+            Seccion(titulo = stringResource(R.string.horas_por_materia)) {
+                GraficoTortaHoras(datos = estado.minutosPorMateria)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // ---------- Horas de estudio ----------
         Text(
-            text = "Horas de estudio planificadas: ${usuario.calcularHorasEstudio()}h",
+            text = stringResource(R.string.horas_planificadas, estado.horasEstudio),
             style = MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+// Tarjeta con título (y un detalle opcional a la derecha) para cada sección.
+@Composable
+private fun Seccion(titulo: String, detalle: String? = null, contenido: @Composable ColumnScope.() -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = titulo, style = MaterialTheme.typography.titleMedium)
+                if (detalle != null) Text(text = detalle, style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            contenido()
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
 }
