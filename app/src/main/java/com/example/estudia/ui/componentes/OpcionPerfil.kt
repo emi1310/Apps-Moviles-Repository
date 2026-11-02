@@ -13,20 +13,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
-// Fila clickeable del menú de perfil (ej: "Editar perfil", "Ayuda").
+// Fila clickeable del menú de perfil (ej: "Editar perfil", "Ayuda"): ícono
+// en un círculo de color, texto y flecha. Las destructivas van en rojo.
 @Composable
 fun OpcionPerfil(texto: String, icono: ImageVector, esDestructiva: Boolean = false, alTocar: () -> Unit) {
-    val color = if (esDestructiva) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    val color = if (esDestructiva) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { alTocar() }
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icono, contentDescription = null, tint = color)
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(text = texto, color = color, modifier = Modifier.weight(1f))
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = color)
+        IconoCircular(icono, color, tamano = 36.dp)
+        Spacer(modifier = Modifier.width(14.dp))
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (esDestructiva) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

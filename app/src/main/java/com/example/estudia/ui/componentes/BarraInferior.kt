@@ -9,6 +9,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
@@ -35,7 +37,13 @@ fun BarraInferior(rutaActual: String?, onSeleccionar: (Screen) -> Unit) {
                 selected = rutaActual == destino.ruta,
                 onClick = { onSeleccionar(destino) },
                 icon = { Icon(icono, contentDescription = null) },
-                label = { Text(stringResource(etiqueta)) }
+                label = { Text(stringResource(etiqueta)) },
+                // El indicador de la sección elegida usa el violeta de la app.
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     }

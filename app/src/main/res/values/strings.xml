@@ -253,4 +253,38 @@
         <item>Sí: al eliminar una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
         <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
     </string-array>
+
+    <!-- Retoques visuales -->
+    <string name="bienvenida_tareas">Organizá tus materias, tareas y apuntes</string>
+    <string name="bienvenida_calendario">Planificá clases, exámenes y entregas</string>
+    <string name="bienvenida_recordatorios">Recibí recordatorios para no olvidarte de nada</string>
+    <string name="login_subtitulo">Qué bueno verte de nuevo</string>
+    <string name="registro_subtitulo">En un minuto empezás a organizar tu estudio</string>
+    <string name="sin_tareas_pendientes_feliz">¡Estás al día! No tenés tareas pendientes 🎉</string>
+    <string name="fecha_larga">%1$s %2$d de %3$s</string>
+    <string name="pendientes">Pendientes</string>
+    <string name="proximos">Próximos</string>
+    <string name="de_estudio">De estudio</string>
+    <string name="notas_subtitulo">Tus apuntes de todas las materias</string>
+    <string name="calendario_subtitulo">Clases, exámenes y bloques de estudio</string>
+    <string name="sin_resultados_sugerencia">Probá con otra palabra</string>
+    <string name="sin_materias_activas_sugerencia">Tocá \"Nueva materia\" para agregar la primera</string>
+    <string name="sin_materias_archivadas_sugerencia">Las materias que archives van a aparecer acá</string>
+    <string name="sin_notas_sugerencia">Tocá \"Nueva nota\" para guardar tu primer apunte</string>
+    <string name="sin_eventos_fecha_sugerencia">Día libre. Podés agregar un evento con el botón de abajo</string>
+    <string name="preferencias">Preferencias</string>
+    <string name="cuenta">Cuenta</string>
+    <plurals name="materias_activas">
+        <item quantity="one">%1$d materia activa</item>
+        <item quantity="other">%1$d materias activas</item>
+    </plurals>
+    <string-array name="dias_semana_largo">
+        <item>Lunes</item>
+        <item>Martes</item>
+        <item>Miércoles</item>
+        <item>Jueves</item>
+        <item>Viernes</item>
+        <item>Sábado</item>
+        <item>Domingo</item>
+    </string-array>
 </resources>

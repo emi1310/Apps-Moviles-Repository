@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.CasillaDia
 import com.example.estudia.ui.componentes.DialogoEvento
+import com.example.estudia.ui.componentes.EncabezadoPantalla
+import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaEventoCalendario
 import com.example.estudia.ui.componentes.textoFecha
@@ -43,12 +46,14 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                eventoParaEditar = null
-                mostrarDialogo = true
-            }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.nuevo_evento))
-            }
+            ExtendedFloatingActionButton(
+                onClick = {
+                    eventoParaEditar = null
+                    mostrarDialogo = true
+                },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.nuevo_evento)) }
+            )
         }
     ) { relleno ->
         LazyColumn(
@@ -56,66 +61,75 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(R.string.mi_calendario),
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = viewModel::irAHoy) {
+                EncabezadoPantalla(
+                    titulo = stringResource(R.string.mi_calendario),
+                    subtitulo = stringResource(R.string.calendario_subtitulo)
+                ) {
+                    FilledTonalIconButton(onClick = viewModel::irAHoy) {
                         Icon(Icons.Filled.Today, contentDescription = stringResource(R.string.ir_a_hoy))
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
+
+                // ---------- El mes, dentro de una tarjeta ----------
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    IconButton(onClick = viewModel::mesAnterior) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
-                    }
-                    Text(
-                        text = "${meses[estado.mes.monthValue - 1]} ${estado.mes.year}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    IconButton(onClick = viewModel::mesSiguiente) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = viewModel::mesAnterior) {
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
+                            }
+                            Text(
+                                text = "${meses[estado.mes.monthValue - 1]} ${estado.mes.year}",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            IconButton(onClick = viewModel::mesSiguiente) {
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            diasSemana.forEach { letra ->
+                                Text(
+                                    text = letra,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        estado.semanas.forEach { semana ->
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                semana.forEach { fecha ->
+                                    CasillaDia(
+                                        fecha = fecha,
+                                        esHoy = fecha == estado.hoy,
+                                        seleccionado = fecha == estado.seleccionado,
+                                        tieneEventos = fecha in estado.diasConEventos,
+                                        modifier = Modifier.weight(1f),
+                                        onSeleccionar = { if (fecha != null) viewModel.seleccionar(fecha) }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    diasSemana.forEach { letra ->
-                        Text(
-                            text = letra,
-                            style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
 
-            items(estado.semanas) { semana ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    semana.forEach { fecha ->
-                        CasillaDia(
-                            fecha = fecha,
-                            esHoy = fecha == estado.hoy,
-                            seleccionado = fecha == estado.seleccionado,
-                            tieneEventos = fecha in estado.diasConEventos,
-                            modifier = Modifier.weight(1f),
-                            onSeleccionar = { if (fecha != null) viewModel.seleccionar(fecha) }
-                        )
-                    }
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Text(text = textoFecha(estado.seleccionado, estado.hoy), style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
                 if (estado.eventosDelDia.isEmpty()) {
-                    Text(text = stringResource(R.string.sin_eventos_fecha), style = MaterialTheme.typography.bodySmall)
+                    EstadoVacio(
+                        Icons.Filled.EventAvailable,
+                        stringResource(R.string.sin_eventos_fecha),
+                        stringResource(R.string.sin_eventos_fecha_sugerencia)
+                    )
                 }
             }
 

@@ -1,9 +1,12 @@
 package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,55 +33,55 @@ fun RegistroScreen(
     var nombreUsuario by rememberSaveable { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
 
-    Column(
-        // imePadding + scroll: cuando aparece el teclado, el formulario se corre
-        // hacia arriba en vez de quedar tapado.
-        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = stringResource(R.string.crear_cuenta), style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text(stringResource(R.string.nombre_completo)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = nombreUsuario,
-            onValueChange = { nombreUsuario = it },
-            label = { Text(stringResource(R.string.nombre_usuario)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = contrasena,
-            onValueChange = { contrasena = it },
-            label = { Text(stringResource(R.string.contrasena)) },
-            supportingText = { Text(stringResource(R.string.contrasena_minimo, SesionViewModel.LARGO_MINIMO_CONTRASENA)) },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        TextoError(estado.error?.let { stringResource(it) })
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { onRegistrar(nombre, nombreUsuario, contrasena) },
-            enabled = !estado.procesando,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (estado.procesando) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            else Text(stringResource(R.string.crear_cuenta))
+    FormularioCuenta(
+        icono = Icons.Filled.PersonAdd,
+        titulo = stringResource(R.string.crear_cuenta),
+        subtitulo = stringResource(R.string.registro_subtitulo),
+        campos = {
+            OutlinedTextField(
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text(stringResource(R.string.nombre_completo)) },
+                leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = nombreUsuario,
+                onValueChange = { nombreUsuario = it },
+                label = { Text(stringResource(R.string.nombre_usuario)) },
+                leadingIcon = { Icon(Icons.Filled.AlternateEmail, contentDescription = null) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = contrasena,
+                onValueChange = { contrasena = it },
+                label = { Text(stringResource(R.string.contrasena)) },
+                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                supportingText = { Text(stringResource(R.string.contrasena_minimo, SesionViewModel.LARGO_MINIMO_CONTRASENA)) },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            TextoError(estado.error?.let { stringResource(it) })
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = { onRegistrar(nombre, nombreUsuario, contrasena) },
+                enabled = !estado.procesando,
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                if (estado.procesando) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                else Text(stringResource(R.string.crear_cuenta))
+            }
+        },
+        pie = {
+            TextButton(onClick = onVolverALogin) {
+                Text(stringResource(R.string.ir_a_login))
+            }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onVolverALogin, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.ir_a_login))
-        }
-    }
+    )
 }

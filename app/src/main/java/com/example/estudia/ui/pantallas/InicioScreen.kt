@@ -1,14 +1,24 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.DonutLarge
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,7 +26,11 @@ import com.example.estudia.R
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
+import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
+import com.example.estudia.ui.theme.AmarilloFavorita
+import com.example.estudia.ui.theme.LocalDegradado
+import com.example.estudia.viewmodel.InicioUiState
 import com.example.estudia.viewmodel.InicioViewModel
 
 // Pantalla "Inicio": resumen de todas las materias — tareas pendientes,
@@ -35,19 +49,20 @@ fun InicioScreen(viewModel: InicioViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(text = stringResource(R.string.saludo, estado.nombre), style = MaterialTheme.typography.headlineSmall)
-        Text(text = stringResource(R.string.saludo_subtitulo), style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+        EncabezadoInicio(estado)
 
         // ---------- Tareas pendientes ----------
-        Seccion(
+        TarjetaSeccion(
             titulo = stringResource(R.string.tareas_pendientes_titulo),
-            detalle = pluralStringResource(R.plurals.tareas_pendientes, estado.tareasPendientes.size, estado.tareasPendientes.size)
+            icono = Icons.Filled.TaskAlt,
+            color = MaterialTheme.colorScheme.primary,
+            detalle = estado.tareasPendientes.size.toString()
         ) {
             if (estado.tareasPendientes.isEmpty()) {
-                Text(text = stringResource(R.string.sin_tareas_pendientes), style = MaterialTheme.typography.bodySmall)
+                TextoSecundario(stringResource(R.string.sin_tareas_pendientes_feliz))
             }
             estado.tareasPendientes.take(5).forEach { item ->
                 TarjetaTareaPendiente(item, estado.hoy, onAlternar = { viewModel.alternarTarea(item) })
@@ -55,9 +70,13 @@ fun InicioScreen(viewModel: InicioViewModel) {
         }
 
         // ---------- Próximos exámenes y entregas ----------
-        Seccion(titulo = stringResource(R.string.proximos_eventos)) {
+        TarjetaSeccion(
+            titulo = stringResource(R.string.proximos_eventos),
+            icono = Icons.Filled.Event,
+            color = MaterialTheme.colorScheme.tertiary
+        ) {
             if (estado.proximosEventos.isEmpty()) {
-                Text(text = stringResource(R.string.sin_eventos_proximos), style = MaterialTheme.typography.bodySmall)
+                TextoSecundario(stringResource(R.string.sin_eventos_proximos))
             }
             estado.proximosEventos.take(3).forEach { TarjetaEventoResumen(it, estado.hoy) }
         }
@@ -65,40 +84,96 @@ fun InicioScreen(viewModel: InicioViewModel) {
         // ---------- Nota destacada ----------
         val nota = estado.notaDestacada
         if (nota != null) {
-            Seccion(titulo = stringResource(R.string.nota_destacada)) {
-                Text(text = nota.titulo, style = MaterialTheme.typography.bodyLarge)
-                Text(text = nota.contenido, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+            TarjetaSeccion(
+                titulo = stringResource(R.string.nota_destacada),
+                icono = Icons.Filled.Star,
+                color = AmarilloFavorita
+            ) {
+                Text(text = nota.titulo, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = nota.contenido,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3
+                )
             }
         }
 
         if (estado.materiasActivas.isNotEmpty()) {
-            Seccion(titulo = stringResource(R.string.progreso_por_materia)) {
+            TarjetaSeccion(
+                titulo = stringResource(R.string.progreso_por_materia),
+                icono = Icons.Filled.BarChart,
+                color = MaterialTheme.colorScheme.secondary
+            ) {
                 GraficoBarrasProgreso(materias = estado.materiasActivas)
             }
-            Seccion(titulo = stringResource(R.string.horas_por_materia)) {
+            TarjetaSeccion(
+                titulo = stringResource(R.string.horas_por_materia),
+                icono = Icons.Filled.DonutLarge,
+                color = MaterialTheme.colorScheme.primary,
+                detalle = stringResource(R.string.horas_corto, estado.horasEstudio)
+            ) {
                 GraficoTortaHoras(datos = estado.minutosPorMateria)
             }
         }
-
-        Text(
-            text = stringResource(R.string.horas_planificadas, estado.horasEstudio),
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 
-// Tarjeta con título (y un detalle opcional a la derecha) para cada sección.
+// Encabezado con degradado: saludo, fecha de hoy y tres números clave.
 @Composable
-private fun Seccion(titulo: String, detalle: String? = null, contenido: @Composable ColumnScope.() -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = titulo, style = MaterialTheme.typography.titleMedium)
-                if (detalle != null) Text(text = detalle, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            contenido()
+private fun EncabezadoInicio(estado: InicioUiState) {
+    val dias = stringArrayResource(R.array.dias_semana_largo)
+    val meses = stringArrayResource(R.array.meses)
+    val hoy = estado.hoy
+    val fecha = stringResource(
+        R.string.fecha_larga,
+        dias[hoy.dayOfWeek.value - 1],
+        hoy.dayOfMonth,
+        meses[hoy.monthValue - 1].lowercase()
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(LocalDegradado.current)
+            .padding(20.dp)
+    ) {
+        Text(text = fecha, style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.8f))
+        Text(
+            text = stringResource(R.string.saludo, estado.nombre),
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White
+        )
+        Text(
+            text = stringResource(R.string.saludo_subtitulo),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.85f)
+        )
+        Spacer(modifier = Modifier.height(18.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DatoEncabezado(estado.tareasPendientes.size.toString(), stringResource(R.string.pendientes), Modifier.weight(1f))
+            DatoEncabezado(estado.proximosEventos.size.toString(), stringResource(R.string.proximos), Modifier.weight(1f))
+            DatoEncabezado(stringResource(R.string.horas_corto, estado.horasEstudio), stringResource(R.string.de_estudio), Modifier.weight(1f))
         }
     }
-    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun DatoEncabezado(valor: String, etiqueta: String, modifier: Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.16f))
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = valor, style = MaterialTheme.typography.titleLarge, color = Color.White)
+        Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+    }
+}
+
+@Composable
+private fun TextoSecundario(texto: String) {
+    Text(text = texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

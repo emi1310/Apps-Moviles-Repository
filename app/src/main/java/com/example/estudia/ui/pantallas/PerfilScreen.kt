@@ -11,6 +11,11 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +25,11 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,12 +49,16 @@ import com.example.estudia.ui.componentes.DialogoMeta
 import com.example.estudia.ui.componentes.OpcionPerfil
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaEstadistica
+import com.example.estudia.ui.componentes.TarjetaSeccion
+import com.example.estudia.ui.componentes.IconoCircular
+import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.viewmodel.PerfilViewModel
 
 // Pantalla "Mi Perfil": datos del usuario, estadísticas, meta semanal de
 // estudio, recordatorios, tema (claro/oscuro), ayuda y cerrar sesión.
 // "Recordatorios" pide el permiso POST_NOTIFICATIONS cuando hace falta.
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun PerfilScreen(
     viewModel: PerfilViewModel,
     onAbrirAyuda: () -> Unit,
@@ -100,116 +114,157 @@ fun PerfilScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text(text = stringResource(R.string.mi_perfil), style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // ---------- Avatar + datos principales ----------
-        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        // ---------- Encabezado con degradado: avatar + datos principales ----------
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(28.dp))
+                .background(LocalDegradado.current)
+                .padding(vertical = 24.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Box(
-                modifier = Modifier.size(80.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+                modifier = Modifier
+                    .size(88.dp)
+                    .border(3.dp, Color.White.copy(alpha = 0.7f), CircleShape)
+                    .padding(5.dp)
+                    .background(Color.White, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = usuario.nombre.take(1).uppercase(),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = usuario.nombre, style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(text = usuario.nombre, style = MaterialTheme.typography.titleLarge, color = Color.White)
             val carrera = usuario.carrera ?: stringResource(R.string.carrera_no_especificada)
             val anio = usuario.anio
             Text(
                 text = if (anio != null) stringResource(R.string.anio_carrera, anio, carrera) else carrera,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.9f)
             )
-            Text(text = usuario.email ?: stringResource(R.string.email_no_especificado), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = usuario.email ?: stringResource(R.string.email_no_especificado),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.75f)
+            )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- Estadísticas ----------
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            TarjetaEstadistica(valor = usuario.contarMaterias().toString(), etiqueta = stringResource(R.string.materias))
-            TarjetaEstadistica(valor = stringResource(R.string.horas_corto, usuario.calcularHorasEstudio()), etiqueta = stringResource(R.string.estudio))
-            TarjetaEstadistica(valor = usuario.contarNotas().toString(), etiqueta = stringResource(R.string.notas))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TarjetaEstadistica(usuario.contarMaterias().toString(), stringResource(R.string.materias), Icons.AutoMirrored.Filled.MenuBook, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            TarjetaEstadistica(stringResource(R.string.horas_corto, usuario.calcularHorasEstudio()), stringResource(R.string.estudio), Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+            TarjetaEstadistica(usuario.contarNotas().toString(), stringResource(R.string.notas), Icons.AutoMirrored.Filled.Notes, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- Meta semanal de estudio ----------
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = stringResource(R.string.meta_semanal), style = MaterialTheme.typography.titleMedium)
-                val meta = usuario.metaHorasSemanales
-                val progreso = estado.progresoMeta
-                if (meta == null || progreso == null) {
-                    Text(text = stringResource(R.string.sin_meta), style = MaterialTheme.typography.bodySmall)
-                } else {
-                    Text(
-                        text = stringResource(R.string.meta_progreso, estado.horasEstaSemana, meta),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+        TarjetaSeccion(
+            titulo = stringResource(R.string.meta_semanal),
+            icono = Icons.Filled.Flag,
+            color = MaterialTheme.colorScheme.secondary,
+            detalle = estado.progresoMeta?.let { "${(it * 100).toInt()}%" }
+        ) {
+            val meta = usuario.metaHorasSemanales
+            val progreso = estado.progresoMeta
+            if (meta == null || progreso == null) {
+                Text(
+                    text = stringResource(R.string.sin_meta),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(text = stringResource(R.string.meta_progreso, estado.horasEstaSemana, meta), style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { progreso },
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
+                    strokeCap = StrokeCap.Round,
+                    modifier = Modifier.fillMaxWidth().height(10.dp)
+                )
+                if (progreso >= 1f) {
                     Spacer(modifier = Modifier.height(6.dp))
-                    LinearProgressIndicator(progress = { progreso }, modifier = Modifier.fillMaxWidth())
-                    if (progreso >= 1f) {
-                        Text(text = stringResource(R.string.meta_cumplida), style = MaterialTheme.typography.bodySmall)
+                    Text(text = stringResource(R.string.meta_cumplida), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        TituloGrupo(stringResource(R.string.preferencias))
+
+        // ---------- Recordatorios ----------
+        // Se muestran activos solo si el usuario los eligió Y hay permiso.
+        val activos = estado.recordatoriosActivos && permitidas
+        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconoCircular(Icons.Filled.NotificationsActive, MaterialTheme.colorScheme.tertiary, tamano = 36.dp)
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = stringResource(R.string.recordatorios), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = stringResource(
+                            when {
+                                activos -> R.string.recordatorios_descripcion
+                                estado.recordatoriosActivos -> R.string.sin_permiso_notificaciones
+                                else -> R.string.desactivados
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = activos,
+                    onCheckedChange = { activar -> if (activar) activarRecordatorios() else viewModel.cambiarRecordatorios(false) }
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            // ---------- Tema ----------
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconoCircular(Icons.Filled.Palette, MaterialTheme.colorScheme.primary, tamano = 36.dp)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Text(text = stringResource(R.string.tema), style = MaterialTheme.typography.bodyLarge)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                val opciones = listOf(
+                    PreferenciaTema.SISTEMA to R.string.tema_sistema,
+                    PreferenciaTema.CLARO to R.string.tema_claro,
+                    PreferenciaTema.OSCURO to R.string.tema_oscuro
+                )
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    opciones.forEachIndexed { indice, (tema, texto) ->
+                        SegmentedButton(
+                            selected = estado.tema == tema,
+                            onClick = { viewModel.cambiarTema(tema) },
+                            shape = SegmentedButtonDefaults.itemShape(indice, opciones.size)
+                        ) { Text(stringResource(texto)) }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // ---------- Recordatorios ----------
-        // Se muestran activos solo si el usuario los eligió Y hay permiso.
-        val activos = estado.recordatoriosActivos && permitidas
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.recordatorios), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    text = stringResource(
-                        when {
-                            activos -> R.string.recordatorios_descripcion
-                            estado.recordatoriosActivos -> R.string.sin_permiso_notificaciones
-                            else -> R.string.desactivados
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            Switch(
-                checked = activos,
-                onCheckedChange = { activar -> if (activar) activarRecordatorios() else viewModel.cambiarRecordatorios(false) }
-            )
-        }
-
-        // ---------- Tema ----------
-        Text(text = stringResource(R.string.tema), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
-        Row {
-            listOf(
-                PreferenciaTema.SISTEMA to R.string.tema_sistema,
-                PreferenciaTema.CLARO to R.string.tema_claro,
-                PreferenciaTema.OSCURO to R.string.tema_oscuro
-            ).forEach { (tema, texto) ->
-                FilterChip(
-                    selected = estado.tema == tema,
-                    onClick = { viewModel.cambiarTema(tema) },
-                    label = { Text(stringResource(texto)) }
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
+        TituloGrupo(stringResource(R.string.cuenta))
 
         // ---------- Menú de opciones ----------
-        OpcionPerfil(stringResource(R.string.editar_perfil), Icons.Filled.Edit) { mostrarEditarPerfil = true }
-        OpcionPerfil(stringResource(R.string.metas_de_estudio), Icons.Filled.Flag) { mostrarMeta = true }
-        OpcionPerfil(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Filled.HelpOutline, alTocar = onAbrirAyuda)
-        OpcionPerfil(stringResource(R.string.cerrar_sesion), Icons.AutoMirrored.Filled.Logout, esDestructiva = true) {
-            confirmarCierreSesion = true
+        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                OpcionPerfil(stringResource(R.string.editar_perfil), Icons.Filled.Edit) { mostrarEditarPerfil = true }
+                OpcionPerfil(stringResource(R.string.metas_de_estudio), Icons.Filled.Flag) { mostrarMeta = true }
+                OpcionPerfil(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Filled.HelpOutline, alTocar = onAbrirAyuda)
+                OpcionPerfil(stringResource(R.string.cerrar_sesion), Icons.AutoMirrored.Filled.Logout, esDestructiva = true) {
+                    confirmarCierreSesion = true
+                }
+            }
         }
     }
 
@@ -305,4 +360,15 @@ private fun Context.buscarActivity(): Activity? {
         actual = actual.baseContext
     }
     return null
+}
+
+// Título chico que agrupa las tarjetas de opciones ("Preferencias", "Cuenta").
+@Composable
+private fun TituloGrupo(texto: String) {
+    Text(
+        text = texto.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+    )
 }

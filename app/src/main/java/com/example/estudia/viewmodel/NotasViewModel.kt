@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 enum class FiltroNotas { TODAS, RECIENTES, FAVORITAS }
 
 // Una nota junto con su materia (Nota no sabe a qué materia pertenece).
-data class NotaConMateria(val nota: Nota, val materiaId: Int, val nombreMateria: String)
+data class NotaConMateria(val nota: Nota, val materiaId: Int, val nombreMateria: String, val colorMateria: Long)
 
 data class NotasUiState(
     val cargando: Boolean = true,
@@ -54,7 +54,7 @@ class NotasViewModel(
     val uiState: StateFlow<NotasUiState> =
         combine(usuario, filtro, busqueda, idsEncontrados) { u, filtroActual, texto, ids ->
             val todas = u?.materias.orEmpty().flatMap { materia ->
-                materia.notas.map { NotaConMateria(it, materia.id, materia.nombre) }
+                materia.notas.map { NotaConMateria(it, materia.id, materia.nombre, materia.color) }
             }
             val buscadas = if (ids == null) todas else ids.mapNotNull { id -> todas.firstOrNull { it.nota.id == id } }
             val filtradas = when (filtroActual) {

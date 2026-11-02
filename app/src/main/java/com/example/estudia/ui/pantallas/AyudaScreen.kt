@@ -39,7 +39,7 @@ fun AyudaScreen(onVolver: () -> Unit) {
     val sinMail = stringResource(R.string.sin_app_mail)
     val correo = stringResource(R.string.soporte_email)
 
-    LazyColumn(contentPadding = PaddingValues(16.dp), modifier = Modifier.fillMaxSize()) {
+    LazyColumn(contentPadding = PaddingValues(16.dp), modifier = Modifier.fillMaxSize().systemBarsPadding()) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onVolver) {

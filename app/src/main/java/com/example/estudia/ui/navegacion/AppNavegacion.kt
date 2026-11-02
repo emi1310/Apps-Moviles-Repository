@@ -102,7 +102,10 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
             NavHost(
                 navController = navController,
                 startDestination = destinoInicial,
-                modifier = Modifier.padding(espacioInterno)
+                // Las pantallas con barra inferior respetan el espacio del Scaffold;
+                // las demás (Bienvenida, Login, Registro, Ayuda) dibujan de borde a
+                // borde y manejan ellas mismas las barras del sistema.
+                modifier = if (mostrarBarra) Modifier.padding(espacioInterno) else Modifier
             ) {
                 composable(Screen.Bienvenida.ruta) {
                     BienvenidaScreen(onComenzar = { navController.navigate(Screen.Login.ruta) })

@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -14,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,6 +25,8 @@ import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.ui.componentes.Buscador
+import com.example.estudia.ui.componentes.EncabezadoPantalla
+import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoConfirmacion
 import com.example.estudia.ui.componentes.DialogoMateria
 import com.example.estudia.ui.componentes.DialogoTarea
@@ -68,9 +74,11 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            FloatingActionButton(onClick = { crearMateria = true }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.nueva_materia))
-            }
+            ExtendedFloatingActionButton(
+                onClick = { crearMateria = true },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.nueva_materia)) }
+            )
         }
     ) { relleno ->
         LazyColumn(
@@ -78,8 +86,12 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
-                Text(text = stringResource(R.string.mis_materias), style = MaterialTheme.typography.headlineSmall)
-                Spacer(modifier = Modifier.height(12.dp))
+                EncabezadoPantalla(
+                    titulo = stringResource(R.string.mis_materias),
+                    subtitulo = pluralStringResource(
+                        R.plurals.materias_activas, estado.todas.count { !it.archivada }, estado.todas.count { !it.archivada }
+                    )
+                )
                 Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_tareas))
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -87,7 +99,13 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
             if (estado.buscando) {
                 // ---------- Resultados del buscador ----------
                 if (estado.resultadosBusqueda.isEmpty()) {
-                    item { Text(stringResource(R.string.sin_resultados), style = MaterialTheme.typography.bodyMedium) }
+                    item {
+                        EstadoVacio(
+                            Icons.Filled.SearchOff,
+                            stringResource(R.string.sin_resultados),
+                            stringResource(R.string.sin_resultados_sugerencia)
+                        )
+                    }
                 }
                 items(estado.resultadosBusqueda, key = { "t" + it.tarea.id }) { encontrada ->
                     FilaTarea(
@@ -122,11 +140,19 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                         )
                     }
                     if (estado.materias.isEmpty() && !estado.cargando) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(if (estado.mostrarArchivadas) R.string.sin_materias_archivadas else R.string.sin_materias_activas),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        if (estado.mostrarArchivadas) {
+                            EstadoVacio(
+                                Icons.Filled.Archive,
+                                stringResource(R.string.sin_materias_archivadas),
+                                stringResource(R.string.sin_materias_archivadas_sugerencia)
+                            )
+                        } else {
+                            EstadoVacio(
+                                Icons.AutoMirrored.Filled.MenuBook,
+                                stringResource(R.string.sin_materias_activas),
+                                stringResource(R.string.sin_materias_activas_sugerencia)
+                            )
+                        }
                     }
                 }
                 items(estado.materias, key = { it.id }) { materia ->

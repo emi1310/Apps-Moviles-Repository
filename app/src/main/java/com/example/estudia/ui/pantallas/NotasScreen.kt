@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -17,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.Buscador
+import com.example.estudia.ui.componentes.EncabezadoPantalla
+import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.RecolectarAvisos
@@ -51,9 +55,11 @@ fun NotasScreen(viewModel: NotasViewModel) {
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            FloatingActionButton(onClick = { crearNota = true }) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.nueva_nota))
-            }
+            ExtendedFloatingActionButton(
+                onClick = { crearNota = true },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text(stringResource(R.string.nueva_nota)) }
+            )
         }
     ) { relleno ->
         LazyColumn(
@@ -61,8 +67,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
-                Text(text = stringResource(R.string.mis_notas), style = MaterialTheme.typography.headlineSmall)
-                Spacer(modifier = Modifier.height(12.dp))
+                EncabezadoPantalla(titulo = stringResource(R.string.mis_notas), subtitulo = stringResource(R.string.notas_subtitulo))
                 Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_notas))
                 Spacer(modifier = Modifier.height(8.dp))
                 Row {
@@ -80,11 +85,11 @@ fun NotasScreen(viewModel: NotasViewModel) {
                     }
                 }
                 if (estado.notas.isEmpty() && !estado.cargando) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(if (estado.busqueda.isBlank()) R.string.sin_notas else R.string.sin_resultados),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    if (estado.busqueda.isNotBlank()) {
+                        EstadoVacio(Icons.Filled.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.sin_resultados_sugerencia))
+                    } else {
+                        EstadoVacio(Icons.AutoMirrored.Filled.Notes, stringResource(R.string.sin_notas), stringResource(R.string.sin_notas_sugerencia))
+                    }
                 }
             }
 
@@ -92,6 +97,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
                 TarjetaNota(
                     nota = item.nota,
                     nombreMateria = item.nombreMateria,
+                    colorMateria = item.colorMateria,
                     alTocarEstrella = { viewModel.alternarFavorita(item) },
                     alAdjuntar = {
                         idNotaParaAdjuntar = item.nota.id
