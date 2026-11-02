@@ -1,5 +1,6 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,12 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
-import com.example.estudia.ui.componentes.IconoCircular
 import com.example.estudia.ui.theme.LocalDegradado
+import com.example.estudia.ui.theme.VioletaPrincipal
 
 // Primera pantalla que ve el usuario al abrir la app: fondo con degradado,
 // el logo, el lema y las tres cosas principales que hace la app.
@@ -46,7 +47,21 @@ fun BienvenidaScreen(onComenzar: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            IconoCircular(Icons.Filled.School, Color.White, tamano = 96.dp, fondo = Color.White.copy(alpha = 0.18f))
+            // El logo de la app (el mismo dibujo del ícono) sobre una tarjeta blanca.
+            // El dibujo trae margen para el ícono adaptativo: se agranda y se recorta.
+            Box(
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.requiredSize(156.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = stringResource(R.string.app_name),
@@ -79,7 +94,7 @@ fun BienvenidaScreen(onComenzar: () -> Unit) {
 
             Button(
                 onClick = onComenzar,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = VioletaPrincipal),
                 modifier = Modifier.fillMaxWidth().height(54.dp)
             ) {
                 Text(stringResource(R.string.comenzar), style = MaterialTheme.typography.titleMedium)

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versión de un solo color del logo, para los íconos temáticos de Android 13+.
+     El sistema solo usa la forma: las hojas quedan como un hueco en la "E". -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="-2"
+        android:translateY="-3">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M40,30H75A5,5 0,0 1,75 40H42V49H67A4.5,4.5 0,0 1,67 58H42V66H74A6,6 0,0 1,74 78H42A10,10 0,0 1,32 68V38A8,8 0,0 1,40 30ZM46,69.5H75A2.5,2.5 0,0 1,75 74.5H46A2.5,2.5 0,0 1,46 69.5Z" />
+    </group>
+</vector>

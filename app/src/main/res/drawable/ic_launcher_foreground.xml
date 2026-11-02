@@ -1,24 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Frente del ícono de la app: un birrete blanco con un "+" (Estudia+).
-     El ícono adaptativo mide 108dp, pero solo el círculo central de 66dp se
-     ve siempre: por eso el dibujo está centrado y dentro de esa zona. -->
+<!-- Logo de Estudia+: una "E" armada con las hojas de un libro, con el lomo
+     abajo y un señalador. El ícono adaptativo mide 108dp, pero solo el círculo
+     central de 66dp se ve siempre: por eso el dibujo está centrado y dentro de
+     esa zona. También se usa en la pantalla de Bienvenida. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Birrete (ícono "School" de Material, de 24x24, agrandado 2 veces) -->
     <group
-        android:scaleX="2"
-        android:scaleY="2"
-        android:translateX="26"
-        android:translateY="28">
+        android:translateX="-2"
+        android:translateY="-3">
+        <!-- La "E": tapa de arriba, hoja del medio y libro de abajo -->
+        <path android:pathData="M40,30H75A5,5 0,0 1,75 40H42V49H67A4.5,4.5 0,0 1,67 58H42V66H74A6,6 0,0 1,74 78H42A10,10 0,0 1,32 68V38A8,8 0,0 1,40 30Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="78"
+                    android:startY="30"
+                    android:endX="34"
+                    android:endY="78">
+                    <item android:offset="0" android:color="#FFC9BBFF" />
+                    <item android:offset="0.45" android:color="#FF8E5CF0" />
+                    <item android:offset="1" android:color="#FF5B4BDB" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- Hojas del libro de abajo -->
         <path
             android:fillColor="#FFFFFFFF"
-            android:pathData="M5,13.18v4L12,21l7,-3.82v-4L12,17l-7,-3.82zM12,3L1,9l11,6 9,-4.91V17h2V9L12,3z" />
+            android:pathData="M46,69.5H75A2.5,2.5 0,0 1,75 74.5H46A2.5,2.5 0,0 1,46 69.5Z" />
+        <!-- Señalador -->
+        <path
+            android:fillColor="#FF3F31B0"
+            android:pathData="M60,71H67V84L63.5,80.5L60,84Z" />
     </group>
-    <!-- Signo "+" arriba a la derecha -->
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M72.5,30h3v3.5h3.5v3h-3.5v3.5h-3v-3.5h-3.5v-3h3.5z" />
 </vector>
