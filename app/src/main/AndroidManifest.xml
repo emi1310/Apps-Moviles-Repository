@@ -6,12 +6,12 @@
          POST_NOTIFICATIONS: mostrar recordatorios (Android 13+ lo pide en
          tiempo de ejecución, cuando el usuario activa "Recordatorios").
          READ_MEDIA_IMAGES (Android 13+) / READ_EXTERNAL_STORAGE (hasta Android 12):
-         leer fotos para adjuntarlas. Se pide una sola vez, la primera vez que
-         el usuario adjunta algo, después de explicarle para qué es. Si no lo
-         da, igual puede adjuntar con el selector del sistema (que da acceso
-         solo al archivo elegido). -->
+         leer fotos y archivos para adjuntarlos. Se pide al tocar "Adjuntar",
+         después de explicar para qué es. Sin este permiso no se puede adjuntar.
+         READ_MEDIA_VISUAL_USER_SELECTED (Android 14+): el "acceso limitado". -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />

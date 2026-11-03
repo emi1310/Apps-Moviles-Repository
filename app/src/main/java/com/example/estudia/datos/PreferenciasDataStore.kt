@@ -31,8 +31,8 @@ class PreferenciasDataStore(private val context: Context) {
             PreferenciaTema.entries.firstOrNull { it.name == guardado } ?: PreferenciaTema.SISTEMA
         }
 
-    // Si ya se pidió una vez el permiso para leer fotos y archivos (se pide
-    // una sola vez, la primera vez que el usuario adjunta algo).
+    // Si ya se le explicó al usuario para qué es el permiso de fotos y
+    // archivos (la explicación se muestra una sola vez).
     val permisoArchivosPedido: Flow<Boolean> = context.preferenciasDataStore.data
         .map { preferencias -> preferencias[CLAVE_PERMISO_ARCHIVOS] ?: false }
 

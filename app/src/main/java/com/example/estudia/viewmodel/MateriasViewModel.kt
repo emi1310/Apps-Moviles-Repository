@@ -184,9 +184,9 @@ class MateriasViewModel(
 
     // ---------- Archivos ----------
 
-    // El permiso de fotos y archivos se pide una sola vez, la primera vez que
-    // el usuario adjunta algo. Arranca en true para no preguntar antes de
-    // saber qué hay guardado.
+    // Si ya se le explicó al usuario para qué es el permiso de fotos y
+    // archivos (se explica una sola vez; después el permiso se pide directo).
+    // Arranca en true para no mostrar la explicación antes de saber qué hay guardado.
     val permisoArchivosPedido: StateFlow<Boolean> = repositorio.permisoArchivosPedido
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 

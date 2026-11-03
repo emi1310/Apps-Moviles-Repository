@@ -258,7 +258,7 @@
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
         <item>En Materias, expandí la materia y tocá \"Adjuntar archivo\". En Notas, usá el menú de la nota. El archivo se copia dentro de la app, así que no se pierde aunque borres el original.</item>
         <item>Solo para los recordatorios: un resumen diario, un aviso antes de cada examen o entrega, otro 15 minutos antes de cada clase y la cuenta regresiva del temporizador. El permiso se pide recién cuando activás \"Recordatorios\" en tu perfil, y podés quitarlo cuando quieras.</item>
-        <item>No. La primera vez que adjuntás algo, la app te pide permiso para leer tus fotos, pero solo usa el archivo que vos elegís en el selector del sistema. Si no le das el permiso, igual podés adjuntar archivos.</item>
+        <item>Para adjuntar, la app te pide permiso para leer tus fotos y archivos; sin ese permiso no se puede adjuntar. Aunque lo des, la app solo guarda el archivo que vos elegís.</item>
         <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio de esa semana: los que cargás en el calendario y las sesiones del temporizador.</item>
         <item>Sí: al eliminar una materia, una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
         <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
@@ -319,7 +319,9 @@
     <string name="permiso_temporizador_titulo">Notificación del temporizador</string>
     <string name="explicacion_permiso_temporizador">Para mostrarte cuánto falta aunque salgas de la app, y avisarte cuando termine la sesión, Estudia+ necesita permiso para mostrar notificaciones. Sin el permiso, el temporizador anda igual.</string>
     <string name="permiso_archivos_titulo">Acceso a tus fotos y archivos</string>
-    <string name="explicacion_permiso_archivos">Para que puedas adjuntar fotos del pizarrón, apuntes o PDF a tus materias y notas, Estudia+ te pide permiso para leer tus fotos y archivos. Te lo pedimos una sola vez: si no lo das, igual podés elegir el archivo con el selector del sistema.</string>
+    <string name="explicacion_permiso_archivos">Para que puedas adjuntar fotos del pizarrón, apuntes o PDF a tus materias y notas, Estudia+ necesita permiso para leer tus fotos y archivos. Si no lo das, no vas a poder adjuntar archivos.</string>
+    <string name="sin_permiso_archivos_titulo">Sin permiso de archivos</string>
+    <string name="sin_permiso_archivos">Sin el permiso de fotos y archivos no se pueden adjuntar archivos. Podés darlo la próxima vez que toques \"Adjuntar archivo\" o desde Ajustes.</string>
     <string name="temporizador_pausar">Pausar</string>
     <string name="temporizador_reanudar">Seguir</string>
     <string name="temporizador_terminar">Terminar</string>

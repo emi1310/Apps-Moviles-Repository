@@ -46,8 +46,8 @@ fun NotasScreen(viewModel: NotasViewModel) {
     var notaParaEditar by remember { mutableStateOf<NotaConMateria?>(null) }
     var idNotaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    // Selector de archivos: la primera vez explica y pide el permiso de
-    // fotos y archivos (ver selectorDeArchivos).
+    // Selector de archivos: solo se abre con el permiso de fotos y archivos
+    // (ver selectorDeArchivos).
     val permisoArchivosPedido by viewModel.permisoArchivosPedido.collectAsStateWithLifecycle()
     val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val nota = estado.notas.firstOrNull { it.nota.id == idNotaParaAdjuntar }
