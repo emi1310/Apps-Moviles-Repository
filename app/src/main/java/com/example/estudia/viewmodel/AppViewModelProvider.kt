@@ -19,6 +19,7 @@ object AppViewModelProvider {
         initializer { CalendarioViewModel(estudiaApp().repositorio) }
         initializer { NotasViewModel(estudiaApp().repositorio) }
         initializer { PerfilViewModel(estudiaApp().repositorio) }
+        initializer { TemporizadorViewModel(estudiaApp().repositorio) }
     }
 }
 

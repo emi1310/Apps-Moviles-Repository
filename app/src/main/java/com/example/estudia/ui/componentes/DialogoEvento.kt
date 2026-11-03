@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,8 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.modelo.Evento
@@ -48,7 +54,10 @@ fun DialogoEvento(
     materiaIdInicial: Int?,
     materias: List<Materia>,
     fechaInicial: LocalDate,
-    onConfirmar: (materiaId: Int, titulo: String, tipo: TipoEvento, fecha: LocalDate, inicio: LocalTime, fin: LocalTime) -> Int?,
+    onConfirmar: (
+        materiaId: Int, titulo: String, tipo: TipoEvento, fecha: LocalDate,
+        inicio: LocalTime, fin: LocalTime, semanal: Boolean, repetirHasta: LocalDate?
+    ) -> Int?,
     onCancelar: () -> Unit
 ) {
     var materia by remember { mutableStateOf(materias.firstOrNull { it.id == materiaIdInicial }) }
@@ -57,6 +66,8 @@ fun DialogoEvento(
     var fecha by remember { mutableStateOf(evento?.fecha ?: fechaInicial) }
     var inicio by remember { mutableStateOf(evento?.horaInicio ?: LocalTime.of(9, 0)) }
     var fin by remember { mutableStateOf(evento?.horaFin ?: LocalTime.of(10, 0)) }
+    var semanal by remember { mutableStateOf(evento?.semanal ?: false) }
+    var repetirHasta by remember { mutableStateOf(evento?.repetirHasta) }
     var error by remember { mutableStateOf<Int?>(null) }
 
     AlertDialog(
@@ -97,6 +108,42 @@ fun DialogoEvento(
                     Spacer(modifier = Modifier.width(8.dp))
                     CampoHora(stringResource(R.string.hasta), fin, { fin = it; error = null }, Modifier.weight(1f))
                 }
+                // Solo las clases se pueden repetir: se muestran todas las
+                // semanas, el mismo día, hasta la última clase (si se eligió).
+                if (tipo == TipoEvento.CLASE) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().toggleable(
+                            value = semanal,
+                            role = Role.Checkbox,
+                            onValueChange = { semanal = it; error = null }
+                        )
+                    ) {
+                        Checkbox(checked = semanal, onCheckedChange = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(stringResource(R.string.repetir_semanal), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                text = stringResource(R.string.cada_dia_semana, nombreDiaSemana(fecha)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    if (semanal) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(stringResource(R.string.repetir_hasta), style = MaterialTheme.typography.labelLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        CampoFecha(
+                            fecha = repetirHasta,
+                            onCambiar = { repetirHasta = it; error = null },
+                            modifier = Modifier.fillMaxWidth(),
+                            permitirVacio = true,
+                            textoVacio = stringResource(R.string.repetir_sin_fin)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 TextoError(error?.let { stringResource(it) })
             }
@@ -109,7 +156,7 @@ fun DialogoEvento(
                     m == null -> R.string.error_elegir_materia
                     t == null -> R.string.error_elegir_tipo
                     titulo.isBlank() -> R.string.error_titulo_evento
-                    else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin)
+                    else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta)
                 }
             }) { Text(stringResource(if (evento == null) R.string.crear else R.string.guardar)) }
         },
@@ -118,3 +165,9 @@ fun DialogoEvento(
         }
     )
 }
+
+// Nombre del día de la semana en minúscula (ej: "lunes"), para textos
+// como "Cada lunes".
+@Composable
+fun nombreDiaSemana(fecha: LocalDate): String =
+    stringArrayResource(R.array.dias_semana_largo)[fecha.dayOfWeek.value - 1].lowercase()

@@ -1,5 +1,6 @@
 package com.example.estudia.datos.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -98,7 +99,11 @@ data class EventoEntity(
     val tipo: String,            // "CLASE", "EXAMEN", "ENTREGA" o "BLOQUE_ESTUDIO"
     val fecha: LocalDate,
     val horaInicio: LocalTime,
-    val horaFin: LocalTime
+    val horaFin: LocalTime,
+    // Versión 4: clases que se repiten cada semana (ver Evento.ocurreEl).
+    @ColumnInfo(defaultValue = "0")
+    val semanal: Boolean = false,
+    val repetirHasta: LocalDate? = null
 )
 
 @Entity(

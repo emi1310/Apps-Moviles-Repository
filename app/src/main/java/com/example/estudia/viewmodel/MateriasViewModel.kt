@@ -92,12 +92,21 @@ class MateriasViewModel(
         avisar(Aviso(if (materia.archivada) R.string.aviso_materia_desarchivada else R.string.aviso_materia_archivada))
     }
 
-    // Eliminar una materia pide confirmación (borra todo su contenido),
-    // por eso no tiene "Deshacer".
+    // Eliminar una materia pide confirmación (borra todo su contenido) y,
+    // por si acaso, también ofrece "Deshacer". Los archivos del disco se
+    // borran recién cuando pasa el aviso.
     fun eliminarMateria(materia: Materia) {
         val u = usuario.value ?: return
         viewModelScope.launch {
             repositorio.eliminarMateria(u.id, materia)
+            avisar(
+                Aviso(
+                    R.string.aviso_materia_eliminada,
+                    argumentos = listOf(materia.nombre),
+                    alDeshacer = { repositorio.restaurarMateria(u.id, materia) },
+                    alConfirmar = { repositorio.borrarArchivosDelDisco(materia.todosLosArchivos()) }
+                )
+            )
         }
     }
 

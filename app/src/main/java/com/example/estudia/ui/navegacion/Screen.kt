@@ -13,6 +13,7 @@ sealed class Screen(val ruta: String) {
     object Notas : Screen("notas")
     object Perfil : Screen("perfil")
     object Ayuda : Screen("ayuda")
+    object Temporizador : Screen("temporizador")
 }
 
 // Pantallas que muestran la barra inferior.
@@ -22,4 +23,12 @@ val pantallasConBarra = listOf(
     Screen.Calendario,
     Screen.Notas,
     Screen.Perfil
+)
+
+// Pantallas con botón flotante: muestran los avisos en su propio Scaffold
+// (ver SnackbarDeAvisos), para que el aviso no tape el botón.
+val pantallasConBotonFlotante = listOf(
+    Screen.Materias,
+    Screen.Calendario,
+    Screen.Notas
 )

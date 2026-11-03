@@ -1,16 +1,20 @@
 package com.example.estudia
 
+import android.app.UiModeManager
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.ui.navegacion.AppNavegacion
 import com.example.estudia.ui.theme.EstudiaTheme
@@ -43,6 +47,21 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { oscuro }
                 )
                 onDispose { }
+            }
+            // En Android 12+ se le avisa al sistema el tema elegido: así la
+            // pantalla de carga (que se dibuja antes que Compose) sale oscura
+            // o clara según la app, y no según el teléfono.
+            LaunchedEffect(Unit) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@LaunchedEffect
+                sesionViewModel.temaGuardado.distinctUntilChanged().collect { tema ->
+                    getSystemService(UiModeManager::class.java).setApplicationNightMode(
+                        when (tema) {
+                            PreferenciaTema.CLARO -> UiModeManager.MODE_NIGHT_NO
+                            PreferenciaTema.OSCURO -> UiModeManager.MODE_NIGHT_YES
+                            PreferenciaTema.SISTEMA -> UiModeManager.MODE_NIGHT_AUTO
+                        }
+                    )
+                }
             }
             EstudiaTheme(darkTheme = oscuro) {
                 AppNavegacion(sesionViewModel)

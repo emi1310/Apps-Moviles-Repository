@@ -15,6 +15,7 @@ import androidx.room.TypeConverters
 //  2 - se agrega la tabla "archivos" (adjuntos de cada materia).
 //  3 - contraseñas con hash, fechas reales, metas de estudio y
 //      archivos adjuntos a notas.
+//  4 - clases que se repiten cada semana (eventos.semanal y repetirHasta).
 // Cada vez que cambia el esquema se sube "version" y se agrega una
 // migración (Migraciones.kt), para no perder los datos ya guardados.
 @Database(
@@ -26,7 +27,7 @@ import androidx.room.TypeConverters
         NotaEntity::class,
         ArchivoEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Conversores::class)
@@ -50,7 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "estudia_db"
                 )
-                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3)
+                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3, MIGRACION_3_4)
                     .build()
                     .also {
                         INSTANCE = it

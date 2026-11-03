@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.MIGRACION_2_3
+import com.example.estudia.datos.local.MIGRACION_3_4
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -14,7 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.LocalDate
 
-// Test de la migración 2 -> 3: crea una base con el esquema viejo (sacado de
+// Tests de las migraciones. El de 2 -> 3 crea una base con el esquema viejo (sacado de
 // app/schemas/.../2.json), le carga datos como los guardaba la versión 2
 // (contraseña en texto plano, fechas como texto) y verifica que después de
 // migrar los datos siguen ahí, convertidos, y que el esquema es el correcto.
@@ -77,6 +78,29 @@ class MigracionesTest {
             assertTrue(c.moveToFirst())
             assertTrue(c.isNull(0))
             assertEquals(LocalDate.of(2026, 11, 2).toEpochDay(), c.getLong(1))
+        }
+        db.close()
+    }
+
+    // 3 -> 4: los eventos que ya existían siguen igual y quedan sin repetir.
+    @Test
+    fun migrar3a4AgregaLaRepeticionSemanal() {
+        val lunes = LocalDate.of(2026, 11, 2).toEpochDay()
+        ayudante.createDatabase(nombreBase, 3).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO eventos (id, materiaId, titulo, tipo, fecha, horaInicio, horaFin) VALUES (1, 1, 'Teórico', 'CLASE', $lunes, 540, 660)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 4, true, MIGRACION_3_4)
+
+        db.query("SELECT titulo, fecha, semanal, repetirHasta FROM eventos").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("Teórico", c.getString(0))
+            assertEquals(lunes, c.getLong(1))
+            assertEquals(0, c.getInt(2))
+            assertTrue(c.isNull(3))
         }
         db.close()
     }

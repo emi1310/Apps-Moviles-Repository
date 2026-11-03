@@ -98,10 +98,15 @@ fun TarjetaEventoResumen(item: EventoConMateria, hoy: LocalDate) {
 // Evento del día elegido en el Calendario: la hora a la izquierda, una
 // franja del color de la materia y el detalle, con menú para editar o eliminar.
 @Composable
-fun TarjetaEventoCalendario(item: EventoConMateria, onEditar: () -> Unit, onEliminar: () -> Unit) {
+fun TarjetaEventoCalendario(
+    item: EventoConMateria,
+    onEditar: () -> Unit,
+    onEliminar: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val color = Color(item.colorMateria)
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -133,7 +138,9 @@ fun TarjetaEventoCalendario(item: EventoConMateria, onEditar: () -> Unit, onElim
                     ChipMateria(item.nombreMateria, item.colorMateria)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = stringResource(nombreTipo(item.evento.tipo)),
+                        // Las clases semanales muestran además el día: "Clase · Cada lunes".
+                        text = stringResource(nombreTipo(item.evento.tipo)) +
+                            if (item.evento.semanal) " · " + stringResource(R.string.cada_dia_semana, nombreDiaSemana(item.evento.fecha)) else "",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

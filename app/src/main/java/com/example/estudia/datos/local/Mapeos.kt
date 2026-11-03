@@ -60,7 +60,9 @@ fun EventoEntity.aModelo(): Evento = Evento(
     tipo = textoATipo(tipo),
     fecha = fecha,
     horaInicio = horaInicio,
-    horaFin = horaFin
+    horaFin = horaFin,
+    semanal = semanal,
+    repetirHasta = repetirHasta
 )
 
 fun NotaEntity.aModelo(archivos: List<Archivo> = emptyList()): Nota = Nota(
@@ -109,7 +111,9 @@ fun Evento.aEntidad(materiaId: Int): EventoEntity = EventoEntity(
     tipo = tipoATexto(tipo),
     fecha = fecha,
     horaInicio = horaInicio,
-    horaFin = horaFin
+    horaFin = horaFin,
+    semanal = semanal,
+    repetirHasta = repetirHasta
 )
 
 fun Nota.aEntidad(materiaId: Int): NotaEntity = NotaEntity(

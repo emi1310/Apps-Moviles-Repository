@@ -101,6 +101,7 @@
     <string name="confirmar_eliminar_materia">¿Eliminar \"%1$s\"? Se van a borrar también sus tareas, eventos, notas y archivos.</string>
     <string name="aviso_materia_archivada">Materia archivada</string>
     <string name="aviso_materia_desarchivada">Materia desarchivada</string>
+    <string name="aviso_materia_eliminada">Se eliminó \"%1$s\"</string>
     <string name="aviso_tarea_eliminada">Tarea eliminada</string>
 
     <!-- Archivos -->
@@ -133,6 +134,11 @@
     <string name="error_elegir_tipo">Elegí un tipo de evento</string>
     <string name="error_titulo_evento">Escribí un título para el evento</string>
     <string name="error_hora_fin">La hora de fin tiene que ser posterior a la de inicio</string>
+    <string name="repetir_semanal">Repetir cada semana</string>
+    <string name="repetir_hasta">Última clase (opcional)</string>
+    <string name="repetir_sin_fin">Sin fecha de fin</string>
+    <string name="error_repetir_hasta">La última clase no puede ser antes de la primera</string>
+    <string name="cada_dia_semana">Cada %1$s</string>
     <string name="aviso_evento_eliminado">Evento eliminado</string>
     <string-array name="meses">
         <item>Enero</item>
@@ -243,15 +249,21 @@
         <item>¿Qué es la meta semanal?</item>
         <item>¿Borré algo sin querer, lo puedo recuperar?</item>
         <item>¿Dónde se guardan mis datos?</item>
+        <item>¿Cómo uso el temporizador de estudio?</item>
+        <item>¿Cómo cargo una clase que se repite todas las semanas?</item>
+        <item>¿Hay atajos para completar o eliminar?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
         <item>En Materias, expandí la materia y tocá \"Adjuntar archivo\". En Notas, usá el menú de la nota. El archivo se copia dentro de la app, así que no se pierde aunque borres el original.</item>
         <item>Solo para los recordatorios: un resumen diario y un aviso antes de cada examen o entrega. El permiso se pide recién cuando activás \"Recordatorios\" en tu perfil, y podés quitarlo cuando quieras.</item>
         <item>No. La app no tiene permisos de almacenamiento: solo puede leer el archivo que vos elegís en el selector del sistema.</item>
-        <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio que cargaste en el calendario para esa semana.</item>
-        <item>Sí: al eliminar una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
+        <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio de esa semana: los que cargás en el calendario y las sesiones del temporizador.</item>
+        <item>Sí: al eliminar una materia, una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
         <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
+        <item>En Inicio tocá \"Temporizador de estudio\", elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
+        <item>Creá un evento de tipo \"Clase\" con la fecha de la primera clase y marcá \"Repetir cada semana\". Si querés, elegí la fecha de la última clase; si no, se repite sin fin.</item>
+        <item>Sí: en las listas, deslizá una tarea hacia la derecha para completarla, o cualquier tarea, nota o evento hacia la izquierda para eliminarlo (con \"Deshacer\").</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -287,4 +299,37 @@
         <item>Sábado</item>
         <item>Domingo</item>
     </string-array>
+
+    <!-- Temporizador de estudio -->
+    <string name="temporizador_titulo">Temporizador de estudio</string>
+    <string name="temporizador_subtitulo">Concentrate un rato en una sola materia y después tomate 5 minutos de descanso</string>
+    <string name="temporizador_invitacion">Elegí una materia y empezá a concentrarte</string>
+    <string name="temporizador_que_estudias">¿Qué vas a estudiar?</string>
+    <string name="temporizador_duracion">Duración</string>
+    <string name="minutos_corto">%1$d min</string>
+    <string name="temporizador_empezar">Empezar</string>
+    <string name="temporizador_pausar">Pausar</string>
+    <string name="temporizador_reanudar">Seguir</string>
+    <string name="temporizador_terminar">Terminar</string>
+    <string name="temporizador_descartar">Descartar sesión</string>
+    <string name="temporizador_listo">Listo para empezar</string>
+    <string name="temporizador_en_pausa">En pausa</string>
+    <string name="temporizador_estudiando">Estudiando %1$s</string>
+    <string name="temporizador_faltan">Faltan %1$d min · tocá para ver</string>
+    <string name="temporizador_hoy">Estudiaste hoy</string>
+    <string name="temporizador_consejo">Cada sesión terminada se guarda como bloque de estudio y suma a tu meta semanal.</string>
+    <string name="temporizador_sin_materias">Todavía no tenés materias</string>
+    <string name="temporizador_sin_materias_sugerencia">Creá una materia en la pestaña Materias para empezar a estudiar</string>
+    <string name="sesion_estudio_titulo">Sesión de estudio</string>
+    <string name="aviso_sesion_completa">¡Sesión completa! Sumaste %1$d min de estudio en %2$s</string>
+    <string name="aviso_sesion_guardada">Se guardaron %1$d min de estudio</string>
+    <string name="aviso_sesion_muy_corta">La sesión duró menos de 1 minuto y no se guardó</string>
+    <string name="aviso_sesion_descartada">Sesión descartada</string>
+    <string name="notificacion_temporizador_titulo">¡Terminó tu sesión de estudio! 🎉</string>
+    <string name="notificacion_temporizador_texto">Estudiaste %1$d min de %2$s. Tomate un descanso de 5 minutos.</string>
+
+    <!-- Deslizar en las listas (lo lee TalkBack) -->
+    <string name="deslizar_completar">Completar</string>
+    <string name="deslizar_desmarcar">Marcar como pendiente</string>
+    <string name="deslizar_eliminar">Eliminar</string>
 </resources>

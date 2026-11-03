@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
@@ -34,6 +36,7 @@ import com.example.estudia.ui.componentes.FilaTarea
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.OpcionMenu
 import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TIPOS_ARCHIVO
 import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.abrirArchivo
@@ -73,6 +76,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
     // para las barras del sistema (si no, el espacio se duplica).
     Scaffold(
         contentWindowInsets = WindowInsets(0),
+        snackbarHost = { SnackbarDeAvisos() },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { crearMateria = true },
@@ -108,20 +112,29 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                     }
                 }
                 items(estado.resultadosBusqueda, key = { "t" + it.tarea.id }) { encontrada ->
-                    FilaTarea(
-                        tarea = encontrada.tarea,
-                        hoy = LocalDate.now(),
-                        subtitulo = encontrada.nombreMateria,
-                        onAlternar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
-                        opciones = listOf(
-                            OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
-                                tareaEnDialogo = encontrada.materiaId to encontrada.tarea
-                            },
-                            OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) {
-                                viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
-                            }
+                    Deslizable(
+                        modifier = Modifier.animateItem(),
+                        onCompletar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
+                        completada = encontrada.tarea.completada,
+                        onEliminar = { viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea) },
+                        forma = RoundedCornerShape(12.dp),
+                        fondoContenido = MaterialTheme.colorScheme.background
+                    ) {
+                        FilaTarea(
+                            tarea = encontrada.tarea,
+                            hoy = LocalDate.now(),
+                            subtitulo = encontrada.nombreMateria,
+                            onAlternar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
+                            opciones = listOf(
+                                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
+                                    tareaEnDialogo = encontrada.materiaId to encontrada.tarea
+                                },
+                                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) {
+                                    viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
+                                }
+                            )
                         )
-                    )
+                    }
                 }
             } else {
                 // ---------- Filtro Activas / Archivadas ----------
@@ -157,6 +170,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                 }
                 items(estado.materias, key = { it.id }) { materia ->
                     TarjetaMateria(
+                        modifier = Modifier.animateItem(),
                         materia = materia,
                         onAlternarTarea = { viewModel.alternarTarea(materia.id, it) },
                         onAgregarTarea = { tareaEnDialogo = materia.id to null },

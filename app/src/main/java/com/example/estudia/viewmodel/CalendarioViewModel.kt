@@ -23,7 +23,9 @@ data class CalendarioUiState(
     val hoy: LocalDate = LocalDate.now(),
     // Grilla del mes: semanas de 7 casilleros (domingo a sábado); null = vacío.
     val semanas: List<List<LocalDate?>> = emptyList(),
-    val diasConEventos: Set<LocalDate> = emptySet(),
+    // Para cada día del mes con eventos, los colores de sus materias (hasta 3,
+    // sin repetir): se dibujan como puntitos debajo del número.
+    val coloresPorDia: Map<LocalDate, List<Long>> = emptyMap(),
     val eventosDelDia: List<EventoConMateria> = emptyList(),
     val materiasActivas: List<Materia> = emptyList()
 )
@@ -47,8 +49,15 @@ class CalendarioViewModel(
                 mes = mesActual,
                 seleccionado = dia,
                 semanas = semanasDelMes(mesActual),
-                diasConEventos = eventos.map { it.evento.fecha }.filter { YearMonth.from(it) == mesActual }.toSet(),
-                eventosDelDia = eventos.filter { it.evento.fecha == dia }.sortedBy { it.evento.horaInicio },
+                // Se recorre día por día porque las clases semanales aparecen
+                // en varias fechas aunque estén guardadas una sola vez.
+                coloresPorDia = (1..mesActual.lengthOfMonth())
+                    .map { mesActual.atDay(it) }
+                    .associateWith { fecha ->
+                        eventos.filter { it.evento.ocurreEl(fecha) }.map { it.colorMateria }.distinct().take(3)
+                    }
+                    .filterValues { it.isNotEmpty() },
+                eventosDelDia = eventos.filter { it.evento.ocurreEl(dia) }.sortedBy { it.evento.horaInicio },
                 materiasActivas = materias.filter { !it.archivada }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarioUiState(semanas = semanasDelMes(YearMonth.now())))
@@ -71,8 +80,9 @@ class CalendarioViewModel(
         seleccionado.value = nuevo.atDay(1)
     }
 
-    // Crea o edita un evento. Devuelve el error a mostrar en el diálogo, o
-    // null si se guardó. Si se edita, el evento puede cambiar de materia.
+    // Crea o edita un evento (las clases pueden repetirse cada semana).
+    // Devuelve el error a mostrar en el diálogo, o null si se guardó.
+    // Si se edita, el evento puede cambiar de materia.
     @StringRes
     fun guardarEvento(
         materiaId: Int,
@@ -81,10 +91,19 @@ class CalendarioViewModel(
         tipo: TipoEvento,
         fecha: LocalDate,
         inicio: LocalTime,
-        fin: LocalTime
+        fin: LocalTime,
+        semanal: Boolean = false,
+        repetirHasta: LocalDate? = null
     ): Int? {
         if (!fin.isAfter(inicio)) return R.string.error_hora_fin
-        val evento = Evento(existente?.id ?: 0, titulo.trim(), tipo, fecha, inicio, fin)
+        // Solo las clases se repiten; "hasta" no puede ser antes de la primera clase.
+        val seRepite = semanal && tipo == TipoEvento.CLASE
+        if (seRepite && repetirHasta != null && repetirHasta.isBefore(fecha)) return R.string.error_repetir_hasta
+        val evento = Evento(
+            existente?.id ?: 0, titulo.trim(), tipo, fecha, inicio, fin,
+            semanal = seRepite,
+            repetirHasta = if (seRepite) repetirHasta else null
+        )
         viewModelScope.launch {
             if (existente == null) repositorio.agregarEvento(materiaId, evento)
             else repositorio.actualizarEvento(materiaId, evento)

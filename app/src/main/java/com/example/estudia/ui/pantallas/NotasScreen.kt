@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -18,12 +18,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TIPOS_ARCHIVO
 import com.example.estudia.ui.componentes.TarjetaNota
 import com.example.estudia.ui.componentes.abrirArchivo
@@ -54,6 +56,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
+        snackbarHost = { SnackbarDeAvisos() },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { crearNota = true },
@@ -88,30 +91,37 @@ fun NotasScreen(viewModel: NotasViewModel) {
                     if (estado.busqueda.isNotBlank()) {
                         EstadoVacio(Icons.Filled.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.sin_resultados_sugerencia))
                     } else {
-                        EstadoVacio(Icons.AutoMirrored.Filled.Notes, stringResource(R.string.sin_notas), stringResource(R.string.sin_notas_sugerencia))
+                        EstadoVacio(Icons.Filled.StickyNote2, stringResource(R.string.sin_notas), stringResource(R.string.sin_notas_sugerencia))
                     }
                 }
             }
 
             items(estado.notas, key = { it.nota.id }) { item ->
-                TarjetaNota(
-                    nota = item.nota,
-                    nombreMateria = item.nombreMateria,
-                    colorMateria = item.colorMateria,
-                    alTocarEstrella = { viewModel.alternarFavorita(item) },
-                    alAdjuntar = {
-                        idNotaParaAdjuntar = item.nota.id
-                        selectorArchivos.launch(TIPOS_ARCHIVO)
-                    },
-                    alEditar = { notaParaEditar = item },
-                    alEliminar = { viewModel.eliminarNota(item) },
-                    alAbrirArchivo = { archivo ->
-                        if (!abrirArchivo(context, viewModel.uriParaAbrir(archivo), archivo.tipoMime)) {
-                            avisos.mostrarTexto(textoSinApp)
-                        }
-                    },
-                    alEliminarArchivo = { viewModel.eliminarArchivo(item, it) }
-                )
+                // Deslizar hacia la izquierda elimina la nota (con "Deshacer").
+                Deslizable(
+                    modifier = Modifier.animateItem(),
+                    onEliminar = { viewModel.eliminarNota(item) },
+                    margenVertical = 6.dp
+                ) {
+                    TarjetaNota(
+                        nota = item.nota,
+                        nombreMateria = item.nombreMateria,
+                        colorMateria = item.colorMateria,
+                        alTocarEstrella = { viewModel.alternarFavorita(item) },
+                        alAdjuntar = {
+                            idNotaParaAdjuntar = item.nota.id
+                            selectorArchivos.launch(TIPOS_ARCHIVO)
+                        },
+                        alEditar = { notaParaEditar = item },
+                        alEliminar = { viewModel.eliminarNota(item) },
+                        alAbrirArchivo = { archivo ->
+                            if (!abrirArchivo(context, viewModel.uriParaAbrir(archivo), archivo.tipoMime)) {
+                                avisos.mostrarTexto(textoSinApp)
+                            }
+                        },
+                        alEliminarArchivo = { viewModel.eliminarArchivo(item, it) }
+                    )
+                }
             }
         }
     }

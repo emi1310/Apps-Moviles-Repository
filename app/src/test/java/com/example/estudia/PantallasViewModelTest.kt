@@ -110,6 +110,22 @@ class PantallasViewModelTest {
     }
 
     @Test
+    fun eliminarMateriaSePuedeDeshacer() = runTest {
+        val vm = MateriasViewModel(repositorio)
+        observar(vm.uiState)
+        val avisos = recolectarAvisos(vm.avisos)
+        val materia = vm.uiState.value.todas.first { it.nombre == "Física" }
+
+        vm.eliminarMateria(materia)
+        assertTrue(vm.uiState.value.materias.isEmpty())
+        assertEquals(R.string.aviso_materia_eliminada, avisos.single().mensaje)
+
+        avisos.single().alDeshacer!!.invoke()
+        assertEquals(listOf("Física"), vm.uiState.value.materias.map { it.nombre })
+        assertTrue(repositorio.archivosBorradosDelDisco.isEmpty())
+    }
+
+    @Test
     fun elArchivoSeBorraDelDiscoSoloSiNoSeDeshace() = runTest {
         val vm = MateriasViewModel(repositorio)
         observar(vm.uiState)

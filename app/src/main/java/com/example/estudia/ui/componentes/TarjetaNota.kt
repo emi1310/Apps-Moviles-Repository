@@ -39,10 +39,11 @@ fun TarjetaNota(
     alEditar: () -> Unit,
     alEliminar: () -> Unit,
     alAbrirArchivo: (Archivo) -> Unit,
-    alEliminarArchivo: (Archivo) -> Unit
+    alEliminarArchivo: (Archivo) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(start = 16.dp, top = 8.dp, end = 4.dp, bottom = 14.dp)) {

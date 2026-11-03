@@ -19,11 +19,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.CasillaDia
 import com.example.estudia.ui.componentes.DialogoEvento
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TarjetaEventoCalendario
 import com.example.estudia.ui.componentes.textoFecha
 import com.example.estudia.viewmodel.CalendarioViewModel
@@ -45,6 +47,7 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
+        snackbarHost = { SnackbarDeAvisos() },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
@@ -111,7 +114,7 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                                         fecha = fecha,
                                         esHoy = fecha == estado.hoy,
                                         seleccionado = fecha == estado.seleccionado,
-                                        tieneEventos = fecha in estado.diasConEventos,
+                                        coloresEventos = estado.coloresPorDia[fecha].orEmpty(),
                                         modifier = Modifier.weight(1f),
                                         onSeleccionar = { if (fecha != null) viewModel.seleccionar(fecha) }
                                     )
@@ -134,14 +137,21 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
             }
 
             items(estado.eventosDelDia, key = { it.evento.id }) { item ->
-                TarjetaEventoCalendario(
-                    item = item,
-                    onEditar = {
-                        eventoParaEditar = item
-                        mostrarDialogo = true
-                    },
-                    onEliminar = { viewModel.eliminarEvento(item) }
-                )
+                // Deslizar hacia la izquierda elimina el evento (con "Deshacer").
+                Deslizable(
+                    modifier = Modifier.animateItem(),
+                    onEliminar = { viewModel.eliminarEvento(item) },
+                    margenVertical = 4.dp
+                ) {
+                    TarjetaEventoCalendario(
+                        item = item,
+                        onEditar = {
+                            eventoParaEditar = item
+                            mostrarDialogo = true
+                        },
+                        onEliminar = { viewModel.eliminarEvento(item) }
+                    )
+                }
             }
         }
     }
@@ -154,8 +164,10 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
             // Al editar se puede mover el evento a otra materia activa.
             materias = estado.materiasActivas,
             fechaInicial = estado.seleccionado,
-            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin ->
-                val error = viewModel.guardarEvento(materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin)
+            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta ->
+                val error = viewModel.guardarEvento(
+                    materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta
+                )
                 if (error == null) mostrarDialogo = false
                 error
             },

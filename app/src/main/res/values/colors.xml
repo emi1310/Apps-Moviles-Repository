@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <!-- Fondo de la ventana (pantalla de carga): FondoClaro de Color.kt -->
+    <color name="fondo_ventana">#FFF6F5FB</color>
 </resources>

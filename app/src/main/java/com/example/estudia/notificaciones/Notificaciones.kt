@@ -28,6 +28,7 @@ object Notificaciones {
     // Cada evento usa su propio id (1000 + id del evento), así los avisos
     // de dos exámenes distintos no se pisan entre sí.
     const val ID_BASE_EVENTOS = 1000
+    const val ID_TEMPORIZADOR = 2
 
     // Desde Android 8 cada notificación pertenece a un canal, que el usuario
     // puede configurar por separado en Ajustes. Crearlo varias veces no pasa nada.

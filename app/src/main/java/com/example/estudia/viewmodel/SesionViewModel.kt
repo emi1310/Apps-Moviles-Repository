@@ -7,6 +7,7 @@ import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +52,10 @@ class SesionViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = SesionUiState.Cargando
         )
+
+    // Solo los valores guardados (sin el SISTEMA inicial de stateIn): los usa
+    // MainActivity para avisarle al sistema el tema elegido.
+    val temaGuardado: Flow<PreferenciaTema> = repositorio.tema
 
     val tema: StateFlow<PreferenciaTema> = repositorio.tema
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PreferenciaTema.SISTEMA)

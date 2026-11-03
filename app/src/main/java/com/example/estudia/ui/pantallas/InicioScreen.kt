@@ -6,14 +6,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.DonutLarge
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.modelo.SesionEstudio
+import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
@@ -32,13 +39,15 @@ import com.example.estudia.ui.theme.AmarilloFavorita
 import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.viewmodel.InicioUiState
 import com.example.estudia.viewmodel.InicioViewModel
+import kotlinx.coroutines.delay
 
 // Pantalla "Inicio": resumen de todas las materias — tareas pendientes,
 // próximos exámenes y entregas, una nota destacada y las horas de estudio.
 // Solo dibuja el UiState: los cálculos los hace InicioViewModel.
 @Composable
-fun InicioScreen(viewModel: InicioViewModel) {
+fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    val sesionEstudio by viewModel.sesionEstudio.collectAsStateWithLifecycle()
 
     if (estado.cargando) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -53,6 +62,7 @@ fun InicioScreen(viewModel: InicioViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         EncabezadoInicio(estado)
+        TarjetaTemporizador(sesionEstudio, onAbrirTemporizador)
 
         // ---------- Tareas pendientes ----------
         TarjetaSeccion(
@@ -65,7 +75,16 @@ fun InicioScreen(viewModel: InicioViewModel) {
                 TextoSecundario(stringResource(R.string.sin_tareas_pendientes_feliz))
             }
             estado.tareasPendientes.take(5).forEach { item ->
-                TarjetaTareaPendiente(item, estado.hoy, onAlternar = { viewModel.alternarTarea(item) })
+                // Deslizar hacia la derecha la completa (y sale de la lista).
+                key(item.tarea.id) {
+                    Deslizable(
+                        onCompletar = { viewModel.alternarTarea(item) },
+                        forma = RoundedCornerShape(12.dp),
+                        fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ) {
+                        TarjetaTareaPendiente(item, estado.hoy, onAlternar = { viewModel.alternarTarea(item) })
+                    }
+                }
             }
         }
 
@@ -176,4 +195,50 @@ private fun DatoEncabezado(valor: String, etiqueta: String, modifier: Modifier) 
 @Composable
 private fun TextoSecundario(texto: String) {
     Text(text = texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+// Acceso al temporizador de estudio. Si hay una sesión en curso, muestra
+// la materia y cuánto falta (se actualiza cada segundo).
+@Composable
+private fun TarjetaTemporizador(sesion: SesionEstudio?, onAbrir: () -> Unit) {
+    val ahora by produceState(System.currentTimeMillis(), sesion) {
+        while (sesion != null && !sesion.enPausa) {
+            value = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
+    Card(
+        onClick = onAbrir,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Timer, contentDescription = null, modifier = Modifier.size(32.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                if (sesion == null) {
+                    Text(stringResource(R.string.temporizador_titulo), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.temporizador_invitacion), style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    val minutos = (sesion.restanteMillis(ahora) + 59_999) / 60_000
+                    Text(
+                        text = stringResource(R.string.temporizador_estudiando, sesion.nombreMateria),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = if (sesion.enPausa) stringResource(R.string.temporizador_en_pausa)
+                        else stringResource(R.string.temporizador_faltan, minutos),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            Icon(
+                if (sesion == null) Icons.Filled.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null
+            )
+        }
+    }
 }

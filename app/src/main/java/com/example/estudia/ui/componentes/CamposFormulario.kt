@@ -86,14 +86,16 @@ fun CampoFecha(
     fecha: LocalDate?,
     onCambiar: (LocalDate?) -> Unit,
     modifier: Modifier = Modifier,
-    permitirVacio: Boolean = false
+    permitirVacio: Boolean = false,
+    // Texto del botón cuando no hay fecha (por defecto "Sin fecha").
+    textoVacio: String? = null
 ) {
     var abierto by remember { mutableStateOf(false) }
     Row(modifier = modifier) {
         OutlinedButton(onClick = { abierto = true }, modifier = Modifier.weight(1f)) {
             Icon(Icons.Filled.CalendarMonth, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text(fecha?.aTexto() ?: stringResource(R.string.sin_fecha))
+            Text(fecha?.aTexto() ?: textoVacio ?: stringResource(R.string.sin_fecha))
         }
         if (permitirVacio && fecha != null) {
             IconButton(onClick = { onCambiar(null) }) {

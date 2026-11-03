@@ -6,6 +6,7 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
+import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +43,10 @@ interface RepositorioEstudia {
 
     suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long)
     suspend fun actualizarMateria(usuarioId: Int, materia: Materia)
+    // Los archivos en disco no se borran acá, por si el usuario toca
+    // "Deshacer": ver borrarArchivosDelDisco.
     suspend fun eliminarMateria(usuarioId: Int, materia: Materia)
+    suspend fun restaurarMateria(usuarioId: Int, materia: Materia)
 
     // ---------- Tareas ----------
 
@@ -80,6 +84,24 @@ interface RepositorioEstudia {
 
     suspend fun cambiarRecordatorios(activos: Boolean)
     suspend fun cambiarTema(tema: PreferenciaTema)
+
+    // ---------- Temporizador de estudio ----------
+    // Al terminar, la sesión se guarda como un bloque de estudio de hoy, así
+    // se suma sola a las horas de estudio y a la meta semanal.
+
+    val sesionEstudio: Flow<SesionEstudio?>
+    suspend fun empezarSesion(materia: Materia, minutos: Int)
+    suspend fun pausarSesion()
+    suspend fun reanudarSesion()
+
+    // Corta la sesión antes de tiempo. Si guardar = true, registra lo que ya
+    // se estudió (si es al menos 1 minuto). Devuelve los minutos guardados.
+    suspend fun terminarSesion(guardar: Boolean): Int
+
+    // Si el tiempo ya llegó a cero, guarda la sesión completa y la cierra.
+    // Devuelve la sesión guardada, o null si no había nada que completar.
+    // La usan la pantalla y TemporizadorWorker: solo uno de los dos la guarda.
+    suspend fun completarSesionSiTermino(): SesionEstudio?
 }
 
 // Resultados del buscador (una nota o tarea junto con su materia).

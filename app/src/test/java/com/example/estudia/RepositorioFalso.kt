@@ -10,12 +10,15 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
+import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.LocalTime
 
 // Repositorio falso para los tests de los ViewModels: guarda todo en
 // memoria (sin Room, sin DataStore, sin emulador). Es posible gracias a
@@ -90,6 +93,10 @@ class RepositorioFalso(
         cambiarMaterias { lista -> lista.filter { it.id != materia.id } }
     }
 
+    override suspend fun restaurarMateria(usuarioId: Int, materia: Materia) {
+        cambiarMaterias { lista -> lista + materia }
+    }
+
     // ---------- Tareas ----------
 
     override suspend fun agregarTarea(materiaId: Int, titulo: String, fechaLimite: LocalDate?) =
@@ -158,6 +165,48 @@ class RepositorioFalso(
 
     override suspend fun cambiarTema(tema: PreferenciaTema) {
         temaElegido.value = tema
+    }
+
+    // ---------- Temporizador ----------
+    // "reloj" lo controla cada test (en milisegundos), en lugar de la hora real.
+
+    var reloj = 0L
+    val sesion = MutableStateFlow<SesionEstudio?>(null)
+    override val sesionEstudio: Flow<SesionEstudio?> = sesion
+
+    override suspend fun empezarSesion(materia: Materia, minutos: Int) {
+        sesion.value = SesionEstudio.nueva(materia, minutos, reloj)
+    }
+
+    override suspend fun pausarSesion() {
+        sesion.value = sesion.value?.pausar(reloj)
+    }
+
+    override suspend fun reanudarSesion() {
+        sesion.value = sesion.value?.reanudar(reloj)
+    }
+
+    override suspend fun terminarSesion(guardar: Boolean): Int {
+        val actual = sesion.value ?: return 0
+        val minutos = if (guardar) actual.minutosEstudiados(reloj) else 0
+        if (minutos > 0) guardarBloque(actual.materiaId, minutos)
+        sesion.value = null
+        return minutos
+    }
+
+    override suspend fun completarSesionSiTermino(): SesionEstudio? {
+        val actual = sesion.value?.takeIf { it.terminada(reloj) } ?: return null
+        guardarBloque(actual.materiaId, actual.minutos)
+        sesion.value = null
+        return actual
+    }
+
+    private suspend fun guardarBloque(materiaId: Int, minutos: Int) {
+        val inicio = LocalTime.of(10, 0)
+        agregarEvento(
+            materiaId,
+            Evento(0, "Sesión de estudio", TipoEvento.BLOQUE_ESTUDIO, LocalDate.now(), inicio, inicio.plusMinutes(minutos.toLong()))
+        )
     }
 
     // ---------- Ayudantes ----------

@@ -1,7 +1,9 @@
 package com.example.estudia.datos
 
 import android.content.Context
+import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
+import com.example.estudia.R
 import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.ArchivoDao
 import com.example.estudia.datos.local.EventoDao
@@ -19,7 +21,9 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
+import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.notificaciones.ProgramadorRecordatorios
 import com.example.estudia.util.Contrasenas
@@ -30,15 +34,20 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 // Implementación real del Repository. Combina varias fuentes:
 //  - Room (DAOs): usuarios, materias, tareas, eventos, notas y archivos.
 //  - DataStore: el id del usuario con la sesión abierta y las preferencias.
 //  - AlmacenamientoArchivos: el contenido de los adjuntos (filesDir).
 //  - ProgramadorRecordatorios: los recordatorios (WorkManager).
+//  - TemporizadorDataStore: la sesión del temporizador de estudio en curso.
 // También convierte entidades de Room <-> modelo de dominio (Mapeos.kt).
 // Arquitectura: UI -> ViewModel -> Repository -> Room / DataStore / archivos.
 class RepositorioEstudiaImpl(
@@ -51,7 +60,10 @@ class RepositorioEstudiaImpl(
     private val sesion: SesionDataStore,
     private val preferencias: PreferenciasDataStore,
     private val almacenamiento: AlmacenamientoArchivos,
-    private val programador: ProgramadorRecordatorios
+    private val programador: ProgramadorRecordatorios,
+    private val temporizador: TemporizadorDataStore,
+    // Título de los bloques de estudio que guarda el temporizador (strings.xml).
+    private val tituloSesionEstudio: String
 ) : RepositorioEstudia {
 
     companion object {
@@ -69,7 +81,9 @@ class RepositorioEstudiaImpl(
                 sesion = SesionDataStore(app),
                 preferencias = PreferenciasDataStore(app),
                 almacenamiento = AlmacenamientoArchivos(app),
-                programador = ProgramadorRecordatorios(app)
+                programador = ProgramadorRecordatorios(app),
+                temporizador = TemporizadorDataStore(app),
+                tituloSesionEstudio = app.getString(R.string.sesion_estudio_titulo)
             )
         }
     }
@@ -143,6 +157,8 @@ class RepositorioEstudiaImpl(
 
     override suspend fun cerrarSesion() {
         sesion.borrarSesion()
+        // El temporizador es del usuario que se va: se descarta sin guardar.
+        candadoTemporizador.withLock { cerrarSesionDeEstudio() }
     }
 
     override suspend fun editarPerfil(usuarioId: Int, nombre: String, carrera: String?, anio: Int?, email: String?) {
@@ -164,11 +180,24 @@ class RepositorioEstudiaImpl(
     }
 
     // El CASCADE de Room borra sus tareas, eventos, notas y filas de archivos;
-    // el contenido de los archivos en disco y los recordatorios se borran a mano.
+    // los recordatorios se cancelan a mano. El contenido de los archivos en
+    // disco se borra después de que pasa el "Deshacer" (borrarArchivosDelDisco).
     override suspend fun eliminarMateria(usuarioId: Int, materia: Materia) {
         materia.eventos.forEach { programador.cancelarEvento(it.id) }
-        borrarArchivosDelDisco(materia.todosLosArchivos())
         materiaDao.eliminar(materia.aEntidad(usuarioId))
+    }
+
+    // Se vuelve a insertar todo con los mismos ids. El orden importa por las
+    // ForeignKey: primero la materia, después las notas y al final los archivos.
+    override suspend fun restaurarMateria(usuarioId: Int, materia: Materia) {
+        materiaDao.insertar(materia.aEntidad(usuarioId))
+        materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materia.id)) }
+        materia.eventos.forEach {
+            eventoDao.insertar(it.aEntidad(materia.id))
+            programarSiCorresponde(it)
+        }
+        materia.notas.forEach { notaDao.insertar(it.aEntidad(materia.id)) }
+        archivoDao.insertarTodos(materia.todosLosArchivos().map { it.aEntidad(materia.id) })
     }
 
     // ---------- Tareas ----------
@@ -284,6 +313,68 @@ class RepositorioEstudiaImpl(
         preferencias.guardarTema(tema)
     }
 
+    // ---------- Temporizador de estudio ----------
+    // El Mutex evita que la pantalla y TemporizadorWorker guarden la misma
+    // sesión dos veces si terminan justo al mismo tiempo.
+
+    private val candadoTemporizador = Mutex()
+
+    override val sesionEstudio: Flow<SesionEstudio?> = temporizador.sesion
+
+    override suspend fun empezarSesion(materia: Materia, minutos: Int) = candadoTemporizador.withLock {
+        val sesion = SesionEstudio.nueva(materia, minutos, ahora())
+        temporizador.guardar(sesion)
+        programador.programarFinTemporizador(sesion.duracionMillis)
+    }
+
+    override suspend fun pausarSesion() = candadoTemporizador.withLock {
+        val sesion = temporizador.actual() ?: return@withLock
+        temporizador.guardar(sesion.pausar(ahora()))
+        programador.cancelarFinTemporizador()
+    }
+
+    override suspend fun reanudarSesion() = candadoTemporizador.withLock {
+        val sesion = temporizador.actual()?.reanudar(ahora()) ?: return@withLock
+        temporizador.guardar(sesion)
+        programador.programarFinTemporizador(sesion.restanteMillis(ahora()))
+    }
+
+    override suspend fun terminarSesion(guardar: Boolean): Int = candadoTemporizador.withLock {
+        val sesion = temporizador.actual() ?: return@withLock 0
+        val minutos = if (guardar) sesion.minutosEstudiados(ahora()) else 0
+        if (minutos > 0) guardarBloqueDeEstudio(sesion.materiaId, minutos)
+        cerrarSesionDeEstudio()
+        minutos
+    }
+
+    override suspend fun completarSesionSiTermino(): SesionEstudio? = candadoTemporizador.withLock {
+        val sesion = temporizador.actual()?.takeIf { it.terminada(ahora()) } ?: return@withLock null
+        guardarBloqueDeEstudio(sesion.materiaId, sesion.minutos)
+        cerrarSesionDeEstudio()
+        sesion
+    }
+
+    private suspend fun cerrarSesionDeEstudio() {
+        temporizador.borrar()
+        programador.cancelarFinTemporizador()
+    }
+
+    // Bloque de estudio que termina ahora y empezó "minutos" antes (si la
+    // sesión arrancó antes de la medianoche, se cuenta desde las 00:00).
+    // Si mientras tanto se borró la materia, no hay dónde guardarlo.
+    private suspend fun guardarBloqueDeEstudio(materiaId: Int, minutos: Int) {
+        val fin = LocalTime.now().truncatedTo(ChronoUnit.MINUTES)
+        val inicio = fin.minusMinutes(minutos.toLong()).let { if (it.isAfter(fin)) LocalTime.MIDNIGHT else it }
+        val bloque = Evento(0, tituloSesionEstudio, TipoEvento.BLOQUE_ESTUDIO, LocalDate.now(), inicio, fin)
+        try {
+            eventoDao.insertar(bloque.aEntidad(materiaId))
+        } catch (e: SQLiteConstraintException) {
+            // La materia ya no existe: la sesión se descarta.
+        }
+    }
+
+    private fun ahora() = System.currentTimeMillis()
+
     // ---------- Para los Workers (no forman parte de la interfaz) ----------
 
     data class ResumenDia(val tareasPendientes: Int, val eventosHoy: List<Evento>, val eventosManana: List<Evento>)
@@ -297,8 +388,8 @@ class RepositorioEstudiaImpl(
         val materias = usuario.materias.filter { !it.archivada }
         val pendientes = materias.sumOf { materia -> materia.tareas.count { !it.completada } }
         val eventos = materias.flatMap { it.eventos }
-        val eventosHoy = eventos.filter { it.fecha == hoy }
-        val eventosManana = eventos.filter { it.fecha == hoy.plusDays(1) }
+        val eventosHoy = eventos.filter { it.ocurreEl(hoy) }
+        val eventosManana = eventos.filter { it.ocurreEl(hoy.plusDays(1)) }
         if (pendientes == 0 && eventosHoy.isEmpty() && eventosManana.isEmpty()) return null
         return ResumenDia(pendientes, eventosHoy, eventosManana)
     }

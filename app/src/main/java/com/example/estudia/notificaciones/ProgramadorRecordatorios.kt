@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit
 //  - Un resumen diario a las 8:00 (RecordatorioWorker).
 //  - Un aviso por cada examen o entrega: la noche anterior a las 20:00, o
 //    2 horas antes si ya pasó ese momento (EventoWorker).
+//  - El fin del temporizador de estudio (TemporizadorWorker).
 class ProgramadorRecordatorios(context: Context) {
 
     private val workManager = WorkManager.getInstance(context.applicationContext)
@@ -64,6 +65,20 @@ class ProgramadorRecordatorios(context: Context) {
         workManager.cancelAllWorkByTag(ETIQUETA_EVENTOS)
     }
 
+    // Fin del temporizador de estudio: aunque la app esté cerrada, al llegar
+    // a cero TemporizadorWorker guarda la sesión y avisa con una notificación.
+    // REPLACE: al pausar y reanudar se reemplaza el aviso por uno nuevo.
+    fun programarFinTemporizador(retrasoMillis: Long) {
+        val trabajo = OneTimeWorkRequestBuilder<TemporizadorWorker>()
+            .setInitialDelay(retrasoMillis.coerceAtLeast(0), TimeUnit.MILLISECONDS)
+            .build()
+        workManager.enqueueUniqueWork(TRABAJO_TEMPORIZADOR, ExistingWorkPolicy.REPLACE, trabajo)
+    }
+
+    fun cancelarFinTemporizador() {
+        workManager.cancelUniqueWork(TRABAJO_TEMPORIZADOR)
+    }
+
     private fun proximaHora(hora: LocalTime): LocalDateTime {
         val hoy = LocalDateTime.now().toLocalDate().atTime(hora)
         return if (hoy.isAfter(LocalDateTime.now())) hoy else hoy.plusDays(1)
@@ -76,5 +91,6 @@ class ProgramadorRecordatorios(context: Context) {
     companion object {
         private const val TRABAJO_DIARIO = "recordatorio_diario"
         private const val ETIQUETA_EVENTOS = "recordatorio_evento"
+        private const val TRABAJO_TEMPORIZADOR = "fin_temporizador"
     }
 }

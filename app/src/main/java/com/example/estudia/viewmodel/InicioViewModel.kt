@@ -6,6 +6,7 @@ import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
@@ -46,6 +47,10 @@ class InicioViewModel(
     val uiState: StateFlow<InicioUiState> = repositorio.usuarioActual
         .map { usuario -> if (usuario == null) InicioUiState() else calcularResumen(usuario, hoy()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InicioUiState())
+
+    // Sesión del temporizador en curso (null si no hay), para la tarjeta de Inicio.
+    val sesionEstudio: StateFlow<SesionEstudio?> = repositorio.sesionEstudio
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun alternarTarea(item: TareaConMateria) {
         viewModelScope.launch {

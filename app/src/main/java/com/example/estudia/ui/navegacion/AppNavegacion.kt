@@ -1,5 +1,9 @@
 package com.example.estudia.ui.navegacion
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,6 +38,7 @@ import com.example.estudia.ui.pantallas.MateriasScreen
 import com.example.estudia.ui.pantallas.NotasScreen
 import com.example.estudia.ui.pantallas.PerfilScreen
 import com.example.estudia.ui.pantallas.RegistroScreen
+import com.example.estudia.ui.pantallas.TemporizadorScreen
 import com.example.estudia.viewmodel.AppViewModelProvider
 import com.example.estudia.viewmodel.SesionUiState
 import com.example.estudia.viewmodel.SesionViewModel
@@ -83,7 +88,11 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
 
     CompositionLocalProvider(LocalAvisos provides avisos) {
         Scaffold(
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            snackbarHost = {
+                if (pantallasConBotonFlotante.none { it.ruta == rutaActual }) {
+                    SnackbarHost(hostState = snackbarHostState)
+                }
+            },
             bottomBar = {
                 if (mostrarBarra) {
                     BarraInferior(
@@ -103,9 +112,15 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
                 navController = navController,
                 startDestination = destinoInicial,
                 // Las pantallas con barra inferior respetan el espacio del Scaffold;
-                // las demás (Bienvenida, Login, Registro, Ayuda) dibujan de borde a
+                // las demás (Bienvenida, Login, Registro, Ayuda, Temporizador) dibujan de borde a
                 // borde y manejan ellas mismas las barras del sistema.
-                modifier = if (mostrarBarra) Modifier.padding(espacioInterno) else Modifier
+                modifier = if (mostrarBarra) Modifier.padding(espacioInterno) else Modifier,
+                // Transición entre pantallas: un fundido corto con un leve
+                // deslizamiento hacia arriba (el de Navigation dura 700 ms).
+                enterTransition = { fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 30 } },
+                exitTransition = { fadeOut(tween(150)) },
+                popEnterTransition = { fadeIn(tween(250)) },
+                popExitTransition = { fadeOut(tween(150)) }
             ) {
                 composable(Screen.Bienvenida.ruta) {
                     BienvenidaScreen(onComenzar = { navController.navigate(Screen.Login.ruta) })
@@ -134,7 +149,10 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
                 }
 
                 composable(Screen.Inicio.ruta) {
-                    InicioScreen(viewModel(factory = AppViewModelProvider.Factory))
+                    InicioScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onAbrirTemporizador = { navController.navigate(Screen.Temporizador.ruta) }
+                    )
                 }
 
                 composable(Screen.Materias.ruta) {
@@ -159,6 +177,13 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
                                 popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
+                    )
+                }
+
+                composable(Screen.Temporizador.ruta) {
+                    TemporizadorScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() }
                     )
                 }
 

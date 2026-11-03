@@ -46,16 +46,19 @@ fun TarjetaMateria(
     onEliminarArchivo: (Archivo) -> Unit,
     onEditar: () -> Unit,
     onArchivar: () -> Unit,
-    onEliminar: () -> Unit
+    onEliminar: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expandida by rememberSaveable { mutableStateOf(false) }
     val color = Color(materia.color)
     val pendientes = materia.tareas.count { !it.completada }
     val progreso = materia.calcularProgreso()
+    // La barra se llena de a poco al abrir la pantalla y al marcar tareas.
+    val avance = progresoAnimado(progreso / 100f)
     val hoy = LocalDate.now()
 
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -105,7 +108,7 @@ fun TarjetaMateria(
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LinearProgressIndicator(
-                        progress = { progreso / 100f },
+                        progress = { avance },
                         color = color,
                         trackColor = color.copy(alpha = 0.15f),
                         strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
@@ -129,15 +132,27 @@ fun TarjetaMateria(
                         )
                     }
                     materia.tareas.forEach { tarea ->
-                        FilaTarea(
-                            tarea = tarea,
-                            hoy = hoy,
-                            onAlternar = { onAlternarTarea(tarea) },
-                            opciones = listOf(
-                                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) { onEditarTarea(tarea) },
-                                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) { onEliminarTarea(tarea) }
-                            )
-                        )
+                        // key: si la tarea se elimina y se recupera con "Deshacer",
+                        // vuelve con su deslizamiento en cero.
+                        key(tarea.id) {
+                            Deslizable(
+                                onCompletar = { onAlternarTarea(tarea) },
+                                completada = tarea.completada,
+                                onEliminar = { onEliminarTarea(tarea) },
+                                forma = RoundedCornerShape(12.dp),
+                                fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
+                            ) {
+                                FilaTarea(
+                                    tarea = tarea,
+                                    hoy = hoy,
+                                    onAlternar = { onAlternarTarea(tarea) },
+                                    opciones = listOf(
+                                        OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) { onEditarTarea(tarea) },
+                                        OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) { onEliminarTarea(tarea) }
+                                    )
+                                )
+                            }
+                        }
                     }
                     TextButton(onClick = onAgregarTarea) {
                         Icon(Icons.Filled.Add, contentDescription = null)
@@ -178,10 +193,11 @@ fun FilaTarea(
     hoy: LocalDate,
     onAlternar: () -> Unit,
     opciones: List<OpcionMenu>,
-    subtitulo: String? = null
+    subtitulo: String? = null,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onAlternar),
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onAlternar),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(checked = tarea.completada, onCheckedChange = { onAlternar() })

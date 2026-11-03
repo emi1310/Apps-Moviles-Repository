@@ -15,14 +15,16 @@ import java.time.LocalDate
 
 // Un casillero del calendario: muestra el número de día. Si es "hoy" lo
 // resalta con un círculo de fondo, y si es el día seleccionado, con el
-// color principal. Los casilleros vacíos (fecha == null) no se pueden tocar.
-// Los colores salen del tema, así se ven bien en modo claro y oscuro.
+// color principal. Abajo dibuja un puntito por cada materia con eventos ese
+// día, con el color de la materia. Los casilleros vacíos (fecha == null) no
+// se pueden tocar. Los colores salen del tema, así se ven bien en modo claro
+// y oscuro.
 @Composable
 fun CasillaDia(
     fecha: LocalDate?,
     esHoy: Boolean,
     seleccionado: Boolean,
-    tieneEventos: Boolean,
+    coloresEventos: List<Long>,
     modifier: Modifier = Modifier,
     onSeleccionar: () -> Unit
 ) {
@@ -48,13 +50,21 @@ fun CasillaDia(
         if (fecha != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = fecha.dayOfMonth.toString(), color = colorTexto)
-                if (tieneEventos) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 1.dp)
-                            .size(4.dp)
-                            .background(if (seleccionado) colorTexto else MaterialTheme.colorScheme.primary, CircleShape)
-                    )
+                if (coloresEventos.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        coloresEventos.forEach { color ->
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    // Sobre el día elegido (fondo violeta) los
+                                    // puntitos van del color del texto, para que se vean.
+                                    .background(if (seleccionado) colorTexto else Color(color), CircleShape)
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -148,3 +148,13 @@ val MIGRACION_2_3 = object : Migration(2, 3) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_archivos_notaId` ON `archivos` (`notaId`)")
     }
 }
+
+// Versión 3 -> 4: clases que se repiten cada semana. Solo se agregan dos
+// columnas a "eventos"; los eventos que ya existían quedan sin repetir.
+// repetirHasta se guarda como epochDay (igual que las demás fechas).
+val MIGRACION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `semanal` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `repetirHasta` INTEGER")
+    }
+}

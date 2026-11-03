@@ -29,7 +29,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -48,10 +48,12 @@ import com.example.estudia.ui.componentes.DialogoEditarPerfil
 import com.example.estudia.ui.componentes.DialogoMeta
 import com.example.estudia.ui.componentes.OpcionPerfil
 import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.componentes.TarjetaEstadistica
 import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.ui.componentes.IconoCircular
 import com.example.estudia.ui.theme.LocalDegradado
+import com.example.estudia.ui.theme.VioletaPrincipal
 import com.example.estudia.viewmodel.PerfilViewModel
 
 // Pantalla "Mi Perfil": datos del usuario, estadísticas, meta semanal de
@@ -134,7 +136,9 @@ fun PerfilScreen(
                 Text(
                     text = usuario.nombre.take(1).uppercase(),
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    // El círculo es blanco también en modo oscuro: se usa el
+                    // violeta fuerte fijo (el primary oscuro es lila claro y no se lee).
+                    color = VioletaPrincipal
                 )
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -159,7 +163,7 @@ fun PerfilScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             TarjetaEstadistica(usuario.contarMaterias().toString(), stringResource(R.string.materias), Icons.AutoMirrored.Filled.MenuBook, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
             TarjetaEstadistica(stringResource(R.string.horas_corto, usuario.calcularHorasEstudio()), stringResource(R.string.estudio), Icons.Filled.Timer, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-            TarjetaEstadistica(usuario.contarNotas().toString(), stringResource(R.string.notas), Icons.AutoMirrored.Filled.Notes, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+            TarjetaEstadistica(usuario.contarNotas().toString(), stringResource(R.string.notas), Icons.Filled.StickyNote2, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -182,8 +186,9 @@ fun PerfilScreen(
             } else {
                 Text(text = stringResource(R.string.meta_progreso, estado.horasEstaSemana, meta), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
+                val avance = progresoAnimado(progreso)
                 LinearProgressIndicator(
-                    progress = { progreso },
+                    progress = { avance },
                     color = MaterialTheme.colorScheme.secondary,
                     trackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
                     strokeCap = StrokeCap.Round,

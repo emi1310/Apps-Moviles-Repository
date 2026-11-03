@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -28,6 +30,8 @@ fun GraficoBarrasProgreso(materias: List<Materia>, modifier: Modifier = Modifier
     Column(modifier = modifier) {
         materias.forEach { materia ->
             val progreso = materia.calcularProgreso().coerceIn(0, 100)
+            // key: cada barra recuerda su propia animación aunque cambie la lista.
+            val avance = key(materia.id) { progresoAnimado(progreso / 100f) }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = materia.nombre,
@@ -38,10 +42,12 @@ fun GraficoBarrasProgreso(materias: List<Materia>, modifier: Modifier = Modifier
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Canvas(modifier = Modifier.weight(1f).height(14.dp)) {
-                    drawRect(color = fondo, size = size)
-                    drawRect(
+                    val radio = CornerRadius(size.height / 2)
+                    drawRoundRect(color = fondo, size = size, cornerRadius = radio)
+                    drawRoundRect(
                         color = Color(materia.color),
-                        size = Size(width = size.width * (progreso / 100f), height = size.height)
+                        size = Size(width = size.width * avance, height = size.height),
+                        cornerRadius = radio
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
