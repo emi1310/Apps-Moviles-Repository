@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -30,8 +32,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Firma del APK de release. Los datos de la clave están en
+    // keystore.properties (no se sube al repositorio). Si ese archivo no
+    // existe, el release se genera sin firmar y el resto del build anda igual.
+    val propiedadesFirma = rootProject.file("keystore.properties")
+    if (propiedadesFirma.exists()) {
+        val firma = Properties().apply { propiedadesFirma.inputStream().use { load(it) } }
+        signingConfigs {
+            create("release") {
+                storeFile = file(firma.getProperty("storeFile"))
+                storePassword = firma.getProperty("storePassword")
+                keyAlias = firma.getProperty("keyAlias")
+                keyPassword = firma.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
