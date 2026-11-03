@@ -15,7 +15,7 @@ import com.example.estudia.modelo.SesionEstudio
 // setChronometerCountDown): no hace falta actualizarla cada segundo ni un
 // servicio en primer plano, y sigue contando aunque la app esté cerrada.
 // Los botones (Pausar / Seguir / Terminar) los atiende TemporizadorReceiver.
-// La muestra y la oculta el Repository cada vez que cambia la sesión.
+// La muestra y la oculta AvisosSistema cada vez que cambia la sesión.
 class NotificacionTemporizador(private val context: Context) {
 
     fun mostrar(sesion: SesionEstudio) {
@@ -32,7 +32,7 @@ class NotificacionTemporizador(private val context: Context) {
 
         val fin = sesion.finMillis
         if (fin == null) {
-            val minutos = (sesion.restantePausaMillis + 59_999) / 60_000
+            val minutos = sesion.minutosRestantes(System.currentTimeMillis())
             constructor
                 .setContentText(context.getString(R.string.notificacion_temporizador_pausa, minutos))
                 .setShowWhen(false)

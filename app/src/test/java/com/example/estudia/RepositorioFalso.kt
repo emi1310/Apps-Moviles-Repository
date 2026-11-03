@@ -1,8 +1,9 @@
 package com.example.estudia
 
-import android.net.Uri
+import com.example.estudia.datos.EventoParaAviso
 import com.example.estudia.datos.NotaEncontrada
 import com.example.estudia.datos.RepositorioEstudia
+import com.example.estudia.datos.ResumenDia
 import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Calificacion
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 // Repositorio falso para los tests de los ViewModels: guarda todo en
@@ -128,8 +130,11 @@ class RepositorioFalso(
 
     // ---------- Eventos ----------
 
-    override suspend fun agregarEvento(materiaId: Int, evento: Evento) =
-        cambiarMateria(materiaId) { it.copy(eventos = it.eventos + evento.copy(id = siguienteId++)) }
+    override suspend fun agregarEvento(materiaId: Int, evento: Evento): Evento {
+        val guardado = evento.copy(id = siguienteId++)
+        cambiarMateria(materiaId) { it.copy(eventos = it.eventos + guardado) }
+        return guardado
+    }
 
     override suspend fun actualizarEvento(materiaId: Int, evento: Evento) =
         cambiarMateria(materiaId) { m -> m.copy(eventos = m.eventos.map { if (it.id == evento.id) evento else it }) }
@@ -158,7 +163,7 @@ class RepositorioFalso(
 
     val archivosBorradosDelDisco = mutableListOf<Archivo>()
 
-    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: Uri): Boolean = true
+    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean = true
 
     override suspend fun eliminarArchivo(materiaId: Int, archivo: Archivo) =
         cambiarMateria(materiaId) { m -> m.copy(archivos = m.archivos.filter { it.id != archivo.id }) }
@@ -170,7 +175,7 @@ class RepositorioFalso(
         archivosBorradosDelDisco += archivos
     }
 
-    override fun uriParaAbrir(archivo: Archivo): Uri = throw UnsupportedOperationException("No se usa en los tests")
+    override fun uriParaAbrir(archivo: Archivo): String = throw UnsupportedOperationException("No se usa en los tests")
 
     // ---------- Preferencias ----------
 
@@ -189,16 +194,19 @@ class RepositorioFalso(
     val sesion = MutableStateFlow<SesionEstudio?>(null)
     override val sesionEstudio: Flow<SesionEstudio?> = sesion
 
-    override suspend fun empezarSesion(materia: Materia, minutos: Int) {
+    override suspend fun empezarSesion(materia: Materia, minutos: Int): SesionEstudio {
         sesion.value = SesionEstudio.nueva(materia, minutos, reloj)
+        return sesion.value!!
     }
 
-    override suspend fun pausarSesion() {
+    override suspend fun pausarSesion(): SesionEstudio? {
         sesion.value = sesion.value?.pausar(reloj)
+        return sesion.value
     }
 
-    override suspend fun reanudarSesion() {
+    override suspend fun reanudarSesion(): SesionEstudio? {
         sesion.value = sesion.value?.reanudar(reloj)
+        return sesion.value
     }
 
     override suspend fun terminarSesion(guardar: Boolean): Int {
@@ -223,6 +231,15 @@ class RepositorioFalso(
             Evento(0, "Sesión de estudio", TipoEvento.BLOQUE_ESTUDIO, LocalDate.now(), inicio, inicio.plusMinutes(minutos.toLong()))
         )
     }
+
+    // ---------- Para los Workers (no los usan los tests de ViewModels) ----------
+
+    override suspend fun resumenDelDia(hoy: LocalDate): ResumenDia? = null
+
+    override suspend fun eventoParaRecordatorio(eventoId: Int, ahora: LocalDateTime): EventoParaAviso? = null
+
+    override suspend fun buscarEvento(eventoId: Int): Evento? =
+        usuario.value?.materias?.flatMap { it.eventos }?.firstOrNull { it.id == eventoId }
 
     // ---------- Ayudantes ----------
 

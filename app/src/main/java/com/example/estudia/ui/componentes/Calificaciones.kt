@@ -47,7 +47,7 @@ fun textoNota(nota: Double): String {
 // Verde si aprueba (4 o más), rojo si no.
 @Composable
 fun colorNota(nota: Double): Color =
-    if (nota >= Calificacion.NOTA_APROBACION) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
+    if (Calificacion.aprueba(nota)) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
 
 // Pastilla con una nota o un promedio (ej: "7,5" o "Prom. 7,5").
 @Composable

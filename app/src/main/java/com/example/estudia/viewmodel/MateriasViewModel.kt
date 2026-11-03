@@ -1,6 +1,5 @@
 package com.example.estudia.viewmodel
 
-import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.R
@@ -11,6 +10,7 @@ import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.notificaciones.AvisosSistema
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +37,8 @@ data class MateriasUiState(
 
 // ViewModel de "Mis Materias": materias, tareas y archivos adjuntos.
 class MateriasViewModel(
-    private val repositorio: RepositorioEstudia
+    private val repositorio: RepositorioEstudia,
+    private val avisosSistema: AvisosSistema
 ) : ViewModelConAvisos() {
 
     private val usuario = repositorio.usuarioActual
@@ -101,11 +102,15 @@ class MateriasViewModel(
         val u = usuario.value ?: return
         viewModelScope.launch {
             repositorio.eliminarMateria(u.id, materia)
+            materia.eventos.forEach { avisosSistema.cancelarEvento(it.id) }
             avisar(
                 Aviso(
                     R.string.aviso_materia_eliminada,
                     argumentos = listOf(materia.nombre),
-                    alDeshacer = { repositorio.restaurarMateria(u.id, materia) },
+                    alDeshacer = {
+                        repositorio.restaurarMateria(u.id, materia)
+                        avisosSistema.programarEventos(materia.eventos)
+                    },
                     alConfirmar = { repositorio.borrarArchivosDelDisco(materia.todosLosArchivos()) }
                 )
             )
@@ -182,7 +187,7 @@ class MateriasViewModel(
 
     // ---------- Archivos ----------
 
-    fun adjuntarArchivo(materiaId: Int, uri: Uri) {
+    fun adjuntarArchivo(materiaId: Int, uri: String) {
         viewModelScope.launch {
             val ok = repositorio.adjuntarArchivo(materiaId, null, uri)
             avisar(Aviso(if (ok) R.string.aviso_archivo_guardado else R.string.aviso_archivo_error))
@@ -204,7 +209,7 @@ class MateriasViewModel(
         }
     }
 
-    fun uriParaAbrir(archivo: Archivo): Uri = repositorio.uriParaAbrir(archivo)
+    fun uriParaAbrir(archivo: Archivo): String = repositorio.uriParaAbrir(archivo)
 
     companion object {
         // Colores (ARGB) que se van repartiendo entre las materias nuevas.

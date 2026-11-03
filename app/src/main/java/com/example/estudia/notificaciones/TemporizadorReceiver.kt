@@ -12,22 +12,25 @@ import kotlinx.coroutines.launch
 
 // Atiende los botones de la notificación del temporizador (Pausar, Seguir,
 // Terminar), aunque la app esté cerrada. Usa el mismo Repository que la
-// pantalla, así la pantalla se entera sola del cambio (la sesión es un Flow).
+// pantalla, así la pantalla se entera sola del cambio (la sesión es un Flow),
+// y después actualiza la notificación con AvisosSistema.
 //
 // goAsync(): el receptor tiene unos segundos para terminar trabajo en
 // segundo plano (guardar en DataStore y Room) antes de que Android lo corte.
 class TemporizadorReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val repositorio = (context.applicationContext as EstudiaApp).repositorio
+        val app = context.applicationContext as EstudiaApp
+        val repositorio = app.repositorio
         val pendiente = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             try {
                 when (intent.action) {
-                    ACCION_PAUSAR -> repositorio.pausarSesion()
-                    ACCION_REANUDAR -> repositorio.reanudarSesion()
+                    ACCION_PAUSAR -> app.avisos.actualizarTemporizador(repositorio.pausarSesion())
+                    ACCION_REANUDAR -> app.avisos.actualizarTemporizador(repositorio.reanudarSesion())
                     ACCION_TERMINAR -> {
                         val minutos = repositorio.terminarSesion(guardar = true)
+                        app.avisos.actualizarTemporizador(null)
                         if (minutos > 0) {
                             Notificaciones.mostrar(
                                 context,

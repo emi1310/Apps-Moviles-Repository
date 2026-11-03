@@ -223,7 +223,7 @@ private fun TarjetaTemporizador(sesion: SesionEstudio?, onAbrir: () -> Unit) {
                     Text(stringResource(R.string.temporizador_titulo), style = MaterialTheme.typography.titleMedium)
                     Text(stringResource(R.string.temporizador_invitacion), style = MaterialTheme.typography.bodyMedium)
                 } else {
-                    val minutos = (sesion.restanteMillis(ahora) + 59_999) / 60_000
+                    val minutos = sesion.minutosRestantes(ahora)
                     Text(
                         text = stringResource(R.string.temporizador_estudiando, sesion.nombreMateria),
                         style = MaterialTheme.typography.titleMedium

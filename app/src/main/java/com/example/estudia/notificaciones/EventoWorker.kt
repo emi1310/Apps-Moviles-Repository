@@ -24,7 +24,8 @@ class EventoWorker(
 
     override suspend fun doWork(): Result {
         val eventoId = inputData.getInt(CLAVE_EVENTO_ID, -1)
-        val repositorio = (applicationContext as EstudiaApp).repositorio
+        val app = applicationContext as EstudiaApp
+        val repositorio = app.repositorio
         val datos = repositorio.eventoParaRecordatorio(eventoId)
 
         if (datos != null) {
@@ -55,8 +56,9 @@ class EventoWorker(
         }
 
         // Aunque este aviso no se haya mostrado (llegó tarde), la clase de la
-        // semana que viene se sigue avisando.
-        repositorio.reprogramarAvisoDeClase(eventoId)
+        // semana que viene se sigue avisando (si todavía existe).
+        val evento = repositorio.buscarEvento(eventoId)
+        if (evento != null && evento.tipo == TipoEvento.CLASE) app.avisos.programarClaseSiguiente(evento)
         return Result.success()
     }
 

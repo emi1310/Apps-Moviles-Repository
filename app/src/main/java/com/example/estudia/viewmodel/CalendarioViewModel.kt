@@ -7,6 +7,8 @@ import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.TipoEvento
+import com.example.estudia.modelo.sePuedeRepetir
+import com.example.estudia.notificaciones.AvisosSistema
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +35,8 @@ data class CalendarioUiState(
 // ViewModel del calendario: qué mes se muestra, qué día está elegido y
 // los eventos de ese día. Antes todo esto se calculaba en el Composable.
 class CalendarioViewModel(
-    private val repositorio: RepositorioEstudia
+    private val repositorio: RepositorioEstudia,
+    private val avisosSistema: AvisosSistema
 ) : ViewModelConAvisos() {
 
     private val mes = MutableStateFlow(YearMonth.now())
@@ -97,7 +100,7 @@ class CalendarioViewModel(
     ): Int? {
         if (!fin.isAfter(inicio)) return R.string.error_hora_fin
         // Solo las clases se repiten; "hasta" no puede ser antes de la primera clase.
-        val seRepite = semanal && tipo == TipoEvento.CLASE
+        val seRepite = semanal && tipo.sePuedeRepetir
         if (seRepite && repetirHasta != null && repetirHasta.isBefore(fecha)) return R.string.error_repetir_hasta
         val evento = Evento(
             existente?.id ?: 0, titulo.trim(), tipo, fecha, inicio, fin,
@@ -105,8 +108,14 @@ class CalendarioViewModel(
             repetirHasta = if (seRepite) repetirHasta else null
         )
         viewModelScope.launch {
-            if (existente == null) repositorio.agregarEvento(materiaId, evento)
-            else repositorio.actualizarEvento(materiaId, evento)
+            // Cada cambio en un evento actualiza su recordatorio.
+            val guardado = if (existente == null) {
+                repositorio.agregarEvento(materiaId, evento)
+            } else {
+                repositorio.actualizarEvento(materiaId, evento)
+                evento
+            }
+            avisosSistema.programarEvento(guardado)
         }
         seleccionar(fecha)
         mes.value = YearMonth.from(fecha)
@@ -116,10 +125,14 @@ class CalendarioViewModel(
     fun eliminarEvento(item: EventoConMateria) {
         viewModelScope.launch {
             repositorio.eliminarEvento(item.materiaId, item.evento)
+            avisosSistema.cancelarEvento(item.evento.id)
             avisar(
                 Aviso(
                     R.string.aviso_evento_eliminado,
-                    alDeshacer = { repositorio.restaurarEvento(item.materiaId, item.evento) }
+                    alDeshacer = {
+                        repositorio.restaurarEvento(item.materiaId, item.evento)
+                        avisosSistema.programarEvento(item.evento)
+                    }
                 )
             )
         }

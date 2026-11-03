@@ -1,6 +1,5 @@
 package com.example.estudia.viewmodel
 
-import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.R
 import com.example.estudia.datos.NotaEncontrada
@@ -112,7 +111,7 @@ class NotasViewModel(
         }
     }
 
-    fun adjuntarArchivo(item: NotaConMateria, uri: Uri) {
+    fun adjuntarArchivo(item: NotaConMateria, uri: String) {
         viewModelScope.launch {
             val ok = repositorio.adjuntarArchivo(item.materiaId, item.nota.id, uri)
             avisar(Aviso(if (ok) R.string.aviso_archivo_guardado_nota else R.string.aviso_archivo_error))
@@ -132,5 +131,5 @@ class NotasViewModel(
         }
     }
 
-    fun uriParaAbrir(archivo: Archivo): Uri = repositorio.uriParaAbrir(archivo)
+    fun uriParaAbrir(archivo: Archivo): String = repositorio.uriParaAbrir(archivo)
 }

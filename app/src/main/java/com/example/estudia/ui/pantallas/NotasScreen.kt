@@ -1,5 +1,6 @@
 package com.example.estudia.ui.pantallas
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -50,7 +51,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
     // Selector de archivos del sistema: no necesita permisos.
     val selectorArchivos = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val nota = estado.notas.firstOrNull { it.nota.id == idNotaParaAdjuntar }
-        if (uri != null && nota != null) viewModel.adjuntarArchivo(nota, uri)
+        if (uri != null && nota != null) viewModel.adjuntarArchivo(nota, uri.toString())
         idNotaParaAdjuntar = null
     }
 
@@ -115,7 +116,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
                         alEditar = { notaParaEditar = item },
                         alEliminar = { viewModel.eliminarNota(item) },
                         alAbrirArchivo = { archivo ->
-                            if (!abrirArchivo(context, viewModel.uriParaAbrir(archivo), archivo.tipoMime)) {
+                            if (!abrirArchivo(context, Uri.parse(viewModel.uriParaAbrir(archivo)), archivo.tipoMime)) {
                                 avisos.mostrarTexto(textoSinApp)
                             }
                         },

@@ -34,6 +34,7 @@ class TemporizadorYRepeticionTest {
     private val minuto = 60_000L
     private val lunes = LocalDate.of(2026, 11, 2)
     private val fisica = Materia(id = 1, nombre = "Física", color = 0)
+    private val avisosSistema = AvisosFalso()
     private val repositorio = RepositorioFalso(
         Usuario(id = 1, nombreUsuario = "ana", metodoAuth = MetodoAuth.LOCAL, nombre = "Ana", materias = listOf(fisica))
     )
@@ -71,7 +72,7 @@ class TemporizadorYRepeticionTest {
 
     @Test
     fun guardarClaseSemanalLaMuestraTodasLasSemanas() = runTest {
-        val vm = CalendarioViewModel(repositorio)
+        val vm = CalendarioViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val error = vm.guardarEvento(
             1, null, "Teórico", TipoEvento.CLASE, lunes, LocalTime.of(9, 0), LocalTime.of(11, 0),
@@ -88,7 +89,7 @@ class TemporizadorYRepeticionTest {
 
     @Test
     fun ultimaClaseAntesDeLaPrimeraDaError() = runTest {
-        val vm = CalendarioViewModel(repositorio)
+        val vm = CalendarioViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val error = vm.guardarEvento(
             1, null, "Teórico", TipoEvento.CLASE, lunes, LocalTime.of(9, 0), LocalTime.of(11, 0),
@@ -99,7 +100,7 @@ class TemporizadorYRepeticionTest {
 
     @Test
     fun soloLasClasesSePuedenRepetir() = runTest {
-        val vm = CalendarioViewModel(repositorio)
+        val vm = CalendarioViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         vm.guardarEvento(
             1, null, "Parcial", TipoEvento.EXAMEN, lunes, LocalTime.of(9, 0), LocalTime.of(11, 0),
@@ -107,6 +108,19 @@ class TemporizadorYRepeticionTest {
         )
         val parcial = repositorio.usuario.value!!.materias[0].eventos.single()
         assertFalse(parcial.semanal)
+    }
+
+    @Test
+    fun guardarYEliminarEventoActualizaSuRecordatorio() = runTest {
+        val vm = CalendarioViewModel(repositorio, avisosSistema)
+        observar(vm.uiState)
+        vm.guardarEvento(1, null, "Parcial", TipoEvento.EXAMEN, lunes, LocalTime.of(9, 0), LocalTime.of(11, 0))
+        val parcial = vm.uiState.value.eventosDelDia.single()
+        // Se programa con el id que le dio el repositorio, no con 0.
+        assertEquals(listOf(parcial.evento.id), avisosSistema.eventosProgramados)
+
+        vm.eliminarEvento(parcial)
+        assertEquals(listOf(parcial.evento.id), avisosSistema.eventosCancelados)
     }
 
     // ---------- Temporizador ----------
@@ -129,17 +143,21 @@ class TemporizadorYRepeticionTest {
 
     @Test
     fun terminarAntesGuardaLoEstudiado() = runTest {
-        val vm = TemporizadorViewModel(repositorio) { repositorio.reloj }
+        val vm = TemporizadorViewModel(repositorio, avisosSistema) { repositorio.reloj }
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
 
         vm.elegirMinutos(45)
         vm.empezar()
         assertEquals(45, vm.uiState.value.sesion?.minutos)
+        // La notificación fija se muestra con la sesión nueva...
+        assertEquals(45, avisosSistema.sesionEnNotificacion?.minutos)
 
         repositorio.reloj = 20 * minuto
         vm.terminar()
         assertNull(vm.uiState.value.sesion)
+        // ... y se oculta al terminar.
+        assertNull(avisosSistema.sesionEnNotificacion)
         assertEquals(R.string.aviso_sesion_guardada, avisos.single().mensaje)
         assertEquals(listOf(20), avisos.single().argumentos)
         // Se guardó como bloque de estudio de la materia.
@@ -149,8 +167,22 @@ class TemporizadorYRepeticionTest {
     }
 
     @Test
+    fun pausarYSeguirActualizanLaNotificacion() = runTest {
+        val vm = TemporizadorViewModel(repositorio, avisosSistema) { repositorio.reloj }
+        observar(vm.uiState)
+        vm.empezar()
+        repositorio.reloj = 5 * minuto
+        vm.pausar()
+        assertTrue(avisosSistema.sesionEnNotificacion!!.enPausa)
+        vm.reanudar()
+        assertFalse(avisosSistema.sesionEnNotificacion!!.enPausa)
+        vm.descartar()
+        assertNull(avisosSistema.sesionEnNotificacion)
+    }
+
+    @Test
     fun sesionDeMenosDeUnMinutoNoSeGuarda() = runTest {
-        val vm = TemporizadorViewModel(repositorio) { repositorio.reloj }
+        val vm = TemporizadorViewModel(repositorio, avisosSistema) { repositorio.reloj }
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
 

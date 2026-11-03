@@ -22,6 +22,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,17 +65,43 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
         onDispose { vista.keepScreenOn = false }
     }
 
-    // El aviso de fin es una notificación: si falta el permiso (Android 13+)
-    // se pide al empezar. Se empiece con o sin permiso, el temporizador anda.
+    // El aviso de fin es una notificación: si falta el permiso (Android 13+),
+    // al empezar primero se explica para qué es y después se pide (como en
+    // el Perfil). Se empiece con o sin permiso, el temporizador anda.
+    // Se explica una sola vez por visita a la pantalla, para no insistir.
+    var mostrarExplicacion by remember { mutableStateOf(false) }
+    var yaSeExplico by rememberSaveable { mutableStateOf(false) }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         viewModel.empezar()
     }
     val alEmpezar = {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Notificaciones.permitidas(context)) {
-            pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !Notificaciones.permitidas(context) && !yaSeExplico) {
+            mostrarExplicacion = true
         } else {
             viewModel.empezar()
         }
+    }
+
+    if (mostrarExplicacion) {
+        AlertDialog(
+            onDismissRequest = { mostrarExplicacion = false },
+            title = { Text(stringResource(R.string.permiso_temporizador_titulo)) },
+            text = { Text(stringResource(R.string.explicacion_permiso_temporizador)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    mostrarExplicacion = false
+                    yaSeExplico = true
+                    pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }) { Text(stringResource(R.string.continuar)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    mostrarExplicacion = false
+                    yaSeExplico = true
+                    viewModel.empezar()
+                }) { Text(stringResource(R.string.ahora_no)) }
+            }
+        )
     }
 
     Column(
@@ -191,8 +221,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
 private fun AnilloTemporizador(estado: TemporizadorUiState, color: Color, modifier: Modifier = Modifier) {
     // Entre un segundo y el siguiente el anillo avanza de forma continua.
     val avance by animateFloatAsState(estado.avance, tween(1_000, easing = LinearEasing), label = "anillo")
-    val segundos = (estado.restanteMillis + 999) / 1_000        // redondeo hacia arriba: 24:59.4 -> 25:00
-    val texto = "%02d:%02d".format(segundos / 60, segundos % 60)
+    val texto = estado.textoRestante
     val sesion = estado.sesion
     val pie = when {
         sesion == null -> stringResource(R.string.temporizador_listo)

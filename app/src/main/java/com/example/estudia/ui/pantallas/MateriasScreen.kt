@@ -1,5 +1,6 @@
 package com.example.estudia.ui.pantallas
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -72,7 +73,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
     // archivo elegido.
     val selectorArchivos = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         val id = idMateriaParaAdjuntar
-        if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri)
+        if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri.toString())
         idMateriaParaAdjuntar = null
     }
 
@@ -185,7 +186,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                             selectorArchivos.launch(TIPOS_ARCHIVO)
                         },
                         onAbrirArchivo = { archivo ->
-                            if (!abrirArchivo(context, viewModel.uriParaAbrir(archivo), archivo.tipoMime)) {
+                            if (!abrirArchivo(context, Uri.parse(viewModel.uriParaAbrir(archivo)), archivo.tipoMime)) {
                                 avisos.mostrarTexto(textoSinApp)
                             }
                         },

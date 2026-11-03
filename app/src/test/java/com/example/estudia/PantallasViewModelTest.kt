@@ -52,6 +52,7 @@ class PantallasViewModelTest {
         )
     )
     private val repositorio = RepositorioFalso(usuarioInicial)
+    private val avisosSistema = AvisosFalso()
 
     // stateIn(WhileSubscribed) solo calcula el estado si alguien lo observa.
     private fun TestScope.observar(flujo: kotlinx.coroutines.flow.Flow<*>) {
@@ -68,7 +69,7 @@ class PantallasViewModelTest {
 
     @Test
     fun materiasFiltraActivasYArchivadas() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         assertEquals(listOf("Física"), vm.uiState.value.materias.map { it.nombre })
         vm.mostrarArchivadas(true)
@@ -77,7 +78,7 @@ class PantallasViewModelTest {
 
     @Test
     fun noSePuedeRepetirElNombreDeUnaMateria() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         assertFalse(vm.nombreDisponible("física "))
         assertTrue(vm.nombreDisponible("Física", exceptoId = 1))   // renombrar a su propio nombre
@@ -86,7 +87,7 @@ class PantallasViewModelTest {
 
     @Test
     fun buscadorDeTareas() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         vm.cambiarBusqueda("capítulo")
         assertEquals(listOf("Leer capítulo 3"), vm.uiState.value.resultadosBusqueda.map { it.tarea.titulo })
@@ -96,7 +97,7 @@ class PantallasViewModelTest {
 
     @Test
     fun eliminarTareaSePuedeDeshacer() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
         val tarea = usuarioInicial.materias[0].tareas[0]
@@ -111,7 +112,7 @@ class PantallasViewModelTest {
 
     @Test
     fun eliminarMateriaSePuedeDeshacer() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
         val materia = vm.uiState.value.todas.first { it.nombre == "Física" }
@@ -127,7 +128,7 @@ class PantallasViewModelTest {
 
     @Test
     fun elArchivoSeBorraDelDiscoSoloSiNoSeDeshace() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
 
@@ -139,7 +140,7 @@ class PantallasViewModelTest {
 
     @Test
     fun agregarTareaConFecha() = runTest {
-        val vm = MateriasViewModel(repositorio)
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         vm.guardarTarea(1, null, "  Resumen  ", hoy.plusDays(2))
         val nueva = vm.uiState.value.todas[0].tareas.last()
@@ -151,7 +152,7 @@ class PantallasViewModelTest {
 
     @Test
     fun eventoConHoraDeFinAnteriorDaError() = runTest {
-        val vm = CalendarioViewModel(repositorio)
+        val vm = CalendarioViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val error = vm.guardarEvento(1, null, "Parcial", TipoEvento.EXAMEN, hoy, LocalTime.of(10, 0), LocalTime.of(9, 0))
         assertEquals(R.string.error_hora_fin, error)
@@ -182,7 +183,7 @@ class PantallasViewModelTest {
 
     @Test
     fun progresoDeLaMetaSemanal() = runTest {
-        val vm = PerfilViewModel(repositorio)
+        val vm = PerfilViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         // 2 h planificadas de una meta de 4 h.
         assertEquals(2, vm.uiState.value.horasEstaSemana)

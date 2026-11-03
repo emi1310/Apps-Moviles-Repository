@@ -5,9 +5,11 @@ import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.notificaciones.AvisosSistema
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -32,6 +34,7 @@ data class PerfilUiState(
 // ViewModel solo guarda la elección del usuario.
 class PerfilViewModel(
     private val repositorio: RepositorioEstudia,
+    private val avisosSistema: AvisosSistema,
     private val hoy: () -> LocalDate = { LocalDate.now() }
 ) : ViewModelConAvisos() {
 
@@ -65,6 +68,12 @@ class PerfilViewModel(
     fun cambiarRecordatorios(activos: Boolean) {
         viewModelScope.launch {
             repositorio.cambiarRecordatorios(activos)
+            if (activos) {
+                val eventos = repositorio.usuarioActual.first()?.materias?.flatMap { it.eventos }.orEmpty()
+                avisosSistema.activarRecordatorios(eventos)
+            } else {
+                avisosSistema.desactivarRecordatorios()
+            }
             avisar(Aviso(if (activos) R.string.aviso_recordatorios_activados else R.string.aviso_recordatorios_desactivados))
         }
     }

@@ -20,9 +20,10 @@ class SesionViewModelTest {
     val reglaMain = ReglaDispatcherPrincipal()
 
     private val repositorio = RepositorioFalso()
+    private val avisosSistema = AvisosFalso()
     // by lazy: se crea dentro de cada test, cuando la regla ya reemplazó
     // Dispatchers.Main (el init del ViewModel lanza una corrutina).
-    private val viewModel by lazy { SesionViewModel(repositorio) }
+    private val viewModel by lazy { SesionViewModel(repositorio, avisosSistema) }
 
     @Test
     fun loginConCamposVaciosMuestraError() {

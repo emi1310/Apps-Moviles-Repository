@@ -1,6 +1,5 @@
 package com.example.estudia.datos
 
-import android.net.Uri
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
@@ -12,9 +11,11 @@ import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 // Repository: centraliza el acceso a los datos y le oculta al ViewModel
-// de dónde vienen (Room, DataStore, archivos, WorkManager).
+// de dónde vienen (Room, DataStore, archivos). Los avisos al sistema
+// (WorkManager y notificaciones) no van acá: ver AvisosSistema.
 //
 // Es una interfaz (como en el apunte de MVVM, cap. 5.6): la app usa
 // RepositorioEstudiaImpl, y los tests de los ViewModels usan un repositorio
@@ -65,7 +66,8 @@ interface RepositorioEstudia {
 
     // ---------- Eventos ----------
 
-    suspend fun agregarEvento(materiaId: Int, evento: Evento)
+    // Devuelve el evento ya guardado, con su id (para programar su aviso).
+    suspend fun agregarEvento(materiaId: Int, evento: Evento): Evento
     suspend fun actualizarEvento(materiaId: Int, evento: Evento)
     suspend fun eliminarEvento(materiaId: Int, evento: Evento)
     suspend fun restaurarEvento(materiaId: Int, evento: Evento)
@@ -82,14 +84,17 @@ interface RepositorioEstudia {
     // ---------- Archivos adjuntos ----------
 
     // notaId null = adjunto de la materia. Devuelve false si no se pudo.
-    suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: Uri): Boolean
+    // uri: el que devuelve el selector de archivos, como texto (así el
+    // ViewModel no depende de android.net.Uri).
+    suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean
     suspend fun eliminarArchivo(materiaId: Int, archivo: Archivo)
     suspend fun restaurarArchivo(materiaId: Int, archivo: Archivo)
     suspend fun borrarArchivosDelDisco(archivos: List<Archivo>)
-    fun uriParaAbrir(archivo: Archivo): Uri
+    fun uriParaAbrir(archivo: Archivo): String
 
     // ---------- Preferencias y recordatorios ----------
 
+    // Solo guarda la preferencia; los avisos los programa AvisosSistema.
     suspend fun cambiarRecordatorios(activos: Boolean)
     suspend fun cambiarTema(tema: PreferenciaTema)
 
@@ -98,9 +103,10 @@ interface RepositorioEstudia {
     // se suma sola a las horas de estudio y a la meta semanal.
 
     val sesionEstudio: Flow<SesionEstudio?>
-    suspend fun empezarSesion(materia: Materia, minutos: Int)
-    suspend fun pausarSesion()
-    suspend fun reanudarSesion()
+    // Devuelven la sesión como quedó (null = no había sesión).
+    suspend fun empezarSesion(materia: Materia, minutos: Int): SesionEstudio
+    suspend fun pausarSesion(): SesionEstudio?
+    suspend fun reanudarSesion(): SesionEstudio?
 
     // Corta la sesión antes de tiempo. Si guardar = true, registra lo que ya
     // se estudió (si es al menos 1 minuto). Devuelve los minutos guardados.
@@ -110,9 +116,29 @@ interface RepositorioEstudia {
     // Devuelve la sesión guardada, o null si no había nada que completar.
     // La usan la pantalla y TemporizadorWorker: solo uno de los dos la guarda.
     suspend fun completarSesionSiTermino(): SesionEstudio?
+
+    // ---------- Para los Workers (recordatorios) ----------
+
+    // Tareas pendientes y eventos de hoy y mañana del usuario con sesión
+    // abierta. null si no hay nada que avisar, si nadie inició sesión o si
+    // el usuario desactivó los recordatorios.
+    suspend fun resumenDelDia(hoy: LocalDate = LocalDate.now()): ResumenDia?
+
+    // El evento a recordar, solo si sigue existiendo, es del usuario con
+    // sesión abierta, todavía no pasó y los recordatorios están activos.
+    suspend fun eventoParaRecordatorio(eventoId: Int, ahora: LocalDateTime = LocalDateTime.now()): EventoParaAviso?
+
+    // El evento tal como está guardado ahora, o null si se borró.
+    suspend fun buscarEvento(eventoId: Int): Evento?
 }
 
 // Resultados del buscador (una nota o tarea junto con su materia).
 data class NotaEncontrada(val nota: Nota, val materiaId: Int, val nombreMateria: String)
 
 data class TareaEncontrada(val tarea: Tarea, val materiaId: Int, val nombreMateria: String, val colorMateria: Long)
+
+// Lo que muestra el resumen diario.
+data class ResumenDia(val tareasPendientes: Int, val eventosHoy: List<Evento>, val eventosManana: List<Evento>)
+
+// inicio: cuándo empieza esta vez (en las clases semanales, la clase de hoy).
+data class EventoParaAviso(val evento: Evento, val nombreMateria: String, val inicio: LocalDateTime)

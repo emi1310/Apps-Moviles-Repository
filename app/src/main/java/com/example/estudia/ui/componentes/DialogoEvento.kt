@@ -31,6 +31,7 @@ import com.example.estudia.R
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.TipoEvento
+import com.example.estudia.modelo.sePuedeRepetir
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -110,7 +111,7 @@ fun DialogoEvento(
                 }
                 // Solo las clases se pueden repetir: se muestran todas las
                 // semanas, el mismo día, hasta la última clase (si se eligió).
-                if (tipo == TipoEvento.CLASE) {
+                if (tipo?.sePuedeRepetir == true) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

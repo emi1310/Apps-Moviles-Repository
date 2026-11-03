@@ -1,10 +1,7 @@
 package com.example.estudia.datos
 
-import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
-import com.example.estudia.R
-import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.ArchivoDao
 import com.example.estudia.datos.local.CalificacionDao
 import com.example.estudia.datos.local.EventoDao
@@ -28,8 +25,6 @@ import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.notificaciones.MINUTOS_AVISO_CLASE
-import com.example.estudia.notificaciones.NotificacionTemporizador
-import com.example.estudia.notificaciones.ProgramadorRecordatorios
 import com.example.estudia.util.Contrasenas
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,12 +43,12 @@ import java.time.temporal.ChronoUnit
 
 // Implementación real del Repository. Combina varias fuentes:
 //  - Room (DAOs): usuarios, materias, tareas, eventos, notas y archivos.
-//  - DataStore: el id del usuario con la sesión abierta y las preferencias.
+//  - DataStore: el id del usuario con la sesión abierta, las preferencias
+//    y la sesión del temporizador en curso.
 //  - AlmacenamientoArchivos: el contenido de los adjuntos (filesDir).
-//  - ProgramadorRecordatorios: los recordatorios (WorkManager).
-//  - TemporizadorDataStore y NotificacionTemporizador: la sesión del
-//    temporizador en curso y su notificación con la cuenta regresiva.
 // También convierte entidades de Room <-> modelo de dominio (Mapeos.kt).
+// Solo maneja datos: los recordatorios y la notificación del temporizador
+// están en AvisosSistema. Las dependencias las arma EstudiaApp.
 // Arquitectura: UI -> ViewModel -> Repository -> Room / DataStore / archivos.
 class RepositorioEstudiaImpl(
     private val usuarioDao: UsuarioDao,
@@ -66,36 +61,11 @@ class RepositorioEstudiaImpl(
     private val sesion: SesionDataStore,
     private val preferencias: PreferenciasDataStore,
     private val almacenamiento: AlmacenamientoArchivos,
-    private val programador: ProgramadorRecordatorios,
     private val temporizador: TemporizadorDataStore,
-    private val notificacionTemporizador: NotificacionTemporizador,
-    // Título de los bloques de estudio que guarda el temporizador (strings.xml).
+    // Título de los bloques de estudio que guarda el temporizador. Lo lee
+    // EstudiaApp de strings.xml, así el Repository no necesita Context.
     private val tituloSesionEstudio: String
 ) : RepositorioEstudia {
-
-    companion object {
-        // Arma el Repository con todas sus dependencias (lo usa EstudiaApp).
-        fun crear(context: Context): RepositorioEstudiaImpl {
-            val db = AppDatabase.obtenerInstancia(context)
-            val app = context.applicationContext
-            return RepositorioEstudiaImpl(
-                usuarioDao = db.usuarioDao(),
-                materiaDao = db.materiaDao(),
-                tareaDao = db.tareaDao(),
-                eventoDao = db.eventoDao(),
-                notaDao = db.notaDao(),
-                archivoDao = db.archivoDao(),
-                calificacionDao = db.calificacionDao(),
-                sesion = SesionDataStore(app),
-                preferencias = PreferenciasDataStore(app),
-                almacenamiento = AlmacenamientoArchivos(app),
-                programador = ProgramadorRecordatorios(app),
-                temporizador = TemporizadorDataStore(app),
-                notificacionTemporizador = NotificacionTemporizador(app),
-                tituloSesionEstudio = app.getString(R.string.sesion_estudio_titulo)
-            )
-        }
-    }
 
     // ---------- Observables ----------
 
@@ -144,7 +114,6 @@ class RepositorioEstudiaImpl(
         val correcta = withContext(Dispatchers.Default) { Contrasenas.verificar(contrasena, usuario.contrasenaHash) }
         if (!correcta) return false
         sesion.guardarSesion(usuario.id)
-        reprogramarEventosSiCorresponde()
         return true
     }
 
@@ -167,7 +136,7 @@ class RepositorioEstudiaImpl(
     override suspend fun cerrarSesion() {
         sesion.borrarSesion()
         // El temporizador es del usuario que se va: se descarta sin guardar.
-        candadoTemporizador.withLock { cerrarSesionDeEstudio() }
+        candadoTemporizador.withLock { temporizador.borrar() }
     }
 
     override suspend fun editarPerfil(usuarioId: Int, nombre: String, carrera: String?, anio: Int?, email: String?) {
@@ -188,11 +157,10 @@ class RepositorioEstudiaImpl(
         materiaDao.actualizar(materia.aEntidad(usuarioId))
     }
 
-    // El CASCADE de Room borra sus tareas, eventos, notas y filas de archivos;
-    // los recordatorios se cancelan a mano. El contenido de los archivos en
-    // disco se borra después de que pasa el "Deshacer" (borrarArchivosDelDisco).
+    // El CASCADE de Room borra sus tareas, eventos, notas y filas de archivos.
+    // El contenido de los archivos en disco se borra después de que pasa el
+    // "Deshacer" (borrarArchivosDelDisco).
     override suspend fun eliminarMateria(usuarioId: Int, materia: Materia) {
-        materia.eventos.forEach { programador.cancelarEvento(it.id) }
         materiaDao.eliminar(materia.aEntidad(usuarioId))
     }
 
@@ -201,10 +169,7 @@ class RepositorioEstudiaImpl(
     override suspend fun restaurarMateria(usuarioId: Int, materia: Materia) {
         materiaDao.insertar(materia.aEntidad(usuarioId))
         materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materia.id)) }
-        materia.eventos.forEach {
-            eventoDao.insertar(it.aEntidad(materia.id))
-            programarSiCorresponde(it)
-        }
+        materia.eventos.forEach { eventoDao.insertar(it.aEntidad(materia.id)) }
         materia.notas.forEach { notaDao.insertar(it.aEntidad(materia.id)) }
         archivoDao.insertarTodos(materia.todosLosArchivos().map { it.aEntidad(materia.id) })
         materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materia.id)) }
@@ -248,26 +213,22 @@ class RepositorioEstudiaImpl(
     }
 
     // ---------- Eventos ----------
-    // Cada cambio en un examen o entrega actualiza su recordatorio.
 
-    override suspend fun agregarEvento(materiaId: Int, evento: Evento) {
+    override suspend fun agregarEvento(materiaId: Int, evento: Evento): Evento {
         val id = eventoDao.insertar(evento.copy(id = 0).aEntidad(materiaId)).toInt()
-        programarSiCorresponde(evento.copy(id = id))
+        return evento.copy(id = id)
     }
 
     override suspend fun actualizarEvento(materiaId: Int, evento: Evento) {
         eventoDao.actualizar(evento.aEntidad(materiaId))
-        programarSiCorresponde(evento)
     }
 
     override suspend fun eliminarEvento(materiaId: Int, evento: Evento) {
         eventoDao.eliminar(evento.aEntidad(materiaId))
-        programador.cancelarEvento(evento.id)
     }
 
     override suspend fun restaurarEvento(materiaId: Int, evento: Evento) {
         eventoDao.insertar(evento.aEntidad(materiaId))
-        programarSiCorresponde(evento)
     }
 
     // ---------- Notas ----------
@@ -293,8 +254,8 @@ class RepositorioEstudiaImpl(
 
     // ---------- Archivos adjuntos ----------
 
-    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: Uri): Boolean {
-        val copiado = almacenamiento.copiarDesde(uri) ?: return false
+    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean {
+        val copiado = almacenamiento.copiarDesde(Uri.parse(uri)) ?: return false
         archivoDao.insertar(
             Archivo(
                 id = 0,
@@ -323,18 +284,12 @@ class RepositorioEstudiaImpl(
         archivos.forEach { almacenamiento.eliminar(it.ruta) }
     }
 
-    override fun uriParaAbrir(archivo: Archivo): Uri = almacenamiento.uriParaAbrir(archivo.ruta)
+    override fun uriParaAbrir(archivo: Archivo): String = almacenamiento.uriParaAbrir(archivo.ruta).toString()
 
-    // ---------- Preferencias y recordatorios ----------
+    // ---------- Preferencias ----------
 
     override suspend fun cambiarRecordatorios(activos: Boolean) {
         preferencias.guardarRecordatoriosActivos(activos)
-        if (activos) {
-            programador.programarDiario()
-            reprogramarEventosSiCorresponde()
-        } else {
-            programador.cancelarTodo()
-        }
     }
 
     override suspend fun cambiarTema(tema: PreferenciaTema) {
@@ -349,54 +304,37 @@ class RepositorioEstudiaImpl(
 
     override val sesionEstudio: Flow<SesionEstudio?> = temporizador.sesion
 
-    override suspend fun empezarSesion(materia: Materia, minutos: Int) = candadoTemporizador.withLock {
+    override suspend fun empezarSesion(materia: Materia, minutos: Int): SesionEstudio = candadoTemporizador.withLock {
         val sesion = SesionEstudio.nueva(materia, minutos, ahora())
         temporizador.guardar(sesion)
-        programador.programarFinTemporizador(sesion.duracionMillis)
-        notificacionTemporizador.mostrar(sesion)
+        sesion
     }
 
-    override suspend fun pausarSesion() = candadoTemporizador.withLock {
-        val sesion = temporizador.actual() ?: return@withLock
-        val pausada = sesion.pausar(ahora())
+    override suspend fun pausarSesion(): SesionEstudio? = candadoTemporizador.withLock {
+        val pausada = temporizador.actual()?.pausar(ahora()) ?: return@withLock null
         temporizador.guardar(pausada)
-        notificacionTemporizador.mostrar(pausada)
-        programador.cancelarFinTemporizador()
+        pausada
     }
 
-    override suspend fun reanudarSesion() = candadoTemporizador.withLock {
-        val sesion = temporizador.actual()?.reanudar(ahora()) ?: return@withLock
+    override suspend fun reanudarSesion(): SesionEstudio? = candadoTemporizador.withLock {
+        val sesion = temporizador.actual()?.reanudar(ahora()) ?: return@withLock null
         temporizador.guardar(sesion)
-        programador.programarFinTemporizador(sesion.restanteMillis(ahora()))
-        notificacionTemporizador.mostrar(sesion)
+        sesion
     }
 
     override suspend fun terminarSesion(guardar: Boolean): Int = candadoTemporizador.withLock {
         val sesion = temporizador.actual() ?: return@withLock 0
         val minutos = if (guardar) sesion.minutosEstudiados(ahora()) else 0
         if (minutos > 0) guardarBloqueDeEstudio(sesion.materiaId, minutos)
-        cerrarSesionDeEstudio()
+        temporizador.borrar()
         minutos
     }
 
     override suspend fun completarSesionSiTermino(): SesionEstudio? = candadoTemporizador.withLock {
         val sesion = temporizador.actual()?.takeIf { it.terminada(ahora()) } ?: return@withLock null
         guardarBloqueDeEstudio(sesion.materiaId, sesion.minutos)
-        cerrarSesionDeEstudio()
-        sesion
-    }
-
-    // Reiniciar el teléfono borra las notificaciones, pero la sesión del
-    // temporizador sigue guardada: al arrancar la app se vuelve a mostrar.
-    suspend fun restaurarNotificacionTemporizador() {
-        val sesion = temporizador.actual() ?: return
-        if (!sesion.terminada(ahora())) notificacionTemporizador.mostrar(sesion)
-    }
-
-    private suspend fun cerrarSesionDeEstudio() {
         temporizador.borrar()
-        programador.cancelarFinTemporizador()
-        notificacionTemporizador.ocultar()
+        sesion
     }
 
     // Bloque de estudio que termina ahora y empezó "minutos" antes (si la
@@ -415,14 +353,9 @@ class RepositorioEstudiaImpl(
 
     private fun ahora() = System.currentTimeMillis()
 
-    // ---------- Para los Workers (no forman parte de la interfaz) ----------
+    // ---------- Para los Workers ----------
 
-    data class ResumenDia(val tareasPendientes: Int, val eventosHoy: List<Evento>, val eventosManana: List<Evento>)
-
-    // Tareas pendientes y eventos de hoy y mañana del usuario con sesión
-    // abierta. null si no hay nada que avisar, si nadie inició sesión o si
-    // el usuario desactivó los recordatorios.
-    suspend fun resumenDelDia(hoy: LocalDate = LocalDate.now()): ResumenDia? {
+    override suspend fun resumenDelDia(hoy: LocalDate): ResumenDia? {
         if (!preferencias.recordatoriosActivos.first()) return null
         val usuario = usuarioActual.first() ?: return null
         val materias = usuario.materias.filter { !it.archivada }
@@ -434,14 +367,9 @@ class RepositorioEstudiaImpl(
         return ResumenDia(pendientes, eventosHoy, eventosManana)
     }
 
-    // inicio: cuándo empieza esta vez (en las clases semanales, la clase de hoy).
-    data class EventoParaAviso(val evento: Evento, val nombreMateria: String, val inicio: LocalDateTime)
-
-    // El evento a recordar, solo si sigue existiendo, es del usuario con
-    // sesión abierta, todavía no pasó y los recordatorios están activos.
     // Para las clases, además, tiene que empezar dentro de un rato (si el
     // aviso llegó muy tarde, por ejemplo con el teléfono apagado, no se muestra).
-    suspend fun eventoParaRecordatorio(eventoId: Int, ahora: LocalDateTime = LocalDateTime.now()): EventoParaAviso? {
+    override suspend fun eventoParaRecordatorio(eventoId: Int, ahora: LocalDateTime): EventoParaAviso? {
         if (!preferencias.recordatoriosActivos.first()) return null
         val fila = eventoDao.buscarConMateria(eventoId) ?: return null
         if (sesion.idUsuarioActivo.first() != fila.usuarioId) return null
@@ -455,25 +383,10 @@ class RepositorioEstudiaImpl(
         return EventoParaAviso(evento, fila.nombreMateria, evento.inicio)
     }
 
-    // Después de avisar una clase semanal, deja programado el aviso de la
-    // semana siguiente (si la clase sigue existiendo y los avisos están activos).
-    suspend fun reprogramarAvisoDeClase(eventoId: Int) {
-        if (!preferencias.recordatoriosActivos.first()) return
-        val evento = eventoDao.buscarConMateria(eventoId)?.evento?.aModelo() ?: return
-        if (evento.tipo == TipoEvento.CLASE) programador.programarEvento(evento, desdeElAviso = true)
-    }
+    override suspend fun buscarEvento(eventoId: Int): Evento? =
+        eventoDao.buscarConMateria(eventoId)?.evento?.aModelo()
 
     // ---------- Privados ----------
-
-    private suspend fun programarSiCorresponde(evento: Evento) {
-        if (preferencias.recordatoriosActivos.first()) programador.programarEvento(evento)
-    }
-
-    private suspend fun reprogramarEventosSiCorresponde() {
-        if (!preferencias.recordatoriosActivos.first()) return
-        val usuario = usuarioActual.first() ?: return
-        usuario.materias.flatMap { it.eventos }.forEach { programador.programarEvento(it) }
-    }
 
     // Inserta un usuario con todo su contenido. Los id del objeto se ignoran
     // (se insertan como 0) y SQLite genera los nuevos.

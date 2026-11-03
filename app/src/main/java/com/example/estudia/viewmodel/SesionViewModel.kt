@@ -7,11 +7,13 @@ import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.notificaciones.AvisosSistema
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -40,7 +42,8 @@ data class AuthUiState(
 // cierre de sesión y el tema elegido. Las pantallas de la app tienen cada
 // una su propio ViewModel.
 class SesionViewModel(
-    private val repositorio: RepositorioEstudia
+    private val repositorio: RepositorioEstudia,
+    private val avisosSistema: AvisosSistema
 ) : ViewModel() {
 
     val sesionUiState: StateFlow<SesionUiState> = repositorio.usuarioActual
@@ -77,6 +80,8 @@ class SesionViewModel(
         _authUiState.update { it.copy(procesando = true, error = null) }
         viewModelScope.launch {
             val correcto = repositorio.iniciarSesion(nombreUsuario.trim(), contrasena)
+            // Los avisos de sus eventos se programan de nuevo (por si cambió de usuario).
+            if (correcto) repositorio.usuarioActual.first()?.let { u -> avisosSistema.programarEventos(u.materias.flatMap { it.eventos }) }
             _authUiState.value = if (correcto) {
                 AuthUiState(sesionIniciada = true)
             } else {
@@ -120,6 +125,7 @@ class SesionViewModel(
     fun cerrarSesion() {
         viewModelScope.launch {
             repositorio.cerrarSesion()
+            avisosSistema.actualizarTemporizador(null)
         }
     }
 

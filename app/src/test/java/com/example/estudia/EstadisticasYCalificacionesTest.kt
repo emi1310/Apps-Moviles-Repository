@@ -126,7 +126,8 @@ class EstadisticasYCalificacionesTest {
     @Test
     fun guardarCalificacionValidaLaNota() = runTest {
         val repositorio = RepositorioFalso(usuarioCon(Materia(1, "Física", 0)))
-        val vm = MateriasViewModel(repositorio)
+        val avisosSistema = AvisosFalso()
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
 
         assertEquals(R.string.error_titulo_calificacion, vm.guardarCalificacion(1, null, " ", "7", hoy))
@@ -143,7 +144,8 @@ class EstadisticasYCalificacionesTest {
     fun eliminarCalificacionSePuedeDeshacer() = runTest {
         val parcial = Calificacion(5, "Parcial", 8.0, hoy)
         val repositorio = RepositorioFalso(usuarioCon(Materia(1, "Física", 0, calificaciones = listOf(parcial))))
-        val vm = MateriasViewModel(repositorio)
+        val avisosSistema = AvisosFalso()
+        val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val avisos = recolectarAvisos(vm.avisos)
 

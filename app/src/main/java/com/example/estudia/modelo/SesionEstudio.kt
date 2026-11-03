@@ -21,6 +21,9 @@ data class SesionEstudio(
     fun restanteMillis(ahora: Long): Long =
         finMillis?.let { (it - ahora).coerceAtLeast(0) } ?: restantePausaMillis
 
+    // Minutos que faltan, redondeados hacia arriba (quedan 30 s -> "1 min").
+    fun minutosRestantes(ahora: Long): Long = (restanteMillis(ahora) + 59_999) / 60_000
+
     fun terminada(ahora: Long): Boolean = !enPausa && restanteMillis(ahora) == 0L
 
     // Minutos completos que ya se estudiaron (lo que se guarda si se corta antes).

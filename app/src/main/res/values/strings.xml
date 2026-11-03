@@ -310,6 +310,8 @@
     <string name="temporizador_duracion">Duración</string>
     <string name="minutos_corto">%1$d min</string>
     <string name="temporizador_empezar">Empezar</string>
+    <string name="permiso_temporizador_titulo">Notificación del temporizador</string>
+    <string name="explicacion_permiso_temporizador">Para mostrarte cuánto falta aunque salgas de la app, y avisarte cuando termine la sesión, Estudia+ necesita permiso para mostrar notificaciones. Sin el permiso, el temporizador anda igual.</string>
     <string name="temporizador_pausar">Pausar</string>
     <string name="temporizador_reanudar">Seguir</string>
     <string name="temporizador_terminar">Terminar</string>
