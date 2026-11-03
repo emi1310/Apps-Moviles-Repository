@@ -2,6 +2,7 @@ package com.example.estudia.datos
 
 import android.net.Uri
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
@@ -54,6 +55,13 @@ interface RepositorioEstudia {
     suspend fun actualizarTarea(materiaId: Int, tarea: Tarea)
     suspend fun eliminarTarea(materiaId: Int, tarea: Tarea)
     suspend fun restaurarTarea(materiaId: Int, tarea: Tarea)
+
+    // ---------- Calificaciones (notas de los exámenes) ----------
+
+    suspend fun agregarCalificacion(materiaId: Int, titulo: String, nota: Double, fecha: LocalDate)
+    suspend fun actualizarCalificacion(materiaId: Int, calificacion: Calificacion)
+    suspend fun eliminarCalificacion(materiaId: Int, calificacion: Calificacion)
+    suspend fun restaurarCalificacion(materiaId: Int, calificacion: Calificacion)
 
     // ---------- Eventos ----------
 

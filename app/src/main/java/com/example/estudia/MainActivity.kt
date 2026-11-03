@@ -1,6 +1,7 @@
 package com.example.estudia
 
 import android.app.UiModeManager
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +14,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.example.estudia.modelo.PreferenciaTema
@@ -28,9 +31,15 @@ class MainActivity : ComponentActivity() {
     // by viewModels hace que el ViewModel sobreviva a rotaciones de pantalla.
     private val sesionViewModel: SesionViewModel by viewModels { AppViewModelProvider.Factory }
 
+    // Pedido de abrir el temporizador: llega al tocar su notificación
+    // (NotificacionTemporizador). Es estado de Compose, así AppNavegacion
+    // navega apenas cambia.
+    private var abrirTemporizador by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) abrirTemporizador = intent.getBooleanExtra(EXTRA_ABRIR_TEMPORIZADOR, false)
         setContent {
             val tema by sesionViewModel.tema.collectAsStateWithLifecycle()
             val oscuro = when (tema) {
@@ -64,8 +73,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
             EstudiaTheme(darkTheme = oscuro) {
-                AppNavegacion(sesionViewModel)
+                AppNavegacion(
+                    sesionViewModel = sesionViewModel,
+                    abrirTemporizador = abrirTemporizador,
+                    onTemporizadorAbierto = { abrirTemporizador = false }
+                )
             }
         }
+    }
+
+    // La app ya estaba abierta y se tocó la notificación del temporizador.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_ABRIR_TEMPORIZADOR, false)) abrirTemporizador = true
+    }
+
+    companion object {
+        const val EXTRA_ABRIR_TEMPORIZADOR = "abrir_temporizador"
     }
 }

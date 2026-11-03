@@ -17,10 +17,14 @@ data class Materia(
     val tareas: List<Tarea> = emptyList(),
     val eventos: List<Evento> = emptyList(),
     val notas: List<Nota> = emptyList(),
-    val archivos: List<Archivo> = emptyList()   // adjuntos de la materia (no de sus notas)
+    val archivos: List<Archivo> = emptyList(),  // adjuntos de la materia (no de sus notas)
+    val calificaciones: List<Calificacion> = emptyList()   // notas de los exámenes
 ) {
     // Archivos de la materia y de todas sus notas (para borrarlos del disco).
     fun todosLosArchivos(): List<Archivo> = archivos + notas.flatMap { it.archivos }
+
+    // Promedio de las notas de los exámenes, o null si todavía no hay ninguna.
+    fun promedio(): Double? = calificaciones.takeIf { it.isNotEmpty() }?.map { it.nota }?.average()
 
     // Calcula el % de tareas completadas sobre el total.
     // Si no hay tareas cargadas, devuelve 100 (para que no rompa el porcentaje).

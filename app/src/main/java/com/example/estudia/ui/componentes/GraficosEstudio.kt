@@ -1,6 +1,8 @@
 package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -8,16 +10,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.modelo.Materia
+import com.example.estudia.viewmodel.SemanaEstudio
 
 // Gráfico de barras con el progreso (% de tareas completadas) de cada
 // materia. Se dibuja a mano con Canvas y drawRect: cada materia es una
@@ -106,4 +111,57 @@ fun GraficoTortaHoras(datos: List<Pair<Materia, Long>>, modifier: Modifier = Mod
             }
         }
     }
+}
+
+// Gráfico de barras con las horas de estudio de cada semana (de lunes a
+// domingo). Las semanas que llegaron a la meta se pintan con el color
+// secundario (verde); la semana actual se resalta con el texto en negrita.
+// Se arma con Box de distinta altura (no hace falta Canvas) y cada barra
+// crece animada al abrir la pantalla.
+@Composable
+fun GraficoSemanas(
+    semanas: List<SemanaEstudio>,
+    metaHoras: Int?,
+    modifier: Modifier = Modifier
+) {
+    val maximo = maxOf(semanas.maxOfOrNull { it.minutos } ?: 0, (metaHoras ?: 0) * 60L, 60L)
+    val altoMaximo = 120.dp
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+        semanas.forEachIndexed { indice, semana ->
+            val esActual = indice == semanas.lastIndex
+            val llegoALaMeta = metaHoras != null && semana.minutos >= metaHoras * 60L
+            val color = if (llegoALaMeta) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+            val avance = key(semana.lunes) { progresoAnimado(semana.minutos.toFloat() / maximo) }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = textoHoras(semana.minutos),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(altoMaximo * avance + 3.dp)
+                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                        .background(if (semana.minutos == 0L) color.copy(alpha = 0.2f) else color)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "${semana.lunes.dayOfMonth}/${semana.lunes.monthValue}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (esActual) FontWeight.Bold else FontWeight.Normal,
+                    color = if (esActual) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// 90 -> "1,5h", 120 -> "2h", 0 -> "0".
+fun textoHoras(minutos: Long): String {
+    if (minutos == 0L) return "0"
+    val horas = Math.round(minutos / 6.0) / 10.0      // redondeado a 1 decimal
+    val texto = if (horas % 1.0 == 0.0) horas.toInt().toString() else horas.toString().replace('.', ',')
+    return texto + "h"
 }

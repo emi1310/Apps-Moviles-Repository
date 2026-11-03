@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.MIGRACION_2_3
 import com.example.estudia.datos.local.MIGRACION_3_4
+import com.example.estudia.datos.local.MIGRACION_4_5
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -101,6 +102,32 @@ class MigracionesTest {
             assertEquals(lunes, c.getLong(1))
             assertEquals(0, c.getInt(2))
             assertTrue(c.isNull(3))
+        }
+        db.close()
+    }
+
+    // 4 -> 5: aparece la tabla de calificaciones y se borra junto con su materia.
+    @Test
+    fun migrar4a5CreaLaTablaDeCalificaciones() {
+        ayudante.createDatabase(nombreBase, 4).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 5, true, MIGRACION_4_5)
+
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO calificaciones (materiaId, titulo, nota, fecha) VALUES (1, 'Parcial', 7.5, 0)")
+        db.query("SELECT titulo, nota FROM calificaciones").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("Parcial", c.getString(0))
+            assertEquals(7.5, c.getDouble(1), 0.001)
+        }
+        db.execSQL("DELETE FROM materias WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM calificaciones").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
         }
         db.close()
     }

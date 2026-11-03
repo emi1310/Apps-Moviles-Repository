@@ -6,7 +6,7 @@ import androidx.room.Relation
 // Clases que Room arma juntando varias tablas con @Relation, o con un JOIN.
 // No son tablas: son el resultado de una consulta.
 
-// Una materia con todas sus tareas, eventos, notas y archivos (los archivos
+// Una materia con todas sus tareas, eventos, notas, archivos y calificaciones (los archivos
 // incluyen los de sus notas: Mapeos.kt los reparte según notaId).
 data class MateriaConDetalle(
     @Embedded val materia: MateriaEntity,
@@ -17,7 +17,9 @@ data class MateriaConDetalle(
     @Relation(parentColumn = "id", entityColumn = "materiaId")
     val notas: List<NotaEntity>,
     @Relation(parentColumn = "id", entityColumn = "materiaId")
-    val archivos: List<ArchivoEntity>
+    val archivos: List<ArchivoEntity>,
+    @Relation(parentColumn = "id", entityColumn = "materiaId")
+    val calificaciones: List<CalificacionEntity>
 )
 
 // Un usuario con todas sus materias (y, dentro de cada una, su detalle).

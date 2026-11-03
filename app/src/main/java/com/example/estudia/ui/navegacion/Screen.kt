@@ -14,6 +14,7 @@ sealed class Screen(val ruta: String) {
     object Perfil : Screen("perfil")
     object Ayuda : Screen("ayuda")
     object Temporizador : Screen("temporizador")
+    object Estadisticas : Screen("estadisticas")
 }
 
 // Pantallas que muestran la barra inferior.

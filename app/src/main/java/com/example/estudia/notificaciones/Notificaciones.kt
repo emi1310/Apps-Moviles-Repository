@@ -24,14 +24,18 @@ import com.example.estudia.R
 object Notificaciones {
 
     const val CANAL_RECORDATORIOS = "recordatorios"
+    // Canal aparte para la cuenta regresiva: importancia baja (sin sonido ni
+    // vibración), así el usuario puede silenciarlo sin perder los recordatorios.
+    const val CANAL_TEMPORIZADOR = "temporizador"
     const val ID_RESUMEN_DIARIO = 1
     // Cada evento usa su propio id (1000 + id del evento), así los avisos
     // de dos exámenes distintos no se pisan entre sí.
     const val ID_BASE_EVENTOS = 1000
     const val ID_TEMPORIZADOR = 2
+    const val ID_TEMPORIZADOR_EN_CURSO = 3
 
     // Desde Android 8 cada notificación pertenece a un canal, que el usuario
-    // puede configurar por separado en Ajustes. Crearlo varias veces no pasa nada.
+    // puede configurar por separado en Ajustes. Crearlos varias veces no pasa nada.
     fun crearCanal(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val canal = NotificationChannel(
@@ -41,7 +45,15 @@ object Notificaciones {
             ).apply {
                 description = context.getString(R.string.canal_recordatorios_descripcion)
             }
-            context.getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
+            val canalTemporizador = NotificationChannel(
+                CANAL_TEMPORIZADOR,
+                context.getString(R.string.canal_temporizador_nombre),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = context.getString(R.string.canal_temporizador_descripcion)
+            }
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannels(listOf(canal, canalTemporizador))
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.estudia.datos.local
 
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
@@ -43,7 +44,8 @@ fun MateriaConDetalle.aModelo(): Materia {
         notas = notas.map { nota ->
             nota.aModelo(archivosModelo.filter { it.notaId == nota.id })
         },
-        archivos = archivosModelo.filter { it.notaId == null }
+        archivos = archivosModelo.filter { it.notaId == null },
+        calificaciones = calificaciones.map { it.aModelo() }.sortedBy { it.fecha }
     )
 }
 
@@ -163,3 +165,18 @@ fun metodoAuthATexto(metodo: MetodoAuth): String {
 private fun textoAMetodoAuth(texto: String): MetodoAuth {
     return if (texto == "GOOGLE") MetodoAuth.GOOGLE else MetodoAuth.LOCAL
 }
+
+fun CalificacionEntity.aModelo(): Calificacion = Calificacion(
+    id = id,
+    titulo = titulo,
+    nota = nota,
+    fecha = fecha
+)
+
+fun Calificacion.aEntidad(materiaId: Int): CalificacionEntity = CalificacionEntity(
+    id = id,
+    materiaId = materiaId,
+    titulo = titulo,
+    nota = nota,
+    fecha = fecha
+)

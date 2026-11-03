@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Timer
@@ -64,6 +65,7 @@ import com.example.estudia.viewmodel.PerfilViewModel
 fun PerfilScreen(
     viewModel: PerfilViewModel,
     onAbrirAyuda: () -> Unit,
+    onAbrirEstadisticas: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
@@ -265,6 +267,7 @@ fun PerfilScreen(
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                 OpcionPerfil(stringResource(R.string.editar_perfil), Icons.Filled.Edit) { mostrarEditarPerfil = true }
                 OpcionPerfil(stringResource(R.string.metas_de_estudio), Icons.Filled.Flag) { mostrarMeta = true }
+                OpcionPerfil(stringResource(R.string.estadisticas_titulo), Icons.Filled.Insights, alTocar = onAbrirEstadisticas)
                 OpcionPerfil(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Filled.HelpOutline, alTocar = onAbrirAyuda)
                 OpcionPerfil(stringResource(R.string.cerrar_sesion), Icons.AutoMirrored.Filled.Logout, esDestructiva = true) {
                     confirmarCierreSesion = true

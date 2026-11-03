@@ -32,6 +32,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Botones de la notificación del temporizador. No es "exported": solo
+             la puede llamar la propia app (desde su notificación). -->
+        <receiver
+            android:name=".notificaciones.TemporizadorReceiver"
+            android:exported="false" />
+
         <!-- Comparte los adjuntos (filesDir/archivos) con otras apps para
              abrirlos, con acceso temporal de solo lectura. No es exportado:
              solo se accede con el permiso que da cada Intent. -->

@@ -161,3 +161,25 @@ data class ArchivoEntity(
     val tamanoBytes: Long,
     val fechaAgregado: LocalDate
 )
+
+// Versión 5: notas de los exámenes de cada materia (escala de 1 a 10).
+@Entity(
+    tableName = "calificaciones",
+    foreignKeys = [
+        ForeignKey(
+            entity = MateriaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["materiaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("materiaId")]
+)
+data class CalificacionEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val materiaId: Int,
+    val titulo: String,
+    val nota: Double,
+    val fecha: LocalDate
+)

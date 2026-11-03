@@ -5,6 +5,7 @@ import com.example.estudia.datos.NotaEncontrada
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
@@ -110,6 +111,20 @@ class RepositorioFalso(
 
     override suspend fun restaurarTarea(materiaId: Int, tarea: Tarea) =
         cambiarMateria(materiaId) { it.copy(tareas = it.tareas + tarea) }
+
+    // ---------- Calificaciones ----------
+
+    override suspend fun agregarCalificacion(materiaId: Int, titulo: String, nota: Double, fecha: LocalDate) =
+        cambiarMateria(materiaId) { it.copy(calificaciones = it.calificaciones + Calificacion(siguienteId++, titulo, nota, fecha)) }
+
+    override suspend fun actualizarCalificacion(materiaId: Int, calificacion: Calificacion) =
+        cambiarMateria(materiaId) { m -> m.copy(calificaciones = m.calificaciones.map { if (it.id == calificacion.id) calificacion else it }) }
+
+    override suspend fun eliminarCalificacion(materiaId: Int, calificacion: Calificacion) =
+        cambiarMateria(materiaId) { m -> m.copy(calificaciones = m.calificaciones.filter { it.id != calificacion.id }) }
+
+    override suspend fun restaurarCalificacion(materiaId: Int, calificacion: Calificacion) =
+        cambiarMateria(materiaId) { it.copy(calificaciones = it.calificaciones + calificacion) }
 
     // ---------- Eventos ----------
 

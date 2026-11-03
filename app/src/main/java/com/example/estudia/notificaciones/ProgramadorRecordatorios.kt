@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.TipoEvento
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
 //  - Un resumen diario a las 8:00 (RecordatorioWorker).
 //  - Un aviso por cada examen o entrega: la noche anterior a las 20:00, o
 //    2 horas antes si ya pasó ese momento (EventoWorker).
+//  - Un aviso 15 minutos antes de cada clase (también EventoWorker).
 //  - El fin del temporizador de estudio (TemporizadorWorker).
 class ProgramadorRecordatorios(context: Context) {
 
@@ -32,17 +34,13 @@ class ProgramadorRecordatorios(context: Context) {
         workManager.enqueue(OneTimeWorkRequestBuilder<RecordatorioWorker>().build())
     }
 
-    fun programarEvento(evento: Evento, ahora: LocalDateTime = LocalDateTime.now()) {
-        if (!evento.llevaRecordatorio) {
-            cancelarEvento(evento.id)
-            return
-        }
-        val nocheAnterior = evento.fecha.minusDays(1).atTime(20, 0)
-        val momento = when {
-            nocheAnterior.isAfter(ahora) -> nocheAnterior
-            evento.inicio.minusHours(2).isAfter(ahora) -> evento.inicio.minusHours(2)
-            else -> null
-        }
+    // desdeElAviso = true cuando lo llama el propio EventoWorker para programar
+    // la clase de la semana siguiente: en ese caso el aviso nuevo se encola
+    // después del que se está ejecutando (con REPLACE se cancelaría a sí mismo).
+    fun programarEvento(evento: Evento, ahora: LocalDateTime = LocalDateTime.now(), desdeElAviso: Boolean = false) {
+        // Desde el aviso se saltea la clase que se acaba de avisar, aunque el
+        // worker haya corrido unos segundos antes de hora.
+        val momento = momentoDelAviso(evento, if (desdeElAviso) ahora.plusMinutes(MINUTOS_AVISO_CLASE * 2) else ahora)
         if (momento == null) {
             cancelarEvento(evento.id)
             return
@@ -53,7 +51,8 @@ class ProgramadorRecordatorios(context: Context) {
             .addTag(ETIQUETA_EVENTOS)
             .build()
         // REPLACE: si el evento se edita, se reemplaza el aviso anterior.
-        workManager.enqueueUniqueWork(nombreTrabajoEvento(evento.id), ExistingWorkPolicy.REPLACE, trabajo)
+        val politica = if (desdeElAviso) ExistingWorkPolicy.APPEND_OR_REPLACE else ExistingWorkPolicy.REPLACE
+        workManager.enqueueUniqueWork(nombreTrabajoEvento(evento.id), politica, trabajo)
     }
 
     fun cancelarEvento(eventoId: Int) {
@@ -92,5 +91,28 @@ class ProgramadorRecordatorios(context: Context) {
         private const val TRABAJO_DIARIO = "recordatorio_diario"
         private const val ETIQUETA_EVENTOS = "recordatorio_evento"
         private const val TRABAJO_TEMPORIZADOR = "fin_temporizador"
+    }
+}
+
+// Minutos antes de cada clase en que llega el aviso.
+const val MINUTOS_AVISO_CLASE = 15L
+
+// Cuándo avisar de un evento (null = no hay que avisar). Función pura, para
+// poder probarla sin WorkManager:
+//  - Clases: 15 minutos antes de la próxima clase (las semanales, de la
+//    próxima semana en que toque).
+//  - Exámenes y entregas: la noche anterior a las 20:00, o 2 horas antes si
+//    ya pasó ese momento.
+//  - Bloques de estudio: no se avisan.
+fun momentoDelAviso(evento: Evento, ahora: LocalDateTime): LocalDateTime? {
+    if (evento.tipo == TipoEvento.CLASE) {
+        return evento.proximoInicio(ahora.plusMinutes(MINUTOS_AVISO_CLASE))?.minusMinutes(MINUTOS_AVISO_CLASE)
+    }
+    if (!evento.llevaRecordatorio) return null
+    val nocheAnterior = evento.fecha.minusDays(1).atTime(20, 0)
+    return when {
+        nocheAnterior.isAfter(ahora) -> nocheAnterior
+        evento.inicio.minusHours(2).isAfter(ahora) -> evento.inicio.minusHours(2)
+        else -> null
     }
 }

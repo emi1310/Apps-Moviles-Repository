@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.ui.componentes.Deslizable
+import com.example.estudia.ui.componentes.DialogoCalificacion
 import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
@@ -59,6 +61,8 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
     var materiaParaEliminar by remember { mutableStateOf<Materia?>(null) }
     // Tarea a crear (tarea == null) o editar, junto con su materia.
     var tareaEnDialogo by remember { mutableStateOf<Pair<Int, Tarea?>?>(null) }
+    // Nota de examen a crear (calificación == null) o editar, junto con su materia.
+    var calificacionEnDialogo by remember { mutableStateOf<Pair<Int, Calificacion?>?>(null) }
     // rememberSaveable: si Android recrea la pantalla mientras el usuario
     // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
     var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -186,6 +190,9 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                             }
                         },
                         onEliminarArchivo = { viewModel.eliminarArchivo(materia.id, it) },
+                        onAgregarCalificacion = { calificacionEnDialogo = materia.id to null },
+                        onEditarCalificacion = { calificacionEnDialogo = materia.id to it },
+                        onEliminarCalificacion = { viewModel.eliminarCalificacion(materia.id, it) },
                         onEditar = { materiaParaEditar = materia },
                         onArchivar = { viewModel.alternarArchivada(materia) },
                         onEliminar = { materiaParaEliminar = materia }
@@ -227,6 +234,18 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                 tareaEnDialogo = null
             },
             onCancelar = { tareaEnDialogo = null }
+        )
+    }
+
+    calificacionEnDialogo?.let { (materiaId, calificacion) ->
+        DialogoCalificacion(
+            calificacion = calificacion,
+            onConfirmar = { titulo, nota, fecha ->
+                val error = viewModel.guardarCalificacion(materiaId, calificacion, titulo, nota, fecha)
+                if (error == null) calificacionEnDialogo = null
+                error
+            },
+            onCancelar = { calificacionEnDialogo = null }
         )
     }
 

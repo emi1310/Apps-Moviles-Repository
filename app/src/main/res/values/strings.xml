@@ -207,7 +207,7 @@
 
     <!-- Recordatorios y permiso de notificaciones -->
     <string name="recordatorios">Recordatorios</string>
-    <string name="recordatorios_descripcion">Resumen diario a las 8:00 y aviso antes de cada examen o entrega</string>
+    <string name="recordatorios_descripcion">Resumen diario a las 8:00, aviso antes de cada examen o entrega y 15 min antes de cada clase</string>
     <string name="sin_permiso_notificaciones">Sin permiso de notificaciones</string>
     <string name="desactivados">Desactivados</string>
     <string name="activar_recordatorios">Activar recordatorios</string>
@@ -221,7 +221,7 @@
 
     <!-- Notificaciones -->
     <string name="canal_recordatorios_nombre">Recordatorios de estudio</string>
-    <string name="canal_recordatorios_descripcion">Tareas pendientes, exámenes y entregas</string>
+    <string name="canal_recordatorios_descripcion">Tareas pendientes, exámenes, entregas y clases</string>
     <string name="notificacion_resumen_titulo">Tu día de estudio</string>
     <string name="notificacion_hoy">Hoy: %1$s</string>
     <string name="notificacion_manana">Mañana: %1$s</string>
@@ -252,11 +252,12 @@
         <item>¿Cómo uso el temporizador de estudio?</item>
         <item>¿Cómo cargo una clase que se repite todas las semanas?</item>
         <item>¿Hay atajos para completar o eliminar?</item>
+        <item>¿Dónde cargo mis notas y veo mi promedio?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
         <item>En Materias, expandí la materia y tocá \"Adjuntar archivo\". En Notas, usá el menú de la nota. El archivo se copia dentro de la app, así que no se pierde aunque borres el original.</item>
-        <item>Solo para los recordatorios: un resumen diario y un aviso antes de cada examen o entrega. El permiso se pide recién cuando activás \"Recordatorios\" en tu perfil, y podés quitarlo cuando quieras.</item>
+        <item>Solo para los recordatorios: un resumen diario, un aviso antes de cada examen o entrega, otro 15 minutos antes de cada clase y la cuenta regresiva del temporizador. El permiso se pide recién cuando activás \"Recordatorios\" en tu perfil, y podés quitarlo cuando quieras.</item>
         <item>No. La app no tiene permisos de almacenamiento: solo puede leer el archivo que vos elegís en el selector del sistema.</item>
         <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio de esa semana: los que cargás en el calendario y las sesiones del temporizador.</item>
         <item>Sí: al eliminar una materia, una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
@@ -264,6 +265,7 @@
         <item>En Inicio tocá \"Temporizador de estudio\", elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
         <item>Creá un evento de tipo \"Clase\" con la fecha de la primera clase y marcá \"Repetir cada semana\". Si querés, elegí la fecha de la última clase; si no, se repite sin fin.</item>
         <item>Sí: en las listas, deslizá una tarea hacia la derecha para completarla, o cualquier tarea, nota o evento hacia la izquierda para eliminarlo (con \"Deshacer\").</item>
+        <item>En Materias, expandí la materia y tocá \"Agregar nota de examen\" (de 1 a 10, se aprueba con 4). El promedio aparece en la tarjeta de la materia, y en Perfil → \"Estadísticas de estudio\" ves el promedio general, tu racha de días seguidos estudiando y las horas de cada semana.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -327,9 +329,54 @@
     <string name="aviso_sesion_descartada">Sesión descartada</string>
     <string name="notificacion_temporizador_titulo">¡Terminó tu sesión de estudio! 🎉</string>
     <string name="notificacion_temporizador_texto">Estudiaste %1$d min de %2$s. Tomate un descanso de 5 minutos.</string>
+    <string name="notificacion_temporizador_corriendo">Sesión de %1$d min · tocá para ver</string>
+    <string name="notificacion_temporizador_pausa">En pausa · faltan %1$d min</string>
+    <string name="notificacion_temporizador_guardada_titulo">Sesión de estudio guardada</string>
+    <string name="canal_temporizador_nombre">Temporizador de estudio</string>
+    <string name="canal_temporizador_descripcion">Cuenta regresiva mientras estudiás</string>
 
     <!-- Deslizar en las listas (lo lee TalkBack) -->
     <string name="deslizar_completar">Completar</string>
     <string name="deslizar_desmarcar">Marcar como pendiente</string>
     <string name="deslizar_eliminar">Eliminar</string>
+
+    <!-- Notas de los exámenes (calificaciones) -->
+    <string name="notas_examenes">Notas de exámenes</string>
+    <string name="sin_calificaciones">Todavía no cargaste notas de exámenes</string>
+    <string name="agregar_calificacion">Agregar nota de examen</string>
+    <string name="nueva_calificacion">Nueva nota de examen</string>
+    <string name="editar_calificacion">Editar nota de examen</string>
+    <string name="calificacion_examen">Examen</string>
+    <string name="calificacion_examen_ejemplo">Ej: Primer parcial</string>
+    <string name="calificacion_nota">Nota</string>
+    <string name="calificacion_nota_ayuda">De 1 a 10 (se aprueba con 4)</string>
+    <string name="promedio_corto">Prom.</string>
+    <string name="error_titulo_calificacion">Escribí el nombre del examen</string>
+    <string name="error_nota_invalida">La nota tiene que ser un número de 1 a 10</string>
+    <string name="aviso_calificacion_eliminada">Nota de examen eliminada</string>
+
+    <!-- Estadísticas de estudio -->
+    <string name="estadisticas_titulo">Estadísticas de estudio</string>
+    <plurals name="estadisticas_racha">
+        <item quantity="one">día seguido estudiando</item>
+        <item quantity="other">días seguidos estudiando</item>
+    </plurals>
+    <plurals name="estadisticas_mejor_racha">
+        <item quantity="one">Mejor racha: %1$d día</item>
+        <item quantity="other">Mejor racha: %1$d días</item>
+    </plurals>
+    <string name="estadisticas_racha_cero">Empezá hoy: cualquier bloque de estudio cuenta</string>
+    <string name="estadisticas_racha_seguir">Todavía no estudiaste hoy: ¡no cortes la racha!</string>
+    <string name="estadisticas_racha_hoy">¡Hoy ya estudiaste! Seguí así</string>
+    <string name="estadisticas_horas_semana">Horas por semana</string>
+    <string name="estadisticas_meta">Meta: %1$d h por semana. En verde, las semanas que la cumpliste.</string>
+    <string name="estadisticas_sin_meta">Fijá una meta semanal en tu perfil para ver cuándo la cumplís.</string>
+    <string name="estadisticas_promedio">Notas de exámenes</string>
+    <string name="estadisticas_promedio_general">Promedio general</string>
+    <string name="estadisticas_sin_notas">Cargá las notas de tus exámenes en cada materia para ver tu promedio.</string>
+    <string name="estadisticas_ultimo_mes">Últimos 30 días por materia</string>
+
+    <!-- Aviso antes de cada clase -->
+    <string name="notificacion_clase_titulo">Clase de %1$s en %2$d min</string>
+    <string name="notificacion_clase_texto">%1$s · de %2$s a %3$s</string>
 </resources>

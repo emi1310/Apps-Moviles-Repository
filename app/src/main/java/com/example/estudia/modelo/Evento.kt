@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 // Representa un evento del calendario: puede ser una clase, un examen,
 // una entrega o un bloque de estudio (ver TipoEvento).
@@ -29,9 +30,21 @@ data class Evento(
         return Duration.between(horaInicio, horaFin).toMinutes().coerceAtLeast(0)
     }
 
-    // Solo los exámenes y entregas generan un recordatorio propio.
+    // Los exámenes y entregas se avisan la noche anterior (las clases, en
+    // cambio, 15 minutos antes: ver ProgramadorRecordatorios).
     val llevaRecordatorio: Boolean
         get() = tipo == TipoEvento.EXAMEN || tipo == TipoEvento.ENTREGA
+
+    // Inicio de la próxima vez que ocurre el evento después de "desde", o
+    // null si ya no vuelve a ocurrir. Para las clases semanales recorre las
+    // semanas hasta repetirHasta. Lo usa el aviso de antes de cada clase.
+    fun proximoInicio(desde: LocalDateTime): LocalDateTime? {
+        if (!semanal) return inicio.takeIf { it.isAfter(desde) }
+        var dia = maxOf(fecha, desde.toLocalDate()).with(TemporalAdjusters.nextOrSame(fecha.dayOfWeek))
+        if (!dia.atTime(horaInicio).isAfter(desde)) dia = dia.plusWeeks(1)
+        val hasta = repetirHasta
+        return if (hasta != null && dia.isAfter(hasta)) null else dia.atTime(horaInicio)
+    }
 
     // ¿Hay que mostrar este evento el día "dia"? Para los que se repiten:
     // mismo día de la semana, desde la primera fecha y hasta repetirHasta.

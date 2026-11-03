@@ -20,6 +20,7 @@ object AppViewModelProvider {
         initializer { NotasViewModel(estudiaApp().repositorio) }
         initializer { PerfilViewModel(estudiaApp().repositorio) }
         initializer { TemporizadorViewModel(estudiaApp().repositorio) }
+        initializer { EstadisticasViewModel(estudiaApp().repositorio) }
     }
 }
 

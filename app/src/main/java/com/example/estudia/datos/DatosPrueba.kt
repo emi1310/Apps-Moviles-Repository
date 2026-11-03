@@ -4,7 +4,7 @@ import com.example.estudia.modelo.*
 import java.time.LocalDate
 import java.time.LocalTime
 
-// Genera un Usuario de demostración con Materias, Tareas, Eventos y Notas
+// Genera un Usuario de demostración con Materias, Tareas, Eventos, Notas y Calificaciones
 // ya cargadas. Se usa solo la primera vez que se abre la app (cuando la
 // base de datos Room todavía está vacía), para poder ver la app funcionando.
 // Las fechas son relativas a hoy, así siempre se ven en el calendario.
@@ -39,7 +39,15 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         eventos = listOf(
             Evento(0, "Clase: Ecuaciones diferenciales", TipoEvento.CLASE, hoy, LocalTime.of(10, 0), LocalTime.of(11, 30)),
             Evento(0, "Examen parcial", TipoEvento.EXAMEN, manana, LocalTime.of(9, 0), LocalTime.of(11, 0)),
-            Evento(0, "Estudio: Ecuaciones", TipoEvento.BLOQUE_ESTUDIO, hoy, LocalTime.of(18, 0), LocalTime.of(20, 0))
+            Evento(0, "Estudio: Ecuaciones", TipoEvento.BLOQUE_ESTUDIO, hoy, LocalTime.of(18, 0), LocalTime.of(20, 0)),
+            // Días anteriores seguidos: para que se vea la racha en Estadísticas.
+            Evento(0, "Estudio: Integrales", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(1), LocalTime.of(18, 0), LocalTime.of(19, 30)),
+            Evento(0, "Estudio: Derivadas", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(2), LocalTime.of(17, 0), LocalTime.of(18, 0)),
+            Evento(0, "Estudio: Límites", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(9), LocalTime.of(16, 0), LocalTime.of(19, 0))
+        ),
+        calificaciones = listOf(
+            Calificacion(0, "Trabajo práctico 1", 9.0, hoy.minusDays(40)),
+            Calificacion(0, "Primer parcial", 7.5, hoy.minusDays(20))
         )
     )
 
@@ -53,7 +61,12 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         ),
         eventos = listOf(
             Evento(0, "Laboratorio: Ondas", TipoEvento.CLASE, hoy, LocalTime.of(14, 0), LocalTime.of(15, 30)),
-            Evento(0, "Entrega: informe de laboratorio", TipoEvento.ENTREGA, manana, LocalTime.of(23, 0), LocalTime.of(23, 59))
+            Evento(0, "Entrega: informe de laboratorio", TipoEvento.ENTREGA, manana, LocalTime.of(23, 0), LocalTime.of(23, 59)),
+            Evento(0, "Estudio: Cinemática", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(15), LocalTime.of(10, 0), LocalTime.of(12, 0))
+        ),
+        calificaciones = listOf(
+            Calificacion(0, "Primer parcial", 3.0, hoy.minusDays(25)),
+            Calificacion(0, "Recuperatorio", 6.0, hoy.minusDays(10))
         )
     )
 

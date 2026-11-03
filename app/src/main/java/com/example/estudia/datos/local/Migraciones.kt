@@ -158,3 +158,20 @@ val MIGRACION_3_4 = object : Migration(3, 4) {
         db.execSQL("ALTER TABLE `eventos` ADD COLUMN `repetirHasta` INTEGER")
     }
 }
+
+// Versión 4 -> 5: tabla nueva con las notas de los exámenes de cada materia.
+// El SQL es el mismo que genera Room (ver app/schemas/.../5.json).
+val MIGRACION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `calificaciones` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`materiaId` INTEGER NOT NULL, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`nota` REAL NOT NULL, " +
+                "`fecha` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`materiaId`) REFERENCES `materias`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_calificaciones_materiaId` ON `calificaciones` (`materiaId`)")
+    }
+}

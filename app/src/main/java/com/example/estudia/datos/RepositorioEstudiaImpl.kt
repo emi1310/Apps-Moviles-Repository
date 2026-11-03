@@ -6,6 +6,7 @@ import android.net.Uri
 import com.example.estudia.R
 import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.ArchivoDao
+import com.example.estudia.datos.local.CalificacionDao
 import com.example.estudia.datos.local.EventoDao
 import com.example.estudia.datos.local.MateriaDao
 import com.example.estudia.datos.local.NotaDao
@@ -16,6 +17,7 @@ import com.example.estudia.datos.local.aEntidad
 import com.example.estudia.datos.local.aModelo
 import com.example.estudia.datos.local.metodoAuthATexto
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
@@ -25,6 +27,8 @@ import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.notificaciones.MINUTOS_AVISO_CLASE
+import com.example.estudia.notificaciones.NotificacionTemporizador
 import com.example.estudia.notificaciones.ProgramadorRecordatorios
 import com.example.estudia.util.Contrasenas
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +51,8 @@ import java.time.temporal.ChronoUnit
 //  - DataStore: el id del usuario con la sesión abierta y las preferencias.
 //  - AlmacenamientoArchivos: el contenido de los adjuntos (filesDir).
 //  - ProgramadorRecordatorios: los recordatorios (WorkManager).
-//  - TemporizadorDataStore: la sesión del temporizador de estudio en curso.
+//  - TemporizadorDataStore y NotificacionTemporizador: la sesión del
+//    temporizador en curso y su notificación con la cuenta regresiva.
 // También convierte entidades de Room <-> modelo de dominio (Mapeos.kt).
 // Arquitectura: UI -> ViewModel -> Repository -> Room / DataStore / archivos.
 class RepositorioEstudiaImpl(
@@ -57,11 +62,13 @@ class RepositorioEstudiaImpl(
     private val eventoDao: EventoDao,
     private val notaDao: NotaDao,
     private val archivoDao: ArchivoDao,
+    private val calificacionDao: CalificacionDao,
     private val sesion: SesionDataStore,
     private val preferencias: PreferenciasDataStore,
     private val almacenamiento: AlmacenamientoArchivos,
     private val programador: ProgramadorRecordatorios,
     private val temporizador: TemporizadorDataStore,
+    private val notificacionTemporizador: NotificacionTemporizador,
     // Título de los bloques de estudio que guarda el temporizador (strings.xml).
     private val tituloSesionEstudio: String
 ) : RepositorioEstudia {
@@ -78,11 +85,13 @@ class RepositorioEstudiaImpl(
                 eventoDao = db.eventoDao(),
                 notaDao = db.notaDao(),
                 archivoDao = db.archivoDao(),
+                calificacionDao = db.calificacionDao(),
                 sesion = SesionDataStore(app),
                 preferencias = PreferenciasDataStore(app),
                 almacenamiento = AlmacenamientoArchivos(app),
                 programador = ProgramadorRecordatorios(app),
                 temporizador = TemporizadorDataStore(app),
+                notificacionTemporizador = NotificacionTemporizador(app),
                 tituloSesionEstudio = app.getString(R.string.sesion_estudio_titulo)
             )
         }
@@ -198,6 +207,7 @@ class RepositorioEstudiaImpl(
         }
         materia.notas.forEach { notaDao.insertar(it.aEntidad(materia.id)) }
         archivoDao.insertarTodos(materia.todosLosArchivos().map { it.aEntidad(materia.id) })
+        materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materia.id)) }
     }
 
     // ---------- Tareas ----------
@@ -217,6 +227,24 @@ class RepositorioEstudiaImpl(
     // Se inserta con el mismo id que tenía, así queda igual que antes.
     override suspend fun restaurarTarea(materiaId: Int, tarea: Tarea) {
         tareaDao.insertar(tarea.aEntidad(materiaId))
+    }
+
+    // ---------- Calificaciones ----------
+
+    override suspend fun agregarCalificacion(materiaId: Int, titulo: String, nota: Double, fecha: LocalDate) {
+        calificacionDao.insertar(Calificacion(0, titulo, nota, fecha).aEntidad(materiaId))
+    }
+
+    override suspend fun actualizarCalificacion(materiaId: Int, calificacion: Calificacion) {
+        calificacionDao.actualizar(calificacion.aEntidad(materiaId))
+    }
+
+    override suspend fun eliminarCalificacion(materiaId: Int, calificacion: Calificacion) {
+        calificacionDao.eliminar(calificacion.aEntidad(materiaId))
+    }
+
+    override suspend fun restaurarCalificacion(materiaId: Int, calificacion: Calificacion) {
+        calificacionDao.insertar(calificacion.aEntidad(materiaId))
     }
 
     // ---------- Eventos ----------
@@ -325,11 +353,14 @@ class RepositorioEstudiaImpl(
         val sesion = SesionEstudio.nueva(materia, minutos, ahora())
         temporizador.guardar(sesion)
         programador.programarFinTemporizador(sesion.duracionMillis)
+        notificacionTemporizador.mostrar(sesion)
     }
 
     override suspend fun pausarSesion() = candadoTemporizador.withLock {
         val sesion = temporizador.actual() ?: return@withLock
-        temporizador.guardar(sesion.pausar(ahora()))
+        val pausada = sesion.pausar(ahora())
+        temporizador.guardar(pausada)
+        notificacionTemporizador.mostrar(pausada)
         programador.cancelarFinTemporizador()
     }
 
@@ -337,6 +368,7 @@ class RepositorioEstudiaImpl(
         val sesion = temporizador.actual()?.reanudar(ahora()) ?: return@withLock
         temporizador.guardar(sesion)
         programador.programarFinTemporizador(sesion.restanteMillis(ahora()))
+        notificacionTemporizador.mostrar(sesion)
     }
 
     override suspend fun terminarSesion(guardar: Boolean): Int = candadoTemporizador.withLock {
@@ -354,9 +386,17 @@ class RepositorioEstudiaImpl(
         sesion
     }
 
+    // Reiniciar el teléfono borra las notificaciones, pero la sesión del
+    // temporizador sigue guardada: al arrancar la app se vuelve a mostrar.
+    suspend fun restaurarNotificacionTemporizador() {
+        val sesion = temporizador.actual() ?: return
+        if (!sesion.terminada(ahora())) notificacionTemporizador.mostrar(sesion)
+    }
+
     private suspend fun cerrarSesionDeEstudio() {
         temporizador.borrar()
         programador.cancelarFinTemporizador()
+        notificacionTemporizador.ocultar()
     }
 
     // Bloque de estudio que termina ahora y empezó "minutos" antes (si la
@@ -394,17 +434,33 @@ class RepositorioEstudiaImpl(
         return ResumenDia(pendientes, eventosHoy, eventosManana)
     }
 
-    data class EventoParaAviso(val evento: Evento, val nombreMateria: String)
+    // inicio: cuándo empieza esta vez (en las clases semanales, la clase de hoy).
+    data class EventoParaAviso(val evento: Evento, val nombreMateria: String, val inicio: LocalDateTime)
 
     // El evento a recordar, solo si sigue existiendo, es del usuario con
     // sesión abierta, todavía no pasó y los recordatorios están activos.
-    suspend fun eventoParaRecordatorio(eventoId: Int): EventoParaAviso? {
+    // Para las clases, además, tiene que empezar dentro de un rato (si el
+    // aviso llegó muy tarde, por ejemplo con el teléfono apagado, no se muestra).
+    suspend fun eventoParaRecordatorio(eventoId: Int, ahora: LocalDateTime = LocalDateTime.now()): EventoParaAviso? {
         if (!preferencias.recordatoriosActivos.first()) return null
         val fila = eventoDao.buscarConMateria(eventoId) ?: return null
         if (sesion.idUsuarioActivo.first() != fila.usuarioId) return null
         val evento = fila.evento.aModelo()
-        if (evento.inicio.isBefore(LocalDateTime.now())) return null
-        return EventoParaAviso(evento, fila.nombreMateria)
+        if (evento.tipo == TipoEvento.CLASE) {
+            val inicio = evento.proximoInicio(ahora.minusMinutes(1)) ?: return null
+            if (inicio.isAfter(ahora.plusMinutes(MINUTOS_AVISO_CLASE * 2))) return null
+            return EventoParaAviso(evento, fila.nombreMateria, inicio)
+        }
+        if (evento.inicio.isBefore(ahora)) return null
+        return EventoParaAviso(evento, fila.nombreMateria, evento.inicio)
+    }
+
+    // Después de avisar una clase semanal, deja programado el aviso de la
+    // semana siguiente (si la clase sigue existiendo y los avisos están activos).
+    suspend fun reprogramarAvisoDeClase(eventoId: Int) {
+        if (!preferencias.recordatoriosActivos.first()) return
+        val evento = eventoDao.buscarConMateria(eventoId)?.evento?.aModelo() ?: return
+        if (evento.tipo == TipoEvento.CLASE) programador.programarEvento(evento, desdeElAviso = true)
     }
 
     // ---------- Privados ----------
@@ -439,6 +495,7 @@ class RepositorioEstudiaImpl(
             materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
             materia.eventos.forEach { eventoDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
             materia.notas.forEach { notaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
         }
     }
 }

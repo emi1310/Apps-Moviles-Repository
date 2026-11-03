@@ -32,6 +32,7 @@ import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.pantallas.AyudaScreen
 import com.example.estudia.ui.pantallas.BienvenidaScreen
 import com.example.estudia.ui.pantallas.CalendarioScreen
+import com.example.estudia.ui.pantallas.EstadisticasScreen
 import com.example.estudia.ui.pantallas.InicioScreen
 import com.example.estudia.ui.pantallas.LoginScreen
 import com.example.estudia.ui.pantallas.MateriasScreen
@@ -48,7 +49,12 @@ import com.example.estudia.viewmodel.SesionViewModel
 // queda asociado a esa entrada de la navegación y se destruye al salir.
 // La sesión la maneja SesionViewModel, que vive mientras vive la Activity.
 @Composable
-fun AppNavegacion(sesionViewModel: SesionViewModel) {
+fun AppNavegacion(
+    sesionViewModel: SesionViewModel,
+    // true cuando se tocó la notificación del temporizador (ver MainActivity).
+    abrirTemporizador: Boolean = false,
+    onTemporizadorAbierto: () -> Unit = {}
+) {
     val sesionUiState by sesionViewModel.sesionUiState.collectAsStateWithLifecycle()
     val authUiState by sesionViewModel.authUiState.collectAsStateWithLifecycle()
 
@@ -86,6 +92,16 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
         }
     }
 
+    // Al tocar la notificación del temporizador se va directo a esa pantalla
+    // (si hay alguien con sesión iniciada).
+    LaunchedEffect(abrirTemporizador, sesionUiState) {
+        if (!abrirTemporizador) return@LaunchedEffect
+        if (sesionUiState is SesionUiState.Activa) {
+            navController.navigate(Screen.Temporizador.ruta) { launchSingleTop = true }
+        }
+        onTemporizadorAbierto()
+    }
+
     CompositionLocalProvider(LocalAvisos provides avisos) {
         Scaffold(
             snackbarHost = {
@@ -112,7 +128,7 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
                 navController = navController,
                 startDestination = destinoInicial,
                 // Las pantallas con barra inferior respetan el espacio del Scaffold;
-                // las demás (Bienvenida, Login, Registro, Ayuda, Temporizador) dibujan de borde a
+                // las demás (Bienvenida, Login, Registro, Ayuda, Temporizador, Estadísticas) dibujan
                 // borde y manejan ellas mismas las barras del sistema.
                 modifier = if (mostrarBarra) Modifier.padding(espacioInterno) else Modifier,
                 // Transición entre pantallas: un fundido corto con un leve
@@ -171,12 +187,20 @@ fun AppNavegacion(sesionViewModel: SesionViewModel) {
                     PerfilScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         onAbrirAyuda = { navController.navigate(Screen.Ayuda.ruta) },
+                        onAbrirEstadisticas = { navController.navigate(Screen.Estadisticas.ruta) },
                         onCerrarSesion = {
                             sesionViewModel.cerrarSesion()
                             navController.navigate(Screen.Login.ruta) {
                                 popUpTo(navController.graph.id) { inclusive = true }
                             }
                         }
+                    )
+                }
+
+                composable(Screen.Estadisticas.ruta) {
+                    EstadisticasScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() }
                     )
                 }
 

@@ -1,11 +1,13 @@
 package com.example.estudia.viewmodel
 
 import android.net.Uri
+import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Usuario
@@ -140,6 +142,39 @@ class MateriasViewModel(
                 Aviso(
                     R.string.aviso_tarea_eliminada,
                     alDeshacer = { repositorio.restaurarTarea(materiaId, tarea) }
+                )
+            )
+        }
+    }
+
+    // ---------- Calificaciones (notas de los exámenes) ----------
+
+    // Crea o edita una nota de examen. La nota llega como texto ("7,5" o
+    // "7.5"). Devuelve el error a mostrar en el diálogo, o null si se guardó.
+    @StringRes
+    fun guardarCalificacion(materiaId: Int, existente: Calificacion?, titulo: String, notaTexto: String, fecha: LocalDate): Int? {
+        if (titulo.isBlank()) return R.string.error_titulo_calificacion
+        val nota = notaTexto.trim().replace(',', '.').toDoubleOrNull()
+        if (nota == null || nota < Calificacion.NOTA_MINIMA || nota > Calificacion.NOTA_MAXIMA) {
+            return R.string.error_nota_invalida
+        }
+        viewModelScope.launch {
+            if (existente == null) {
+                repositorio.agregarCalificacion(materiaId, titulo.trim(), nota, fecha)
+            } else {
+                repositorio.actualizarCalificacion(materiaId, existente.copy(titulo = titulo.trim(), nota = nota, fecha = fecha))
+            }
+        }
+        return null
+    }
+
+    fun eliminarCalificacion(materiaId: Int, calificacion: Calificacion) {
+        viewModelScope.launch {
+            repositorio.eliminarCalificacion(materiaId, calificacion)
+            avisar(
+                Aviso(
+                    R.string.aviso_calificacion_eliminada,
+                    alDeshacer = { repositorio.restaurarCalificacion(materiaId, calificacion) }
                 )
             )
         }

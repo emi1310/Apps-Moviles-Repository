@@ -27,13 +27,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tarea
 import java.time.LocalDate
 
 // Tarjeta que muestra el resumen de una materia: inicial con su color,
 // nombre, tareas pendientes y barra de progreso. Al tocarla se expande
-// (con animación) y muestra las tareas y los archivos adjuntos.
+// (con animación) y muestra las tareas, las notas de los exámenes y los
+// archivos adjuntos. Si hay notas, la cabecera muestra el promedio.
 @Composable
 fun TarjetaMateria(
     materia: Materia,
@@ -44,6 +46,9 @@ fun TarjetaMateria(
     onAdjuntarArchivo: () -> Unit,
     onAbrirArchivo: (Archivo) -> Unit,
     onEliminarArchivo: (Archivo) -> Unit,
+    onAgregarCalificacion: () -> Unit,
+    onEditarCalificacion: (Calificacion) -> Unit,
+    onEliminarCalificacion: (Calificacion) -> Unit,
     onEditar: () -> Unit,
     onArchivar: () -> Unit,
     onEliminar: () -> Unit,
@@ -86,6 +91,8 @@ fun TarjetaMateria(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    // Promedio de las notas de los exámenes (verde si aprueba).
+                    materia.promedio()?.let { EtiquetaNota(it, prefijo = stringResource(R.string.promedio_corto)) }
                     MenuOpciones(
                         listOf(
                             OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, onEditar),
@@ -158,6 +165,38 @@ fun TarjetaMateria(
                         Icon(Icons.Filled.Add, contentDescription = null)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.agregar_tarea))
+                    }
+
+                    // ---------- Notas de los exámenes ----------
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(stringResource(R.string.notas_examenes), style = MaterialTheme.typography.titleSmall)
+                    if (materia.calificaciones.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.sin_calificaciones),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    materia.calificaciones.forEach { calificacion ->
+                        key(calificacion.id) {
+                            Deslizable(
+                                onEliminar = { onEliminarCalificacion(calificacion) },
+                                forma = RoundedCornerShape(12.dp),
+                                fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
+                            ) {
+                                FilaCalificacion(
+                                    calificacion = calificacion,
+                                    onEditar = { onEditarCalificacion(calificacion) },
+                                    onEliminar = { onEliminarCalificacion(calificacion) }
+                                )
+                            }
+                        }
+                    }
+                    TextButton(onClick = onAgregarCalificacion) {
+                        Icon(Icons.Filled.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.agregar_calificacion))
                     }
 
                     HorizontalDivider()
