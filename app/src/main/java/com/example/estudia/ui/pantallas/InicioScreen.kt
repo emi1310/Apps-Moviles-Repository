@@ -1,16 +1,16 @@
 package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.DonutLarge
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
@@ -23,6 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -32,11 +36,13 @@ import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
+import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
 import com.example.estudia.ui.theme.AmarilloFavorita
 import com.example.estudia.ui.theme.LocalDegradado
+import com.example.estudia.ui.theme.NaranjaRacha
 import com.example.estudia.viewmodel.InicioUiState
 import com.example.estudia.viewmodel.InicioViewModel
 import kotlinx.coroutines.delay
@@ -61,8 +67,7 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        EncabezadoInicio(estado)
-        TarjetaTemporizador(sesionEstudio, onAbrirTemporizador)
+        EncabezadoInicio(estado, sesionEstudio, onAbrirTemporizador)
 
         // ---------- Tareas pendientes ----------
         TarjetaSeccion(
@@ -138,9 +143,10 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
     }
 }
 
-// Encabezado con degradado: saludo, fecha de hoy y tres números clave.
+// Encabezado con degradado: saludo, fecha de hoy y tres casillas: la meta
+// semanal, la racha de días estudiando y el acceso al temporizador.
 @Composable
-private fun EncabezadoInicio(estado: InicioUiState) {
+private fun EncabezadoInicio(estado: InicioUiState, sesionEstudio: SesionEstudio?, onAbrirTemporizador: () -> Unit) {
     val dias = stringArrayResource(R.array.dias_semana_largo)
     val meses = stringArrayResource(R.array.meses)
     val hoy = estado.hoy
@@ -170,75 +176,132 @@ private fun EncabezadoInicio(estado: InicioUiState) {
             color = Color.White.copy(alpha = 0.85f)
         )
         Spacer(modifier = Modifier.height(18.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            DatoEncabezado(estado.tareasPendientes.size.toString(), stringResource(R.string.pendientes), Modifier.weight(1f))
-            DatoEncabezado(estado.proximosEventos.size.toString(), stringResource(R.string.proximos), Modifier.weight(1f))
-            DatoEncabezado(stringResource(R.string.horas_corto, estado.horasEstudio), stringResource(R.string.de_estudio), Modifier.weight(1f))
+        // IntrinsicSize.Min: las tres casillas quedan de la misma altura.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.height(IntrinsicSize.Min)
+        ) {
+            CasillaMeta(estado, Modifier.weight(1f))
+            CasillaRacha(estado, Modifier.weight(1f))
+            CasillaTemporizador(sesionEstudio, onAbrirTemporizador, Modifier.weight(1f))
         }
     }
 }
 
+// Horas estudiadas esta semana. Con meta: "3/10h" y una barrita de avance.
 @Composable
-private fun DatoEncabezado(valor: String, etiqueta: String, modifier: Modifier) {
-    Column(
+private fun CasillaMeta(estado: InicioUiState, modifier: Modifier) {
+    val meta = estado.metaHorasSemanales?.takeIf { it > 0 }
+    CasillaEncabezado(
+        etiqueta = stringResource(if (meta != null) R.string.inicio_meta_semanal else R.string.inicio_esta_semana),
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.16f))
-            .padding(vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = valor, style = MaterialTheme.typography.titleLarge, color = Color.White)
-        Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+        Text(
+            text = if (meta != null) stringResource(R.string.inicio_horas_de_meta, estado.horasEstaSemana, meta)
+            else stringResource(R.string.horas_corto, estado.horasEstaSemana),
+            style = MaterialTheme.typography.titleLarge,
+            color = Color.White
+        )
+        val progreso = estado.progresoMeta
+        if (progreso != null) {
+            val avance = progresoAnimado(progreso)
+            LinearProgressIndicator(
+                progress = { avance },
+                color = Color.White,
+                trackColor = Color.White.copy(alpha = 0.25f),
+                // Sin el hueco entre lo cumplido y lo que falta (Material 3 lo
+                // agrega por defecto): en una barra tan chica parecen dos.
+                gapSize = 0.dp,
+                drawStopIndicator = {},
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .width(56.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(50))
+            )
+        }
     }
 }
 
+// Días seguidos estudiando. El fueguito se enciende si hoy ya estudió; si
+// no, queda apagado (la racha sigue, pero hay que estudiar hoy para no cortarla).
 @Composable
-private fun TextoSecundario(texto: String) {
-    Text(text = texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun CasillaRacha(estado: InicioUiState, modifier: Modifier) {
+    CasillaEncabezado(
+        etiqueta = pluralStringResource(R.plurals.inicio_dias_racha, estado.rachaDias),
+        modifier = modifier
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Filled.LocalFireDepartment,
+                contentDescription = null,
+                tint = if (estado.estudioHoy) NaranjaRacha else Color.White.copy(alpha = 0.55f),
+                modifier = Modifier.size(26.dp)
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(text = estado.rachaDias.toString(), style = MaterialTheme.typography.titleLarge, color = Color.White)
+        }
+    }
 }
 
-// Acceso al temporizador de estudio. Si hay una sesión en curso, muestra
-// la materia y cuánto falta (se actualiza cada segundo).
+// Acceso al temporizador. Si hay una sesión en curso, abajo dice cuánto
+// falta (se actualiza cada segundo) o que está en pausa.
 @Composable
-private fun TarjetaTemporizador(sesion: SesionEstudio?, onAbrir: () -> Unit) {
+private fun CasillaTemporizador(sesion: SesionEstudio?, onAbrir: () -> Unit, modifier: Modifier) {
     val ahora by produceState(System.currentTimeMillis(), sesion) {
         while (sesion != null && !sesion.enPausa) {
             value = System.currentTimeMillis()
             delay(1_000)
         }
     }
-    Card(
+    CasillaEncabezado(
+        etiqueta = when {
+            sesion == null -> stringResource(R.string.inicio_temporizador)
+            sesion.enPausa -> stringResource(R.string.temporizador_en_pausa)
+            else -> stringResource(R.string.inicio_temporizador_faltan, sesion.minutosRestantes(ahora))
+        },
+        modifier = modifier,
         onClick = onAbrir,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        ),
-        modifier = Modifier.fillMaxWidth()
+        descripcionClick = stringResource(R.string.temporizador_titulo)
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Timer, contentDescription = null, modifier = Modifier.size(32.dp))
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                if (sesion == null) {
-                    Text(stringResource(R.string.temporizador_titulo), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.temporizador_invitacion), style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    val minutos = sesion.minutosRestantes(ahora)
-                    Text(
-                        text = stringResource(R.string.temporizador_estudiando, sesion.nombreMateria),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = if (sesion.enPausa) stringResource(R.string.temporizador_en_pausa)
-                        else stringResource(R.string.temporizador_faltan, minutos),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-            Icon(
-                if (sesion == null) Icons.Filled.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null
-            )
-        }
+        Icon(Icons.Filled.Timer, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
     }
+}
+
+// Casilla translúcida del encabezado: un dato arriba y su etiqueta abajo.
+// Se lee como un solo elemento con TalkBack (mergeDescendants).
+@Composable
+private fun CasillaEncabezado(
+    etiqueta: String,
+    modifier: Modifier,
+    onClick: (() -> Unit)? = null,
+    descripcionClick: String? = null,
+    contenido: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.16f))
+            .then(
+                if (onClick != null) Modifier.clickable(onClickLabel = descripcionClick, role = Role.Button, onClick = onClick)
+                else Modifier.semantics(mergeDescendants = true) {}
+            )
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        contenido()
+        Text(
+            text = etiqueta,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White.copy(alpha = 0.85f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun TextoSecundario(texto: String) {
+    Text(text = texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

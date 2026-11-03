@@ -276,9 +276,15 @@
     <string name="registro_subtitulo">En un minuto empezás a organizar tu estudio</string>
     <string name="sin_tareas_pendientes_feliz">¡Estás al día! No tenés tareas pendientes 🎉</string>
     <string name="fecha_larga">%1$s %2$d de %3$s</string>
-    <string name="pendientes">Pendientes</string>
-    <string name="proximos">Próximos</string>
-    <string name="de_estudio">De estudio</string>
+    <string name="inicio_meta_semanal">Meta semanal</string>
+    <string name="inicio_esta_semana">Esta semana</string>
+    <string name="inicio_horas_de_meta">%1$d/%2$dh</string>
+    <plurals name="inicio_dias_racha">
+        <item quantity="one">Día de racha</item>
+        <item quantity="other">Días de racha</item>
+    </plurals>
+    <string name="inicio_temporizador">Temporizador</string>
+    <string name="inicio_temporizador_faltan">Faltan %1$d min</string>
     <string name="notas_subtitulo">Tus apuntes de todas las materias</string>
     <string name="calendario_subtitulo">Clases, exámenes y bloques de estudio</string>
     <string name="sin_resultados_sugerencia">Probá con otra palabra</string>

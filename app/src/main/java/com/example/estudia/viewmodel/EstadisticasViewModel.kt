@@ -55,12 +55,7 @@ fun calcularEstadisticas(usuario: Usuario, hoy: LocalDate): EstadisticasUiState 
     val diasEstudiados = bloques.map { it.fecha }.toSet()
 
     // Racha actual: si hoy todavía no estudió, la racha de ayer sigue viva.
-    var dia = if (hoy in diasEstudiados) hoy else hoy.minusDays(1)
-    var rachaActual = 0
-    while (dia in diasEstudiados) {
-        rachaActual++
-        dia = dia.minusDays(1)
-    }
+    val rachaActual = usuario.rachaDeEstudio(hoy)
 
     // Mejor racha: el tramo más largo de días seguidos.
     var mejorRacha = 0

@@ -71,6 +71,24 @@ class InicioYUsuarioTest {
     }
 
     @Test
+    fun elEncabezadoMuestraLaMetaYLaRacha() {
+        // Estudió hoy (2 h de una meta de 4 h): racha de 1 día con el fueguito encendido.
+        val resumen = calcularResumen(usuario.copy(metaHorasSemanales = 4), hoy)
+        assertEquals(2, resumen.horasEstaSemana)
+        assertEquals(0.5f, resumen.progresoMeta!!, 0.001f)
+        assertEquals(1, resumen.rachaDias)
+        assertTrue(resumen.estudioHoy)
+
+        // Mañana todavía no estudió: la racha sigue viva pero el fueguito se apaga.
+        val manana = calcularResumen(usuario, hoy.plusDays(1))
+        assertEquals(1, manana.rachaDias)
+        assertFalse(manana.estudioHoy)
+        assertNull(manana.progresoMeta)   // sin meta
+        // Pasado mañana ya se cortó.
+        assertEquals(0, calcularResumen(usuario, hoy.plusDays(2)).rachaDias)
+    }
+
+    @Test
     fun horasDeEstudioTotalesYDeLaSemana() {
         assertEquals(5, usuario.calcularHorasEstudio())
         assertEquals(2, usuario.horasEstudioDeLaSemana(hoy))

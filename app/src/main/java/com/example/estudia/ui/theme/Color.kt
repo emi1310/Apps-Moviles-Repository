@@ -50,3 +50,6 @@ val DegradadoFinOscuro = Color(0xFF5E36A8)
 
 // Estrella de las notas favoritas.
 val AmarilloFavorita = Color(0xFFF5B400)
+
+// Fueguito de la racha de estudio en Inicio (encendido = hoy ya estudió).
+val NaranjaRacha = Color(0xFFFFB347)
