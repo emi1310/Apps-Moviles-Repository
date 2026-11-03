@@ -26,7 +26,7 @@ class ControladorAvisos(
     private val recursos: Resources
 ) {
     fun mostrar(aviso: Aviso) {
-        val texto = recursos.getString(aviso.mensaje, *aviso.argumentos.toTypedArray())
+        val texto = recursos.getString(aviso.mensaje.texto(), *aviso.argumentos.toTypedArray())
         mostrarTexto(texto, aviso.alDeshacer, aviso.alConfirmar)
     }
 

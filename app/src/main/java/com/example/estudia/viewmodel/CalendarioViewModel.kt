@@ -1,8 +1,6 @@
 package com.example.estudia.viewmodel
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -86,7 +84,6 @@ class CalendarioViewModel(
     // Crea o edita un evento (las clases pueden repetirse cada semana).
     // Devuelve el error a mostrar en el diálogo, o null si se guardó.
     // Si se edita, el evento puede cambiar de materia.
-    @StringRes
     fun guardarEvento(
         materiaId: Int,
         existente: Evento?,
@@ -97,11 +94,11 @@ class CalendarioViewModel(
         fin: LocalTime,
         semanal: Boolean = false,
         repetirHasta: LocalDate? = null
-    ): Int? {
-        if (!fin.isAfter(inicio)) return R.string.error_hora_fin
+    ): Mensaje? {
+        if (!fin.isAfter(inicio)) return Mensaje.ERROR_HORA_FIN
         // Solo las clases se repiten; "hasta" no puede ser antes de la primera clase.
         val seRepite = semanal && tipo.sePuedeRepetir
-        if (seRepite && repetirHasta != null && repetirHasta.isBefore(fecha)) return R.string.error_repetir_hasta
+        if (seRepite && repetirHasta != null && repetirHasta.isBefore(fecha)) return Mensaje.ERROR_REPETIR_HASTA
         val evento = Evento(
             existente?.id ?: 0, titulo.trim(), tipo, fecha, inicio, fin,
             semanal = seRepite,
@@ -128,7 +125,7 @@ class CalendarioViewModel(
             avisosSistema.cancelarEvento(item.evento.id)
             avisar(
                 Aviso(
-                    R.string.aviso_evento_eliminado,
+                    Mensaje.AVISO_EVENTO_ELIMINADO,
                     alDeshacer = {
                         repositorio.restaurarEvento(item.materiaId, item.evento)
                         avisosSistema.programarEvento(item.evento)

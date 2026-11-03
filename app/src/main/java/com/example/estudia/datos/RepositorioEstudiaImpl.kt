@@ -84,6 +84,7 @@ class RepositorioEstudiaImpl(
     override val recordatoriosActivos: Flow<Boolean> = preferencias.recordatoriosActivos
 
     override val tema: Flow<PreferenciaTema> = preferencias.tema
+    override val permisoArchivosPedido: Flow<Boolean> = preferencias.permisoArchivosPedido
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> =
         notaDao.buscar(usuarioId, texto).map { filas ->
@@ -294,6 +295,10 @@ class RepositorioEstudiaImpl(
 
     override suspend fun cambiarTema(tema: PreferenciaTema) {
         preferencias.guardarTema(tema)
+    }
+
+    override suspend fun marcarPermisoArchivosPedido() {
+        preferencias.guardarPermisoArchivosPedido()
     }
 
     // ---------- Temporizador de estudio ----------

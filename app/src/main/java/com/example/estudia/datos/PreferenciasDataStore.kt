@@ -10,11 +10,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 // Preferencias de la app (clave-valor) que no son datos del estudio:
-// si el usuario quiere recibir recordatorios y qué tema prefiere.
+// si el usuario quiere recibir recordatorios, qué tema prefiere y si ya
+// se le pidió el permiso de archivos.
 private val Context.preferenciasDataStore by preferencesDataStore(name = "preferencias")
 
 private val CLAVE_RECORDATORIOS = booleanPreferencesKey("recordatorios_activos")
 private val CLAVE_TEMA = stringPreferencesKey("tema")
+private val CLAVE_PERMISO_ARCHIVOS = booleanPreferencesKey("permiso_archivos_pedido")
 
 class PreferenciasDataStore(private val context: Context) {
 
@@ -28,6 +30,17 @@ class PreferenciasDataStore(private val context: Context) {
             val guardado = preferencias[CLAVE_TEMA]
             PreferenciaTema.entries.firstOrNull { it.name == guardado } ?: PreferenciaTema.SISTEMA
         }
+
+    // Si ya se pidió una vez el permiso para leer fotos y archivos (se pide
+    // una sola vez, la primera vez que el usuario adjunta algo).
+    val permisoArchivosPedido: Flow<Boolean> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[CLAVE_PERMISO_ARCHIVOS] ?: false }
+
+    suspend fun guardarPermisoArchivosPedido() {
+        context.preferenciasDataStore.edit { preferencias ->
+            preferencias[CLAVE_PERMISO_ARCHIVOS] = true
+        }
+    }
 
     suspend fun guardarRecordatoriosActivos(activos: Boolean) {
         context.preferenciasDataStore.edit { preferencias ->

@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.TextoError
 import com.example.estudia.viewmodel.AuthUiState
 
@@ -54,7 +55,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
-            TextoError(estado.error?.let { stringResource(it) })
+            TextoError(estado.error?.let { stringResource(it.texto()) })
             Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = { onIniciarSesion(nombreUsuario, contrasena) },

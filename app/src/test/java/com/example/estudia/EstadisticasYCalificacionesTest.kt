@@ -9,6 +9,7 @@ import com.example.estudia.modelo.Usuario
 import com.example.estudia.notificaciones.momentoDelAviso
 import com.example.estudia.ui.componentes.textoHoras
 import com.example.estudia.ui.componentes.textoNota
+import com.example.estudia.viewmodel.Mensaje
 import com.example.estudia.viewmodel.Aviso
 import com.example.estudia.viewmodel.MateriasViewModel
 import com.example.estudia.viewmodel.calcularEstadisticas
@@ -130,9 +131,9 @@ class EstadisticasYCalificacionesTest {
         val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
 
-        assertEquals(R.string.error_titulo_calificacion, vm.guardarCalificacion(1, null, " ", "7", hoy))
-        assertEquals(R.string.error_nota_invalida, vm.guardarCalificacion(1, null, "Parcial", "11", hoy))
-        assertEquals(R.string.error_nota_invalida, vm.guardarCalificacion(1, null, "Parcial", "siete", hoy))
+        assertEquals(Mensaje.ERROR_TITULO_CALIFICACION, vm.guardarCalificacion(1, null, " ", "7", hoy))
+        assertEquals(Mensaje.ERROR_NOTA_INVALIDA, vm.guardarCalificacion(1, null, "Parcial", "11", hoy))
+        assertEquals(Mensaje.ERROR_NOTA_INVALIDA, vm.guardarCalificacion(1, null, "Parcial", "siete", hoy))
         assertNull(vm.guardarCalificacion(1, null, "Parcial", "7,5", hoy))
 
         val guardada = repositorio.usuario.value!!.materias[0].calificaciones.single()

@@ -1,8 +1,6 @@
 package com.example.estudia.ui.pantallas
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +25,8 @@ import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.ui.componentes.selectorDeArchivos
+import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.DialogoCalificacion
 import com.example.estudia.ui.componentes.Buscador
@@ -40,7 +40,6 @@ import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.OpcionMenu
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.SnackbarDeAvisos
-import com.example.estudia.ui.componentes.TIPOS_ARCHIVO
 import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.MateriasViewModel
@@ -68,10 +67,10 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
     // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
     var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    // Selector de archivos del sistema (Storage Access Framework): no
-    // necesita permisos de almacenamiento, la app recibe acceso solo al
-    // archivo elegido.
-    val selectorArchivos = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    // Selector de archivos: la primera vez explica y pide el permiso de
+    // fotos y archivos (ver selectorDeArchivos).
+    val permisoArchivosPedido by viewModel.permisoArchivosPedido.collectAsStateWithLifecycle()
+    val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val id = idMateriaParaAdjuntar
         if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri.toString())
         idMateriaParaAdjuntar = null
@@ -183,7 +182,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                         onEliminarTarea = { viewModel.eliminarTarea(materia.id, it) },
                         onAdjuntarArchivo = {
                             idMateriaParaAdjuntar = materia.id
-                            selectorArchivos.launch(TIPOS_ARCHIVO)
+                            elegirArchivo()
                         },
                         onAbrirArchivo = { archivo ->
                             if (!abrirArchivo(context, Uri.parse(viewModel.uriParaAbrir(archivo)), archivo.tipoMime)) {
@@ -244,7 +243,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
             onConfirmar = { titulo, nota, fecha ->
                 val error = viewModel.guardarCalificacion(materiaId, calificacion, titulo, nota, fecha)
                 if (error == null) calificacionEnDialogo = null
-                error
+                error?.texto()
             },
             onCancelar = { calificacionEnDialogo = null }
         )

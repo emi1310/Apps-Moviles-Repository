@@ -1,7 +1,6 @@
 package com.example.estudia.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.SesionEstudio
@@ -94,7 +93,7 @@ class TemporizadorViewModel(
                 delay(sesion.restanteMillis(reloj()))
                 val guardada = repositorio.completarSesionSiTermino() ?: return@collectLatest
                 avisosSistema.actualizarTemporizador(null)
-                avisar(Aviso(R.string.aviso_sesion_completa, listOf(guardada.minutos, guardada.nombreMateria)))
+                avisar(Aviso(Mensaje.AVISO_SESION_COMPLETA, listOf(guardada.minutos, guardada.nombreMateria)))
             }
         }
     }
@@ -126,8 +125,8 @@ class TemporizadorViewModel(
             val minutos = repositorio.terminarSesion(guardar = true)
             avisosSistema.actualizarTemporizador(null)
             avisar(
-                if (minutos > 0) Aviso(R.string.aviso_sesion_guardada, listOf(minutos))
-                else Aviso(R.string.aviso_sesion_muy_corta)
+                if (minutos > 0) Aviso(Mensaje.AVISO_SESION_GUARDADA, listOf(minutos))
+                else Aviso(Mensaje.AVISO_SESION_MUY_CORTA)
             )
         }
     }
@@ -136,7 +135,7 @@ class TemporizadorViewModel(
         viewModelScope.launch {
             repositorio.terminarSesion(guardar = false)
             avisosSistema.actualizarTemporizador(null)
-            avisar(Aviso(R.string.aviso_sesion_descartada))
+            avisar(Aviso(Mensaje.AVISO_SESION_DESCARTADA))
         }
     }
 }

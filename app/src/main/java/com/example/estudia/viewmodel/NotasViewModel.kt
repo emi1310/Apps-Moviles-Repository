@@ -1,7 +1,6 @@
 package com.example.estudia.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.NotaEncontrada
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Archivo
@@ -103,7 +102,7 @@ class NotasViewModel(
             repositorio.eliminarNota(item.materiaId, item.nota)
             avisar(
                 Aviso(
-                    R.string.aviso_nota_eliminada,
+                    Mensaje.AVISO_NOTA_ELIMINADA,
                     alDeshacer = { repositorio.restaurarNota(item.materiaId, item.nota) },
                     alConfirmar = { repositorio.borrarArchivosDelDisco(item.nota.archivos) }
                 )
@@ -111,10 +110,20 @@ class NotasViewModel(
         }
     }
 
+    // El permiso de fotos y archivos se pide una sola vez, la primera vez que
+    // el usuario adjunta algo. Arranca en true para no preguntar antes de
+    // saber qué hay guardado.
+    val permisoArchivosPedido: StateFlow<Boolean> = repositorio.permisoArchivosPedido
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun marcarPermisoArchivosPedido() {
+        viewModelScope.launch { repositorio.marcarPermisoArchivosPedido() }
+    }
+
     fun adjuntarArchivo(item: NotaConMateria, uri: String) {
         viewModelScope.launch {
             val ok = repositorio.adjuntarArchivo(item.materiaId, item.nota.id, uri)
-            avisar(Aviso(if (ok) R.string.aviso_archivo_guardado_nota else R.string.aviso_archivo_error))
+            avisar(Aviso(if (ok) Mensaje.AVISO_ARCHIVO_GUARDADO_NOTA else Mensaje.AVISO_ARCHIVO_ERROR))
         }
     }
 
@@ -123,7 +132,7 @@ class NotasViewModel(
             repositorio.eliminarArchivo(item.materiaId, archivo)
             avisar(
                 Aviso(
-                    R.string.aviso_archivo_eliminado,
+                    Mensaje.AVISO_ARCHIVO_ELIMINADO,
                     alDeshacer = { repositorio.restaurarArchivo(item.materiaId, archivo) },
                     alConfirmar = { repositorio.borrarArchivosDelDisco(listOf(archivo)) }
                 )

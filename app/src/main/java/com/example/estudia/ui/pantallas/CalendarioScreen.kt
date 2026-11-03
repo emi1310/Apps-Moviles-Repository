@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.CasillaDia
 import com.example.estudia.ui.componentes.DialogoEvento
@@ -169,7 +170,7 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                     materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta
                 )
                 if (error == null) mostrarDialogo = false
-                error
+                error?.texto()
             },
             onCancelar = { mostrarDialogo = false }
         )

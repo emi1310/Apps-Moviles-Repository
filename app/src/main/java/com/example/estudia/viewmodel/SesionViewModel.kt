@@ -1,9 +1,7 @@
 package com.example.estudia.viewmodel
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
@@ -33,7 +31,7 @@ sealed interface SesionUiState {
 // sesionIniciada funciona como evento: la UI navega a Inicio y avisa al
 // ViewModel con consumirSesionIniciada() para que no se repita.
 data class AuthUiState(
-    @param:StringRes val error: Int? = null,
+    val error: Mensaje? = null,
     val procesando: Boolean = false,
     val sesionIniciada: Boolean = false
 )
@@ -56,10 +54,6 @@ class SesionViewModel(
             initialValue = SesionUiState.Cargando
         )
 
-    // Solo los valores guardados (sin el SISTEMA inicial de stateIn): los usa
-    // MainActivity para avisarle al sistema el tema elegido.
-    val temaGuardado: Flow<PreferenciaTema> = repositorio.tema
-
     val tema: StateFlow<PreferenciaTema> = repositorio.tema
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PreferenciaTema.SISTEMA)
 
@@ -74,7 +68,7 @@ class SesionViewModel(
 
     fun iniciarSesion(nombreUsuario: String, contrasena: String) {
         if (nombreUsuario.isBlank() || contrasena.isBlank()) {
-            _authUiState.value = AuthUiState(error = R.string.error_completar_campos)
+            _authUiState.value = AuthUiState(error = Mensaje.ERROR_COMPLETAR_CAMPOS)
             return
         }
         _authUiState.update { it.copy(procesando = true, error = null) }
@@ -85,16 +79,16 @@ class SesionViewModel(
             _authUiState.value = if (correcto) {
                 AuthUiState(sesionIniciada = true)
             } else {
-                AuthUiState(error = R.string.error_credenciales)
+                AuthUiState(error = Mensaje.ERROR_CREDENCIALES)
             }
         }
     }
 
     fun registrarUsuario(nombre: String, nombreUsuario: String, contrasena: String) {
         val error = when {
-            nombre.isBlank() || nombreUsuario.isBlank() || contrasena.isBlank() -> R.string.error_completar_campos
-            nombreUsuario.trim().contains(' ') -> R.string.error_usuario_espacios
-            contrasena.length < LARGO_MINIMO_CONTRASENA -> R.string.error_contrasena_corta
+            nombre.isBlank() || nombreUsuario.isBlank() || contrasena.isBlank() -> Mensaje.ERROR_COMPLETAR_CAMPOS
+            nombreUsuario.trim().contains(' ') -> Mensaje.ERROR_USUARIO_ESPACIOS
+            contrasena.length < LARGO_MINIMO_CONTRASENA -> Mensaje.ERROR_CONTRASENA_CORTA
             else -> null
         }
         if (error != null) {
@@ -107,7 +101,7 @@ class SesionViewModel(
             _authUiState.value = if (registrado) {
                 AuthUiState(sesionIniciada = true)
             } else {
-                AuthUiState(error = R.string.error_usuario_existe)
+                AuthUiState(error = Mensaje.ERROR_USUARIO_EXISTE)
             }
         }
     }

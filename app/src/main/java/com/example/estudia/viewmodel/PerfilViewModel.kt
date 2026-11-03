@@ -1,7 +1,6 @@
 package com.example.estudia.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
@@ -52,7 +51,7 @@ class PerfilViewModel(
         val usuario = uiState.value.usuario ?: return
         viewModelScope.launch {
             repositorio.editarPerfil(usuario.id, nombre.trim(), carrera, anio, email)
-            avisar(Aviso(R.string.aviso_perfil_guardado))
+            avisar(Aviso(Mensaje.AVISO_PERFIL_GUARDADO))
         }
     }
 
@@ -74,7 +73,7 @@ class PerfilViewModel(
             } else {
                 avisosSistema.desactivarRecordatorios()
             }
-            avisar(Aviso(if (activos) R.string.aviso_recordatorios_activados else R.string.aviso_recordatorios_desactivados))
+            avisar(Aviso(if (activos) Mensaje.AVISO_RECORDATORIOS_ACTIVADOS else Mensaje.AVISO_RECORDATORIOS_DESACTIVADOS))
         }
     }
 
@@ -85,6 +84,6 @@ class PerfilViewModel(
     }
 
     fun avisarSinPermiso() {
-        avisar(Aviso(R.string.aviso_sin_permiso_notificaciones))
+        avisar(Aviso(Mensaje.AVISO_SIN_PERMISO_NOTIFICACIONES))
     }
 }

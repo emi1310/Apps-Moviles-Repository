@@ -8,6 +8,7 @@ import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.viewmodel.Mensaje
 import com.example.estudia.viewmodel.Aviso
 import com.example.estudia.viewmodel.CalendarioViewModel
 import com.example.estudia.viewmodel.FiltroNotas
@@ -16,6 +17,7 @@ import com.example.estudia.viewmodel.NotasViewModel
 import com.example.estudia.viewmodel.PerfilViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -68,6 +70,20 @@ class PantallasViewModelTest {
     // ---------- Materias ----------
 
     @Test
+    fun elPermisoDeArchivosSePideUnaSolaVez() = runTest {
+        val vm = NotasViewModel(repositorio)
+        advanceUntilIdle()
+        assertFalse(vm.permisoArchivosPedido.value)
+        vm.marcarPermisoArchivosPedido()
+        advanceUntilIdle()
+        assertTrue(vm.permisoArchivosPedido.value)
+        // Otra pantalla (Materias) ya ve que se pidió.
+        val materias = MateriasViewModel(repositorio, avisosSistema)
+        advanceUntilIdle()
+        assertTrue(materias.permisoArchivosPedido.value)
+    }
+
+    @Test
     fun materiasFiltraActivasYArchivadas() = runTest {
         val vm = MateriasViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
@@ -104,7 +120,7 @@ class PantallasViewModelTest {
 
         vm.eliminarTarea(1, tarea)
         assertTrue(vm.uiState.value.todas[0].tareas.isEmpty())
-        assertEquals(R.string.aviso_tarea_eliminada, avisos.single().mensaje)
+        assertEquals(Mensaje.AVISO_TAREA_ELIMINADA, avisos.single().mensaje)
 
         avisos.single().alDeshacer!!.invoke()
         assertEquals(listOf(tarea), vm.uiState.value.todas[0].tareas)
@@ -119,7 +135,7 @@ class PantallasViewModelTest {
 
         vm.eliminarMateria(materia)
         assertTrue(vm.uiState.value.materias.isEmpty())
-        assertEquals(R.string.aviso_materia_eliminada, avisos.single().mensaje)
+        assertEquals(Mensaje.AVISO_MATERIA_ELIMINADA, avisos.single().mensaje)
 
         avisos.single().alDeshacer!!.invoke()
         assertEquals(listOf("Física"), vm.uiState.value.materias.map { it.nombre })
@@ -155,7 +171,7 @@ class PantallasViewModelTest {
         val vm = CalendarioViewModel(repositorio, avisosSistema)
         observar(vm.uiState)
         val error = vm.guardarEvento(1, null, "Parcial", TipoEvento.EXAMEN, hoy, LocalTime.of(10, 0), LocalTime.of(9, 0))
-        assertEquals(R.string.error_hora_fin, error)
+        assertEquals(Mensaje.ERROR_HORA_FIN, error)
 
         val ok = vm.guardarEvento(1, null, "Parcial", TipoEvento.EXAMEN, hoy, LocalTime.of(9, 0), LocalTime.of(11, 0))
         assertNull(ok)

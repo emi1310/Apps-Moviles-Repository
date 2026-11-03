@@ -28,6 +28,7 @@ interface RepositorioEstudia {
     val usuarioActual: Flow<Usuario?>
     val recordatoriosActivos: Flow<Boolean>
     val tema: Flow<PreferenciaTema>
+    val permisoArchivosPedido: Flow<Boolean>
 
     fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>>
     fun buscarTareas(usuarioId: Int, texto: String): Flow<List<TareaEncontrada>>
@@ -97,6 +98,7 @@ interface RepositorioEstudia {
     // Solo guarda la preferencia; los avisos los programa AvisosSistema.
     suspend fun cambiarRecordatorios(activos: Boolean)
     suspend fun cambiarTema(tema: PreferenciaTema)
+    suspend fun marcarPermisoArchivosPedido()
 
     // ---------- Temporizador de estudio ----------
     // Al terminar, la sesión se guarda como un bloque de estudio de hoy, así

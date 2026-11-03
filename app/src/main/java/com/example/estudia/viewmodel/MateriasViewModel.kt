@@ -1,8 +1,6 @@
 package com.example.estudia.viewmodel
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
-import com.example.estudia.R
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
@@ -92,7 +90,7 @@ class MateriasViewModel(
 
     fun alternarArchivada(materia: Materia) {
         actualizar(materia.copy(archivada = !materia.archivada))
-        avisar(Aviso(if (materia.archivada) R.string.aviso_materia_desarchivada else R.string.aviso_materia_archivada))
+        avisar(Aviso(if (materia.archivada) Mensaje.AVISO_MATERIA_DESARCHIVADA else Mensaje.AVISO_MATERIA_ARCHIVADA))
     }
 
     // Eliminar una materia pide confirmación (borra todo su contenido) y,
@@ -105,7 +103,7 @@ class MateriasViewModel(
             materia.eventos.forEach { avisosSistema.cancelarEvento(it.id) }
             avisar(
                 Aviso(
-                    R.string.aviso_materia_eliminada,
+                    Mensaje.AVISO_MATERIA_ELIMINADA,
                     argumentos = listOf(materia.nombre),
                     alDeshacer = {
                         repositorio.restaurarMateria(u.id, materia)
@@ -145,7 +143,7 @@ class MateriasViewModel(
             repositorio.eliminarTarea(materiaId, tarea)
             avisar(
                 Aviso(
-                    R.string.aviso_tarea_eliminada,
+                    Mensaje.AVISO_TAREA_ELIMINADA,
                     alDeshacer = { repositorio.restaurarTarea(materiaId, tarea) }
                 )
             )
@@ -156,12 +154,11 @@ class MateriasViewModel(
 
     // Crea o edita una nota de examen. La nota llega como texto ("7,5" o
     // "7.5"). Devuelve el error a mostrar en el diálogo, o null si se guardó.
-    @StringRes
-    fun guardarCalificacion(materiaId: Int, existente: Calificacion?, titulo: String, notaTexto: String, fecha: LocalDate): Int? {
-        if (titulo.isBlank()) return R.string.error_titulo_calificacion
+    fun guardarCalificacion(materiaId: Int, existente: Calificacion?, titulo: String, notaTexto: String, fecha: LocalDate): Mensaje? {
+        if (titulo.isBlank()) return Mensaje.ERROR_TITULO_CALIFICACION
         val nota = notaTexto.trim().replace(',', '.').toDoubleOrNull()
         if (nota == null || nota < Calificacion.NOTA_MINIMA || nota > Calificacion.NOTA_MAXIMA) {
-            return R.string.error_nota_invalida
+            return Mensaje.ERROR_NOTA_INVALIDA
         }
         viewModelScope.launch {
             if (existente == null) {
@@ -178,7 +175,7 @@ class MateriasViewModel(
             repositorio.eliminarCalificacion(materiaId, calificacion)
             avisar(
                 Aviso(
-                    R.string.aviso_calificacion_eliminada,
+                    Mensaje.AVISO_CALIFICACION_ELIMINADA,
                     alDeshacer = { repositorio.restaurarCalificacion(materiaId, calificacion) }
                 )
             )
@@ -187,10 +184,20 @@ class MateriasViewModel(
 
     // ---------- Archivos ----------
 
+    // El permiso de fotos y archivos se pide una sola vez, la primera vez que
+    // el usuario adjunta algo. Arranca en true para no preguntar antes de
+    // saber qué hay guardado.
+    val permisoArchivosPedido: StateFlow<Boolean> = repositorio.permisoArchivosPedido
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun marcarPermisoArchivosPedido() {
+        viewModelScope.launch { repositorio.marcarPermisoArchivosPedido() }
+    }
+
     fun adjuntarArchivo(materiaId: Int, uri: String) {
         viewModelScope.launch {
             val ok = repositorio.adjuntarArchivo(materiaId, null, uri)
-            avisar(Aviso(if (ok) R.string.aviso_archivo_guardado else R.string.aviso_archivo_error))
+            avisar(Aviso(if (ok) Mensaje.AVISO_ARCHIVO_GUARDADO else Mensaje.AVISO_ARCHIVO_ERROR))
         }
     }
 
@@ -201,7 +208,7 @@ class MateriasViewModel(
             repositorio.eliminarArchivo(materiaId, archivo)
             avisar(
                 Aviso(
-                    R.string.aviso_archivo_eliminado,
+                    Mensaje.AVISO_ARCHIVO_ELIMINADO,
                     alDeshacer = { repositorio.restaurarArchivo(materiaId, archivo) },
                     alConfirmar = { repositorio.borrarArchivosDelDisco(listOf(archivo)) }
                 )

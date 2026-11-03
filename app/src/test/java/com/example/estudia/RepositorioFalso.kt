@@ -34,11 +34,13 @@ class RepositorioFalso(
     val usuario = MutableStateFlow(usuarioInicial)
     private val recordatorios = MutableStateFlow(false)
     private val temaElegido = MutableStateFlow(PreferenciaTema.SISTEMA)
+    val permisoArchivos = MutableStateFlow(false)
     private var siguienteId = 1000
 
     override val usuarioActual: Flow<Usuario?> = usuario
     override val recordatoriosActivos: Flow<Boolean> = recordatorios
     override val tema: Flow<PreferenciaTema> = temaElegido
+    override val permisoArchivosPedido: Flow<Boolean> = permisoArchivos
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> = usuario.map { u ->
         u?.materias.orEmpty().flatMap { m ->
@@ -185,6 +187,10 @@ class RepositorioFalso(
 
     override suspend fun cambiarTema(tema: PreferenciaTema) {
         temaElegido.value = tema
+    }
+
+    override suspend fun marcarPermisoArchivosPedido() {
+        permisoArchivos.value = true
     }
 
     // ---------- Temporizador ----------

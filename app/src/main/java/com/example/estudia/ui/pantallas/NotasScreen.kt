@@ -1,8 +1,6 @@
 package com.example.estudia.ui.pantallas
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
@@ -27,7 +26,6 @@ import com.example.estudia.ui.componentes.DialogoNota
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.SnackbarDeAvisos
-import com.example.estudia.ui.componentes.TIPOS_ARCHIVO
 import com.example.estudia.ui.componentes.TarjetaNota
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.FiltroNotas
@@ -48,8 +46,10 @@ fun NotasScreen(viewModel: NotasViewModel) {
     var notaParaEditar by remember { mutableStateOf<NotaConMateria?>(null) }
     var idNotaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    // Selector de archivos del sistema: no necesita permisos.
-    val selectorArchivos = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    // Selector de archivos: la primera vez explica y pide el permiso de
+    // fotos y archivos (ver selectorDeArchivos).
+    val permisoArchivosPedido by viewModel.permisoArchivosPedido.collectAsStateWithLifecycle()
+    val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val nota = estado.notas.firstOrNull { it.nota.id == idNotaParaAdjuntar }
         if (uri != null && nota != null) viewModel.adjuntarArchivo(nota, uri.toString())
         idNotaParaAdjuntar = null
@@ -111,7 +111,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
                         alTocarEstrella = { viewModel.alternarFavorita(item) },
                         alAdjuntar = {
                             idNotaParaAdjuntar = item.nota.id
-                            selectorArchivos.launch(TIPOS_ARCHIVO)
+                            elegirArchivo()
                         },
                         alEditar = { notaParaEditar = item },
                         alEliminar = { viewModel.eliminarNota(item) },

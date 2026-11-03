@@ -6,6 +6,7 @@ import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.viewmodel.Mensaje
 import com.example.estudia.viewmodel.Aviso
 import com.example.estudia.viewmodel.CalendarioViewModel
 import com.example.estudia.viewmodel.TemporizadorViewModel
@@ -95,7 +96,7 @@ class TemporizadorYRepeticionTest {
             1, null, "Teórico", TipoEvento.CLASE, lunes, LocalTime.of(9, 0), LocalTime.of(11, 0),
             semanal = true, repetirHasta = lunes.minusDays(1)
         )
-        assertEquals(R.string.error_repetir_hasta, error)
+        assertEquals(Mensaje.ERROR_REPETIR_HASTA, error)
     }
 
     @Test
@@ -158,7 +159,7 @@ class TemporizadorYRepeticionTest {
         assertNull(vm.uiState.value.sesion)
         // ... y se oculta al terminar.
         assertNull(avisosSistema.sesionEnNotificacion)
-        assertEquals(R.string.aviso_sesion_guardada, avisos.single().mensaje)
+        assertEquals(Mensaje.AVISO_SESION_GUARDADA, avisos.single().mensaje)
         assertEquals(listOf(20), avisos.single().argumentos)
         // Se guardó como bloque de estudio de la materia.
         val bloque = repositorio.usuario.value!!.materias[0].eventos.single()
@@ -189,7 +190,7 @@ class TemporizadorYRepeticionTest {
         vm.empezar()
         repositorio.reloj = 30_000
         vm.terminar()
-        assertEquals(R.string.aviso_sesion_muy_corta, avisos.single().mensaje)
+        assertEquals(Mensaje.AVISO_SESION_MUY_CORTA, avisos.single().mensaje)
         assertTrue(repositorio.usuario.value!!.materias[0].eventos.isEmpty())
     }
 }
