@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -25,7 +26,6 @@ import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.RecolectarAvisos
-import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TarjetaNota
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.FiltroNotas
@@ -55,19 +55,11 @@ fun NotasScreen(viewModel: NotasViewModel) {
         idNotaParaAdjuntar = null
     }
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        snackbarHost = { SnackbarDeAvisos() },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { crearNota = true },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.nueva_nota)) }
-            )
-        }
-    ) { relleno ->
+    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
+    // va arriba de la lista, en la esquina de abajo a la derecha.
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(relleno),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
@@ -125,6 +117,12 @@ fun NotasScreen(viewModel: NotasViewModel) {
                 }
             }
         }
+        ExtendedFloatingActionButton(
+            onClick = { crearNota = true },
+            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            text = { Text(stringResource(R.string.nueva_nota)) },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+        )
     }
 
     if (crearNota) {

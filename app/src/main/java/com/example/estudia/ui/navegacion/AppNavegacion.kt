@@ -104,11 +104,9 @@ fun AppNavegacion(
 
     CompositionLocalProvider(LocalAvisos provides avisos) {
         Scaffold(
-            snackbarHost = {
-                if (pantallasConBotonFlotante.none { it.ruta == rutaActual }) {
-                    SnackbarHost(hostState = snackbarHostState)
-                }
-            },
+            // Único Scaffold de la app (como en la clase): muestra los avisos de
+            // todas las pantallas.
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 if (mostrarBarra) {
                     BarraInferior(

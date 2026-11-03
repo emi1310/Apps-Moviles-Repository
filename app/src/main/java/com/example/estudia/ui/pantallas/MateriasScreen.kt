@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -39,7 +40,6 @@ import com.example.estudia.ui.componentes.FilaTarea
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.OpcionMenu
 import com.example.estudia.ui.componentes.RecolectarAvisos
-import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.MateriasViewModel
@@ -76,21 +76,11 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
         idMateriaParaAdjuntar = null
     }
 
-    // contentWindowInsets en 0: el Scaffold de AppNavegacion ya dejó lugar
-    // para las barras del sistema (si no, el espacio se duplica).
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        snackbarHost = { SnackbarDeAvisos() },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { crearMateria = true },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.nueva_materia)) }
-            )
-        }
-    ) { relleno ->
+    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
+    // va arriba de la lista, en la esquina de abajo a la derecha.
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(relleno),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
@@ -200,6 +190,12 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                 }
             }
         }
+        ExtendedFloatingActionButton(
+            onClick = { crearMateria = true },
+            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            text = { Text(stringResource(R.string.nueva_materia)) },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+        )
     }
 
     if (crearMateria) {

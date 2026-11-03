@@ -2,7 +2,6 @@ package com.example.estudia.ui.componentes
 
 import android.content.res.Resources
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
@@ -60,10 +59,3 @@ fun RecolectarAvisos(avisos: Flow<Aviso>) {
     }
 }
 
-// Snackbar de los avisos. Lo usan las pantallas con botón flotante dentro de
-// su propio Scaffold: así Material sube el botón cuando aparece el aviso y
-// no queda tapado. Las demás pantallas usan el del Scaffold de AppNavegacion.
-@Composable
-fun SnackbarDeAvisos() {
-    SnackbarHost(hostState = LocalAvisos.current.host)
-}

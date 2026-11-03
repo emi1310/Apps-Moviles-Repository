@@ -26,7 +26,6 @@ import com.example.estudia.ui.componentes.DialogoEvento
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.RecolectarAvisos
-import com.example.estudia.ui.componentes.SnackbarDeAvisos
 import com.example.estudia.ui.componentes.TarjetaEventoCalendario
 import com.example.estudia.ui.componentes.textoFecha
 import com.example.estudia.viewmodel.CalendarioViewModel
@@ -46,22 +45,11 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
     val meses = stringArrayResource(R.array.meses)
     val diasSemana = stringArrayResource(R.array.dias_semana_corto)
 
-    Scaffold(
-        contentWindowInsets = WindowInsets(0),
-        snackbarHost = { SnackbarDeAvisos() },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    eventoParaEditar = null
-                    mostrarDialogo = true
-                },
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.nuevo_evento)) }
-            )
-        }
-    ) { relleno ->
+    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
+    // va arriba de la lista, en la esquina de abajo a la derecha.
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(relleno),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
         ) {
             item {
@@ -155,6 +143,15 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                 }
             }
         }
+        ExtendedFloatingActionButton(
+            onClick = {
+                eventoParaEditar = null
+                mostrarDialogo = true
+            },
+            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            text = { Text(stringResource(R.string.nuevo_evento)) },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+        )
     }
 
     if (mostrarDialogo) {

@@ -26,10 +26,3 @@ val pantallasConBarra = listOf(
     Screen.Perfil
 )
 
-// Pantallas con botón flotante: muestran los avisos en su propio Scaffold
-// (ver SnackbarDeAvisos), para que el aviso no tape el botón.
-val pantallasConBotonFlotante = listOf(
-    Screen.Materias,
-    Screen.Calendario,
-    Screen.Notas
-)
