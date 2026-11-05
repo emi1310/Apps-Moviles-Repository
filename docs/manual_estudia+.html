@@ -213,7 +213,7 @@
     <span class="eyebrow">Manual de usuario</span>
     <h1>Estudia+</h1>
     <p class="tagline">Organiza. Estudia. Logra.</p>
-    <p class="sub">Esta guía explica, pantalla por pantalla, cómo usar Estudia+: crear tu cuenta, cargar materias, tareas, eventos y notas, y sacarle provecho al resumen de Inicio y a tu perfil.</p>
+    <p class="sub">Esta guía explica, pantalla por pantalla, cómo usar Estudia+: crear tu cuenta, cargar materias, tareas, eventos y notas, estudiar con el temporizador, seguir tu racha y tu meta semanal, y configurar los recordatorios.</p>
   </div>
 </div>
 
@@ -228,8 +228,11 @@
       <li><a href="#materias">4. Materias</a></li>
       <li><a href="#calendario">5. Calendario</a></li>
       <li><a href="#notas">6. Notas</a></li>
-      <li><a href="#perfil">7. Perfil</a></li>
-      <li><a href="#faq">8. Preguntas frecuentes</a></li>
+      <li><a href="#temporizador">7. Temporizador de estudio</a></li>
+      <li><a href="#estadisticas">8. Estadísticas</a></li>
+      <li><a href="#perfil">9. Perfil</a></li>
+      <li><a href="#permisos">10. Permisos</a></li>
+      <li><a href="#faq">11. Preguntas frecuentes</a></li>
     </ol>
   </nav>
 
@@ -247,7 +250,7 @@
             <li>Completá tu nombre completo, un nombre de usuario y una contraseña.</li>
             <li>Tocá <strong>Crear cuenta</strong>.</li>
           </ol>
-          <p style="margin-top:10px">El nombre de usuario no se puede repetir. Carrera, año y email se cargan después, desde tu <a href="#perfil">Perfil</a>.</p>
+          <p style="margin-top:10px">El nombre de usuario no se puede repetir ni tener espacios, y la contraseña tiene que tener al menos 4 caracteres. Carrera, año y email se cargan después, desde tu <a href="#perfil">Perfil</a>.</p>
         </div>
         <div class="card">
           <h3>Iniciar sesión</h3>
@@ -255,14 +258,14 @@
             <li>Ingresá tu usuario y contraseña.</li>
             <li>Tocá <strong>Iniciar sesión</strong>.</li>
           </ol>
-          <p style="margin-top:10px">Una vez que entrás, la app recuerda tu sesión: no vas a tener que volver a loguearte cada vez que la abras, salvo que cierres sesión manualmente desde tu Perfil.</p>
+          <p style="margin-top:10px">La app recuerda tu sesión: no vas a tener que volver a entrar cada vez que la abras, salvo que cierres sesión desde tu Perfil.</p>
         </div>
       </div>
     </section>
 
     <section id="navegacion">
       <h2>2. Cómo moverte por la app</h2>
-      <p class="kicker">Una vez adentro, una barra inferior te lleva a las 5 secciones principales. Podés tocar cualquiera de estos íconos en cualquier momento:</p>
+      <p class="kicker">Una barra inferior te lleva a las 5 secciones principales. Podés tocar cualquiera en cualquier momento:</p>
       <p>
         <span class="pill purple">🏠 Inicio</span>
         <span class="pill purple">📚 Materias</span>
@@ -270,49 +273,85 @@
         <span class="pill purple">📝 Notas</span>
         <span class="pill purple">👤 Perfil</span>
       </p>
+      <p>Además hay tres pantallas que se abren desde otras: el <a href="#temporizador">Temporizador de estudio</a> (desde Inicio), las <a href="#estadisticas">Estadísticas</a> y <strong>Ayuda y soporte</strong> (las dos desde Perfil).</p>
+      <div class="card">
+        <h3>Deshacer</h3>
+        <p>Cuando eliminás una materia, una tarea, un evento, una nota o un archivo, abajo aparece un aviso con el botón <strong>Deshacer</strong> durante unos segundos. Si lo tocás, vuelve todo como estaba.</p>
+      </div>
     </section>
 
     <section id="inicio">
       <h2>3. Inicio</h2>
       <p class="kicker">Es tu resumen del día: junta información de todas tus materias en un solo lugar.</p>
-      <div class="card"><h3>Tareas pendientes</h3><p>Muestra hasta 4 tareas sin completar de todas tus materias, con su fecha límite y de qué materia son.</p></div>
-      <div class="card"><h3>Próximos eventos</h3><p>Muestra hasta 3 exámenes o entregas cargados en el <a href="#calendario">Calendario</a> (las clases y bloques de estudio no aparecen acá, para no saturar la vista).</p></div>
-      <div class="card"><h3>Nota destacada</h3><p>Si tenés alguna nota marcada como favorita (⭐), aparece acá.</p></div>
-      <div class="card"><h3>Progreso por materia y horas de estudio</h3><p>Un gráfico de barras muestra el % de tareas completadas por cada materia activa, y un gráfico de torta muestra cómo se reparten tus horas de estudio planificadas (según los bloques de estudio que cargues en el Calendario) entre materias.</p></div>
+
+      <div class="card">
+        <h3>El encabezado</h3>
+        <p>Debajo del saludo hay tres casillas:</p>
+        <table class="dot-legend">
+          <tr><td><span class="dot" style="background:var(--teal)"></span><strong>Meta semanal</strong></td><td>Cuántas horas estudiaste esta semana sobre tu meta, con una barra de progreso. Si todavía no fijaste una meta, muestra las horas de la semana.</td></tr>
+          <tr><td><span class="dot" style="background:var(--orange)"></span><strong>Días de racha</strong></td><td>Cuántos días seguidos estudiaste. El fueguito 🔥 se enciende cuando ya estudiaste hoy.</td></tr>
+          <tr><td><span class="dot" style="background:var(--purple)"></span><strong>Temporizador</strong></td><td>Tocala para abrir el <a href="#temporizador">Temporizador de estudio</a>. Si hay una sesión en curso, muestra cuántos minutos faltan.</td></tr>
+        </table>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Tareas pendientes</h3>
+          <p>Hasta 5 tareas sin completar de todas tus materias, ordenadas por fecha. Las vencidas se muestran en rojo.</p>
+        </div>
+        <div class="card">
+          <h3>Próximos exámenes y entregas</h3>
+          <p>Hasta 3 exámenes o entregas cargados en el Calendario. Las clases y los bloques de estudio no aparecen acá, para no saturar la vista.</p>
+        </div>
+        <div class="card">
+          <h3>Nota destacada</h3>
+          <p>Tu nota favorita (⭐) más reciente.</p>
+        </div>
+        <div class="card">
+          <h3>Progreso y horas por materia</h3>
+          <p>Un gráfico con el % de tareas completadas de cada materia activa y otro con cómo se reparten tus horas de estudio entre materias.</p>
+        </div>
+      </div>
     </section>
 
     <section id="materias">
       <h2>4. Materias</h2>
-      <p class="kicker">Acá administrás cada materia: sus tareas, y si la archivás, editás o eliminás.</p>
+      <p class="kicker">Acá administrás cada materia: sus tareas, sus notas de exámenes y sus archivos.</p>
 
       <div class="card">
         <h3>Crear una materia</h3>
-        <p>Tocá el botón <span class="kbd">+</span> flotante, escribí el nombre y confirmá. No podés repetir el nombre de una materia que ya tengas.</p>
+        <p>Tocá el botón <strong>+ Nueva materia</strong>, escribí el nombre y confirmá. No podés repetir el nombre de una materia que ya tengas. Cada materia tiene su color, que se usa en toda la app.</p>
       </div>
 
       <div class="card">
-        <h3>Activas y archivadas</h3>
-        <p>Arriba de la lista hay dos pestañas: <strong>Activas</strong> y <strong>Archivadas</strong>. Una materia archivada deja de contar para los gráficos de Inicio, pero no se borra: podés desarchivarla cuando quieras.</p>
+        <h3>Activas, archivadas y buscador</h3>
+        <p>Arriba de la lista hay dos pestañas: <strong>Activas</strong> y <strong>Archivadas</strong>. Una materia archivada deja de contar para Inicio y las estadísticas, pero no se borra. Con <strong>Buscar tareas…</strong> encontrás una tarea de cualquier materia.</p>
       </div>
 
       <div class="card">
-        <h3>Tareas: crear y completar</h3>
+        <h3>Tareas</h3>
         <ol class="steps">
           <li>Tocá la tarjeta de la materia para expandirla.</li>
-          <li>Vas a ver la lista de tareas cargadas, cada una con un checkbox.</li>
-          <li>Tocá el checkbox (o la tarea) para marcarla como completada — esto actualiza al instante el % de progreso de la materia.</li>
-          <li>Para cargar una tarea nueva, tocá <em>"+ Agregar tarea"</em> al final de la lista, y completá el título y la fecha límite (podés escribirla como quieras: "Hoy", "Mañana", "25 May", etc.).</li>
+          <li>Tocá <strong>Agregar tarea</strong>, escribí el título y, si querés, elegí la fecha límite en el calendario.</li>
+          <li>Marcá el casillero para completarla: el % de progreso de la materia se actualiza al instante.</li>
         </ol>
+        <p style="margin-top:10px">Atajos: deslizá una tarea hacia la derecha para completarla, o hacia la izquierda para eliminarla.</p>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Notas de exámenes</h3>
+          <p>Con la materia expandida, tocá <strong>Agregar nota de examen</strong>. Las notas van de 1 a 10 y se aprueba con 4. El promedio aparece en la tarjeta de la materia.</p>
+        </div>
+        <div class="card">
+          <h3>Archivos adjuntos</h3>
+          <p>Tocá <strong>Adjuntar archivo</strong> y elegí una foto, un PDF u otro archivo. Se copia dentro de la app, así que no se pierde aunque borres el original. Necesita el <a href="#permisos">permiso de fotos y archivos</a>.</p>
+        </div>
       </div>
 
       <div class="card">
         <h3>Editar, archivar o eliminar una materia</h3>
-        <p>Tocá el menú <span class="kbd">⋮</span> en la esquina superior derecha de la tarjeta:</p>
-        <table class="dot-legend">
-          <tr><td><strong>Editar</strong></td><td>cambia el nombre de la materia.</td></tr>
-          <tr><td><strong>Archivar / Desarchivar</strong></td><td>la mueve entre las pestañas Activas y Archivadas.</td></tr>
-          <tr><td><strong>Eliminar</strong></td><td>la borra por completo, junto con todas sus tareas, eventos y notas. Te pide confirmación antes, porque no se puede deshacer.</td></tr>
-        </table>
+        <p>Tocá el menú ⋮ de la tarjeta: <strong>Editar</strong> cambia el nombre, <strong>Archivar / Desarchivar</strong> la mueve entre las pestañas y <strong>Eliminar</strong> la borra junto con sus tareas, eventos y notas. Antes de eliminar te pide confirmación, y después todavía podés tocar <strong>Deshacer</strong>.</p>
       </div>
     </section>
 
@@ -322,87 +361,177 @@
 
       <div class="card">
         <h3>Moverte por el calendario</h3>
-        <p>Usá las flechas <span class="kbd">‹</span> y <span class="kbd">›</span> para cambiar de mes. El día de hoy aparece resaltado, y cualquier día con eventos cargados lleva un punto debajo del número. Tocá un día para ver sus eventos en la lista de abajo.</p>
+        <p>Usá las flechas ‹ y › para cambiar de mes. El día de hoy aparece resaltado, y los días con eventos llevan puntitos con el color de cada materia. Tocá un día para ver sus eventos en la lista de abajo.</p>
       </div>
 
       <div class="card">
         <h3>Agregar un evento</h3>
         <ol class="steps">
-          <li>Tocá el botón <span class="kbd">+</span> flotante (el diálogo se abre con la fecha del día que tenías seleccionado, pero la podés cambiar).</li>
-          <li>Elegí a qué materia pertenece.</li>
-          <li>Elegí el tipo: Clase, Examen, Entrega o Bloque de estudio.</li>
-          <li>Completá título, fecha (dd/MM/aaaa) y hora de inicio y fin (HH:mm).</li>
-          <li>Confirmá con <strong>Crear</strong>.</li>
+          <li>Tocá <strong>+ Nuevo evento</strong> (se abre con la fecha del día que tenías seleccionado).</li>
+          <li>Elegí la materia y el tipo: Clase, Examen, Entrega o Bloque de estudio.</li>
+          <li>Escribí el título y elegí la fecha y las horas de inicio y fin con los selectores.</li>
+          <li>Tocá <strong>Crear</strong>.</li>
         </ol>
-        <p style="margin-top:10px">Los bloques de estudio que cargues acá son los que alimentan el gráfico de "Horas de estudio por materia" en Inicio.</p>
       </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Clases que se repiten</h3>
+          <p>Si el evento es una <strong>Clase</strong>, marcá <strong>Repetir cada semana</strong>. Podés elegir la fecha de la última clase o dejarla sin fin.</p>
+        </div>
+        <div class="card">
+          <h3>Editar o eliminar</h3>
+          <p>El menú ⋮ del evento tiene <strong>Editar</strong> y <strong>Eliminar</strong>. También podés deslizarlo hacia la izquierda para eliminarlo.</p>
+        </div>
+      </div>
+      <p>Los bloques de estudio suman a tus horas de la semana, a tu meta y a tu racha.</p>
     </section>
 
     <section id="notas">
       <h2>6. Notas</h2>
-      <p class="kicker">Para guardar apuntes sueltos de cualquier materia.</p>
+      <p class="kicker">Para guardar apuntes de cualquier materia.</p>
 
       <div class="card">
-        <h3>Filtros</h3>
-        <p>Arriba tenés tres pestañas: <strong>Todas</strong>, <strong>Recientes</strong> (ordenadas de la más nueva a la más vieja) y <strong>Favoritas</strong>.</p>
+        <h3>Buscar y filtrar</h3>
+        <p>Usá <strong>Buscar en tus notas…</strong> para encontrar una nota por título o contenido. Debajo tenés tres filtros: <strong>Todas</strong>, <strong>Recientes</strong> y <strong>Favoritas</strong>.</p>
       </div>
-      <div class="card">
-        <h3>Crear una nota</h3>
-        <p>Tocá el botón <span class="kbd">+</span> flotante, elegí la materia, escribí un título y el contenido, y confirmá.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Crear una nota</h3>
+          <p>Tocá <strong>+ Nueva nota</strong>, elegí la materia, escribí un título y el contenido, y tocá <strong>Crear</strong>.</p>
+        </div>
+        <div class="card">
+          <h3>Favorita, editar, adjuntar o eliminar</h3>
+          <p>La estrella ⭐ la marca como favorita. El menú ⋮ tiene <strong>Adjuntar archivo</strong>, <strong>Editar</strong> y <strong>Eliminar</strong>. También podés deslizarla hacia la izquierda para eliminarla.</p>
+        </div>
       </div>
+    </section>
+
+    <section id="temporizador">
+      <h2>7. Temporizador de estudio</h2>
+      <p class="kicker">Para concentrarte un rato en una sola materia (método Pomodoro). Se abre desde la casilla <strong>Temporizador</strong> de Inicio.</p>
+
       <div class="card">
-        <h3>Marcar favorita, editar o eliminar</h3>
-        <p>En cada tarjeta de nota tenés dos ícono a la derecha del título: la estrella (⭐/☆) marca o desmarca la nota como favorita, y el menú <span class="kbd">⋮</span> tiene las opciones <strong>Editar</strong> (cambiar título y contenido) y <strong>Eliminar</strong> (pide confirmación antes de borrarla).</p>
+        <h3>Empezar una sesión</h3>
+        <ol class="steps">
+          <li>Elegí la materia que vas a estudiar.</li>
+          <li>Elegí la duración: <code>15</code>, <code>25</code>, <code>45</code> o <code>60</code> minutos.</li>
+          <li>Tocá <strong>Empezar</strong>. La primera vez te pide <a href="#permisos">permiso de notificaciones</a>.</li>
+        </ol>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Durante la sesión</h3>
+          <p>Podés <strong>Pausar</strong> y <strong>Seguir</strong>, <strong>Terminar</strong> antes de tiempo (se guarda lo que estudiaste) o <strong>Descartar sesión</strong>. Mientras corre, la pantalla no se apaga.</p>
+        </div>
+        <div class="card">
+          <h3>Si salís de la app</h3>
+          <p>Una notificación muestra cuánto falta y tiene los botones Pausar, Seguir y Terminar. Al terminar te avisa y la sesión se guarda sola como bloque de estudio.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="estadisticas">
+      <h2>8. Estadísticas</h2>
+      <p class="kicker">Se abren desde Perfil, en <strong>Estadísticas de estudio</strong>.</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Racha</h3>
+          <p>Cuántos días seguidos estudiaste. Cualquier bloque de estudio cuenta, sea del calendario o del temporizador.</p>
+        </div>
+        <div class="card">
+          <h3>Horas por semana</h3>
+          <p>Las horas de cada semana. Si tenés una meta, se marcan en verde las semanas que la cumpliste.</p>
+        </div>
+        <div class="card">
+          <h3>Notas de exámenes</h3>
+          <p>Tu promedio general y el promedio de cada materia.</p>
+        </div>
+        <div class="card">
+          <h3>Últimos 30 días por materia</h3>
+          <p>Cuántas horas le dedicaste a cada materia en el último mes.</p>
+        </div>
       </div>
     </section>
 
     <section id="perfil">
-      <h2>7. Perfil</h2>
-      <p class="kicker">Tus datos personales, tus estadísticas y algunas opciones de la cuenta.</p>
+      <h2>9. Perfil</h2>
+      <p class="kicker">Tus datos, tus números y las opciones de la app.</p>
 
-      <div class="card">
-        <h3>Estadísticas</h3>
-        <p>Se calculan solas a partir de tus materias: cantidad de materias, horas de estudio planificadas totales, y cantidad de notas guardadas.</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Editar perfil</h3>
+          <p>Cambiá tu nombre, carrera, año y email. Carrera, año y email son opcionales.</p>
+        </div>
+        <div class="card">
+          <h3>Metas de estudio</h3>
+          <p>Elegí cuántas horas por semana querés estudiar. Se ve en Inicio y en las Estadísticas.</p>
+        </div>
+        <div class="card">
+          <h3>Recordatorios</h3>
+          <p>Un resumen diario a las 8:00, un aviso antes de cada examen o entrega y otro 15 minutos antes de cada clase. Al activarlos te pide <a href="#permisos">permiso de notificaciones</a>.</p>
+        </div>
+        <div class="card">
+          <h3>Tema</h3>
+          <p>Elegí <strong>Sistema</strong> (sigue al teléfono), <strong>Claro</strong> u <strong>Oscuro</strong>.</p>
+        </div>
       </div>
       <div class="card">
-        <h3>Editar perfil</h3>
-        <p>Tocá <em>"Editar perfil"</em> para cambiar tu nombre, carrera, año y email. Carrera, año y email son opcionales: podés dejarlos vacíos.</p>
+        <h3>Ayuda y cerrar sesión</h3>
+        <p><strong>Ayuda y soporte</strong> tiene preguntas frecuentes y un botón para escribir a soporte. <strong>Cerrar sesión</strong> te pide confirmación y te lleva a la pantalla de inicio de sesión.</p>
       </div>
-      <div class="card">
-        <h3>Otras opciones</h3>
-        <p><strong>Metas de estudio</strong>, <strong>Recordatorios</strong> y <strong>Ayuda y soporte</strong> todavía están en desarrollo — al tocarlas, un aviso te lo indica. <strong>Cerrar sesión</strong> sí funciona: te pide confirmación y te vuelve a la pantalla de inicio de sesión.</p>
+    </section>
+
+    <section id="permisos">
+      <h2>10. Permisos</h2>
+      <p class="kicker">Estudia+ pide solo dos permisos, y nunca al abrir la app: siempre cuando vas a usar la función, y antes te explica para qué es.</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Notificaciones</h3>
+          <p>Se pide al activar los Recordatorios o al empezar el temporizador. Si no lo das, la app funciona igual, pero no te puede avisar.</p>
+        </div>
+        <div class="card">
+          <h3>Fotos y archivos</h3>
+          <p>Se pide al tocar <strong>Adjuntar archivo</strong>. Sin este permiso no se pueden adjuntar archivos. Si lo rechazaste, la app te ofrece ir a Ajustes para darlo.</p>
+        </div>
       </div>
     </section>
 
     <section id="faq">
-      <h2>8. Preguntas frecuentes</h2>
+      <h2>11. Preguntas frecuentes</h2>
       <dl class="faq">
         <dt>¿Dónde se guardan mis datos?</dt>
-        <dd>Todo se guarda en el almacenamiento interno del propio dispositivo. Estudia+ no necesita conexión a internet para funcionar.</dd>
+        <dd>En tu teléfono, en una base de datos privada de la app. Estudia+ no necesita internet. Las contraseñas no se guardan: solo un hash que no se puede revertir.</dd>
 
         <dt>¿Qué pasa si desinstalo la app?</dt>
-        <dd>Se pierden los datos guardados, porque viven en un espacio privado de la app dentro del dispositivo.</dd>
+        <dd>Se pierden los datos guardados, porque viven en un espacio privado de la app dentro del teléfono.</dd>
 
         <dt>¿Puedo usar la app con más de un usuario en el mismo celular?</dt>
-        <dd>Sí. Cada persona se registra con su propio usuario y contraseña, y cada una ve únicamente sus propias materias, tareas, eventos y notas.</dd>
+        <dd>Sí. Cada persona se registra con su propio usuario y contraseña, y ve solo sus materias, tareas, eventos y notas.</dd>
+
+        <dt>Borré algo sin querer, ¿lo puedo recuperar?</dt>
+        <dd>Sí, si tocás <strong>Deshacer</strong> en el aviso que aparece abajo durante unos segundos. Después de eso, el borrado es definitivo.</dd>
 
         <dt>Archivé una materia por error, ¿se borró algo?</dt>
-        <dd>No. Archivar solo la saca de la pestaña "Activas" y de los gráficos de Inicio. Podés desarchivarla en cualquier momento desde el menú ⋮ de su tarjeta.</dd>
+        <dd>No. Archivar solo la saca de la pestaña "Activas", de Inicio y de las estadísticas. Podés desarchivarla desde el menú ⋮ de su tarjeta.</dd>
 
-        <dt>Eliminé una materia o una nota por error, ¿la puedo recuperar?</dt>
-        <dd>No: a diferencia de archivar, eliminar es permanente. Por eso la app siempre pide confirmación antes de borrar.</dd>
+        <dt>¿Qué cuenta para la racha y la meta semanal?</dt>
+        <dd>Los bloques de estudio: los que cargás en el Calendario y las sesiones del temporizador.</dd>
+
+        <dt>¿La app puede ver mis otros archivos?</dt>
+        <dd>Para adjuntar necesita permiso de fotos y archivos. Aunque lo des, solo guarda el archivo que vos elegís.</dd>
 
         <dt>¿Cómo veo cuánto me falta de una materia?</dt>
-        <dd>Expandí su tarjeta en Materias: ahí ves cuántas tareas te quedan pendientes y el % de progreso, que también aparece resumido en el gráfico de Inicio.</dd>
+        <dd>Expandí su tarjeta en Materias: ahí ves las tareas pendientes, el % de progreso y el promedio de tus notas de exámenes.</dd>
       </dl>
     </section>
 
   </main>
 </div>
 
-<footer>
-  Manual de usuario de Estudia+ · Proyecto de la materia Dispositivos Móviles
-</footer>
+<footer>Manual de usuario de Estudia+ · Proyecto de la materia Dispositivos Móviles</footer>
 
 </body>
 </html>

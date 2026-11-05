@@ -262,7 +262,7 @@
         <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio de esa semana: los que cargás en el calendario y las sesiones del temporizador.</item>
         <item>Sí: al eliminar una materia, una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
         <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
-        <item>En Inicio tocá \"Temporizador de estudio\", elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
+        <item>En Inicio tocá la casilla \"Temporizador\", elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
         <item>Creá un evento de tipo \"Clase\" con la fecha de la primera clase y marcá \"Repetir cada semana\". Si querés, elegí la fecha de la última clase; si no, se repite sin fin.</item>
         <item>Sí: en las listas, deslizá una tarea hacia la derecha para completarla, o cualquier tarea, nota o evento hacia la izquierda para eliminarlo (con \"Deshacer\").</item>
         <item>En Materias, expandí la materia y tocá \"Agregar nota de examen\" (de 1 a 10, se aprueba con 4). El promedio aparece en la tarjeta de la materia, y en Perfil → \"Estadísticas de estudio\" ves el promedio general, tu racha de días seguidos estudiando y las horas de cada semana.</item>
