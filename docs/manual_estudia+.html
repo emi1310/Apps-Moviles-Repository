@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manual de usuario — Estudia+</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FBFAF7;
+    --panel: #FFFFFF;
+    --ink: #1E1B2E;
+    --ink-soft: #56526B;
+    --line: #E7E3F2;
+    --purple: #6C5CE7;
+    --purple-soft: #EFEBFD;
+    --teal: #00B894;
+    --orange: #FDA43C;
+    --red: #E74C3C;
+    --blue: #0984E3;
+    --radius: 14px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; scroll-padding-top: calc(24px + env(safe-area-inset-top, 0px)); }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #15131F;
+      --panel: #1D1A2B;
+      --ink: #F1EFFA;
+      --ink-soft: #B4AFCB;
+      --line: #322D48;
+      --purple-soft: #2A2445;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #15131F;
+    --panel: #1D1A2B;
+    --ink: #F1EFFA;
+    --ink-soft: #B4AFCB;
+    --line: #322D48;
+    --purple-soft: #2A2445;
+  }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1,h2,h3{
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  a{ color: var(--purple); }
+
+  .hero{
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-inner{ max-width: 900px; margin: 0 auto; }
+  .hero .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 0.85rem; color: var(--purple);
+    background: var(--purple-soft);
+    padding: 6px 14px; border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  .hero h1{ font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 10px; }
+  .hero p.tagline{ font-size: 1.15rem; color: var(--ink-soft); margin: 0 0 4px; max-width: 60ch; }
+  .hero p.sub{ color: var(--ink-soft); max-width: 65ch; }
+
+  .layout{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+    display: grid;
+    grid-template-columns: 220px minmax(0,1fr);
+    gap: 48px;
+  }
+  @media (max-width: 760px){
+    .layout{ grid-template-columns: 1fr; padding: 28px 18px 80px; gap: 28px; }
+    nav.toc{ position: static !important; }
+  }
+
+  nav.toc{
+    position: sticky;
+    top: calc(24px + env(safe-area-inset-top, 0px));
+    align-self: start;
+    font-size: 0.92rem;
+  }
+  nav.toc .toc-title{
+    text-transform: none;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+  nav.toc ol{ list-style: none; margin:0; padding:0; border-left: 2px solid var(--line); }
+  nav.toc li{ margin: 0; }
+  nav.toc a{
+    display:block;
+    padding: 7px 0 7px 16px;
+    color: var(--ink-soft);
+    text-decoration:none;
+    border-left: 2px solid transparent;
+    margin-left:-2px;
+  }
+  nav.toc a:hover{ color: var(--purple); }
+
+  main{ min-width: 0; }
+
+  section{
+    padding: 34px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  section:last-child{ border-bottom: none; }
+
+  section h2{
+    font-size: 1.5rem;
+    display:flex; align-items:center; gap: 10px;
+    margin: 0 0 6px;
+  }
+  section .kicker{ color: var(--ink-soft); margin: 0 0 20px; max-width: 68ch; }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin: 14px 0;
+  }
+  .card h3{ font-size: 1.02rem; margin: 0 0 8px; }
+  .card p{ margin: 0; color: var(--ink-soft); }
+
+  .steps{ margin: 0; padding-left: 0; list-style: none; counter-reset: step; }
+  .steps li{
+    counter-increment: step;
+    position: relative;
+    padding: 4px 0 4px 40px;
+    margin-bottom: 6px;
+  }
+  .steps li::before{
+    content: counter(step);
+    position: absolute; left:0; top: 2px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--purple-soft);
+    color: var(--purple);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .grid2{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 560px){ .grid2{ grid-template-columns: 1fr; } }
+
+  .pill{
+    display:inline-block;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin: 2px 6px 2px 0;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .pill.purple{ border-color: transparent; background: var(--purple-soft); color: var(--purple); }
+
+  code, .kbd{
+    font-family: 'Space Grotesk', monospace;
+    background: var(--purple-soft);
+    color: var(--purple);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.88em;
+  }
+
+  table.dot-legend{ border-collapse: collapse; width: 100%; margin-top: 8px; }
+  table.dot-legend td{ padding: 6px 10px 6px 0; color: var(--ink-soft); vertical-align: top; }
+  .dot{ display:inline-block; width:10px; height:10px; border-radius: 50%; margin-right: 8px; }
+
+  .faq dt{ font-weight: 600; margin-top: 18px; }
+  .faq dd{ margin: 6px 0 0; color: var(--ink-soft); }
+
+  footer{
+    max-width: 1080px; margin: 0 auto; padding: 30px 24px 60px;
+    color: var(--ink-soft); font-size: 0.85rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow">Manual de usuario</span>
+    <h1>Estudia+</h1>
+    <p class="tagline">Organiza. Estudia. Logra.</p>
+    <p class="sub">Esta guía explica, pantalla por pantalla, cómo usar Estudia+: crear tu cuenta, cargar materias, tareas, eventos y notas, y sacarle provecho al resumen de Inicio y a tu perfil.</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <nav class="toc" aria-label="Índice">
+    <div class="toc-title">En este manual</div>
+    <ol>
+      <li><a href="#cuentas">1. Crear cuenta e iniciar sesión</a></li>
+      <li><a href="#navegacion">2. Cómo moverte por la app</a></li>
+      <li><a href="#inicio">3. Inicio</a></li>
+      <li><a href="#materias">4. Materias</a></li>
+      <li><a href="#calendario">5. Calendario</a></li>
+      <li><a href="#notas">6. Notas</a></li>
+      <li><a href="#perfil">7. Perfil</a></li>
+      <li><a href="#faq">8. Preguntas frecuentes</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="cuentas">
+      <h2>1. Crear cuenta e iniciar sesión</h2>
+      <p class="kicker">Lo primero que ves al abrir Estudia+ es la pantalla de bienvenida. Desde ahí tocás <strong>Comenzar</strong> para crear tu cuenta o iniciar sesión.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Crear una cuenta</h3>
+          <ol class="steps">
+            <li>Tocá <em>"¿No tenés cuenta? Creá una"</em>.</li>
+            <li>Completá tu nombre completo, un nombre de usuario y una contraseña.</li>
+            <li>Tocá <strong>Crear cuenta</strong>.</li>
+          </ol>
+          <p style="margin-top:10px">El nombre de usuario no se puede repetir. Carrera, año y email se cargan después, desde tu <a href="#perfil">Perfil</a>.</p>
+        </div>
+        <div class="card">
+          <h3>Iniciar sesión</h3>
+          <ol class="steps">
+            <li>Ingresá tu usuario y contraseña.</li>
+            <li>Tocá <strong>Iniciar sesión</strong>.</li>
+          </ol>
+          <p style="margin-top:10px">Una vez que entrás, la app recuerda tu sesión: no vas a tener que volver a loguearte cada vez que la abras, salvo que cierres sesión manualmente desde tu Perfil.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="navegacion">
+      <h2>2. Cómo moverte por la app</h2>
+      <p class="kicker">Una vez adentro, una barra inferior te lleva a las 5 secciones principales. Podés tocar cualquiera de estos íconos en cualquier momento:</p>
+      <p>
+        <span class="pill purple">🏠 Inicio</span>
+        <span class="pill purple">📚 Materias</span>
+        <span class="pill purple">📅 Calendario</span>
+        <span class="pill purple">📝 Notas</span>
+        <span class="pill purple">👤 Perfil</span>
+      </p>
+    </section>
+
+    <section id="inicio">
+      <h2>3. Inicio</h2>
+      <p class="kicker">Es tu resumen del día: junta información de todas tus materias en un solo lugar.</p>
+      <div class="card"><h3>Tareas pendientes</h3><p>Muestra hasta 4 tareas sin completar de todas tus materias, con su fecha límite y de qué materia son.</p></div>
+      <div class="card"><h3>Próximos eventos</h3><p>Muestra hasta 3 exámenes o entregas cargados en el <a href="#calendario">Calendario</a> (las clases y bloques de estudio no aparecen acá, para no saturar la vista).</p></div>
+      <div class="card"><h3>Nota destacada</h3><p>Si tenés alguna nota marcada como favorita (⭐), aparece acá.</p></div>
+      <div class="card"><h3>Progreso por materia y horas de estudio</h3><p>Un gráfico de barras muestra el % de tareas completadas por cada materia activa, y un gráfico de torta muestra cómo se reparten tus horas de estudio planificadas (según los bloques de estudio que cargues en el Calendario) entre materias.</p></div>
+    </section>
+
+    <section id="materias">
+      <h2>4. Materias</h2>
+      <p class="kicker">Acá administrás cada materia: sus tareas, y si la archivás, editás o eliminás.</p>
+
+      <div class="card">
+        <h3>Crear una materia</h3>
+        <p>Tocá el botón <span class="kbd">+</span> flotante, escribí el nombre y confirmá. No podés repetir el nombre de una materia que ya tengas.</p>
+      </div>
+
+      <div class="card">
+        <h3>Activas y archivadas</h3>
+        <p>Arriba de la lista hay dos pestañas: <strong>Activas</strong> y <strong>Archivadas</strong>. Una materia archivada deja de contar para los gráficos de Inicio, pero no se borra: podés desarchivarla cuando quieras.</p>
+      </div>
+
+      <div class="card">
+        <h3>Tareas: crear y completar</h3>
+        <ol class="steps">
+          <li>Tocá la tarjeta de la materia para expandirla.</li>
+          <li>Vas a ver la lista de tareas cargadas, cada una con un checkbox.</li>
+          <li>Tocá el checkbox (o la tarea) para marcarla como completada — esto actualiza al instante el % de progreso de la materia.</li>
+          <li>Para cargar una tarea nueva, tocá <em>"+ Agregar tarea"</em> al final de la lista, y completá el título y la fecha límite (podés escribirla como quieras: "Hoy", "Mañana", "25 May", etc.).</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>Editar, archivar o eliminar una materia</h3>
+        <p>Tocá el menú <span class="kbd">⋮</span> en la esquina superior derecha de la tarjeta:</p>
+        <table class="dot-legend">
+          <tr><td><strong>Editar</strong></td><td>cambia el nombre de la materia.</td></tr>
+          <tr><td><strong>Archivar / Desarchivar</strong></td><td>la mueve entre las pestañas Activas y Archivadas.</td></tr>
+          <tr><td><strong>Eliminar</strong></td><td>la borra por completo, junto con todas sus tareas, eventos y notas. Te pide confirmación antes, porque no se puede deshacer.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section id="calendario">
+      <h2>5. Calendario</h2>
+      <p class="kicker">Un calendario mensual para ver y cargar clases, exámenes, entregas y bloques de estudio.</p>
+
+      <div class="card">
+        <h3>Moverte por el calendario</h3>
+        <p>Usá las flechas <span class="kbd">‹</span> y <span class="kbd">›</span> para cambiar de mes. El día de hoy aparece resaltado, y cualquier día con eventos cargados lleva un punto debajo del número. Tocá un día para ver sus eventos en la lista de abajo.</p>
+      </div>
+
+      <div class="card">
+        <h3>Agregar un evento</h3>
+        <ol class="steps">
+          <li>Tocá el botón <span class="kbd">+</span> flotante (el diálogo se abre con la fecha del día que tenías seleccionado, pero la podés cambiar).</li>
+          <li>Elegí a qué materia pertenece.</li>
+          <li>Elegí el tipo: Clase, Examen, Entrega o Bloque de estudio.</li>
+          <li>Completá título, fecha (dd/MM/aaaa) y hora de inicio y fin (HH:mm).</li>
+          <li>Confirmá con <strong>Crear</strong>.</li>
+        </ol>
+        <p style="margin-top:10px">Los bloques de estudio que cargues acá son los que alimentan el gráfico de "Horas de estudio por materia" en Inicio.</p>
+      </div>
+    </section>
+
+    <section id="notas">
+      <h2>6. Notas</h2>
+      <p class="kicker">Para guardar apuntes sueltos de cualquier materia.</p>
+
+      <div class="card">
+        <h3>Filtros</h3>
+        <p>Arriba tenés tres pestañas: <strong>Todas</strong>, <strong>Recientes</strong> (ordenadas de la más nueva a la más vieja) y <strong>Favoritas</strong>.</p>
+      </div>
+      <div class="card">
+        <h3>Crear una nota</h3>
+        <p>Tocá el botón <span class="kbd">+</span> flotante, elegí la materia, escribí un título y el contenido, y confirmá.</p>
+      </div>
+      <div class="card">
+        <h3>Marcar favorita, editar o eliminar</h3>
+        <p>En cada tarjeta de nota tenés dos ícono a la derecha del título: la estrella (⭐/☆) marca o desmarca la nota como favorita, y el menú <span class="kbd">⋮</span> tiene las opciones <strong>Editar</strong> (cambiar título y contenido) y <strong>Eliminar</strong> (pide confirmación antes de borrarla).</p>
+      </div>
+    </section>
+
+    <section id="perfil">
+      <h2>7. Perfil</h2>
+      <p class="kicker">Tus datos personales, tus estadísticas y algunas opciones de la cuenta.</p>
+
+      <div class="card">
+        <h3>Estadísticas</h3>
+        <p>Se calculan solas a partir de tus materias: cantidad de materias, horas de estudio planificadas totales, y cantidad de notas guardadas.</p>
+      </div>
+      <div class="card">
+        <h3>Editar perfil</h3>
+        <p>Tocá <em>"Editar perfil"</em> para cambiar tu nombre, carrera, año y email. Carrera, año y email son opcionales: podés dejarlos vacíos.</p>
+      </div>
+      <div class="card">
+        <h3>Otras opciones</h3>
+        <p><strong>Metas de estudio</strong>, <strong>Recordatorios</strong> y <strong>Ayuda y soporte</strong> todavía están en desarrollo — al tocarlas, un aviso te lo indica. <strong>Cerrar sesión</strong> sí funciona: te pide confirmación y te vuelve a la pantalla de inicio de sesión.</p>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>8. Preguntas frecuentes</h2>
+      <dl class="faq">
+        <dt>¿Dónde se guardan mis datos?</dt>
+        <dd>Todo se guarda en el almacenamiento interno del propio dispositivo. Estudia+ no necesita conexión a internet para funcionar.</dd>
+
+        <dt>¿Qué pasa si desinstalo la app?</dt>
+        <dd>Se pierden los datos guardados, porque viven en un espacio privado de la app dentro del dispositivo.</dd>
+
+        <dt>¿Puedo usar la app con más de un usuario en el mismo celular?</dt>
+        <dd>Sí. Cada persona se registra con su propio usuario y contraseña, y cada una ve únicamente sus propias materias, tareas, eventos y notas.</dd>
+
+        <dt>Archivé una materia por error, ¿se borró algo?</dt>
+        <dd>No. Archivar solo la saca de la pestaña "Activas" y de los gráficos de Inicio. Podés desarchivarla en cualquier momento desde el menú ⋮ de su tarjeta.</dd>
+
+        <dt>Eliminé una materia o una nota por error, ¿la puedo recuperar?</dt>
+        <dd>No: a diferencia de archivar, eliminar es permanente. Por eso la app siempre pide confirmación antes de borrar.</dd>
+
+        <dt>¿Cómo veo cuánto me falta de una materia?</dt>
+        <dd>Expandí su tarjeta en Materias: ahí ves cuántas tareas te quedan pendientes y el % de progreso, que también aparece resumido en el gráfico de Inicio.</dd>
+      </dl>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Manual de usuario de Estudia+ · Proyecto de la materia Dispositivos Móviles
+</footer>
+
+</body>
+</html>
