@@ -12,9 +12,12 @@ import java.util.UUID
 // Fuente de datos para los archivos adjuntos (imágenes, PDFs, etc.).
 //
 // Buenas prácticas de almacenamiento (scoped storage):
-//  - La app NO pide permisos de almacenamiento (READ/WRITE_EXTERNAL_STORAGE
-//    ni MANAGE_EXTERNAL_STORAGE). El usuario elige el archivo con el selector
-//    del sistema, que le da a la app acceso solo a ESE archivo.
+//  - Para adjuntar hace falta el permiso de fotos y archivos (READ_MEDIA_IMAGES
+//    o READ_EXTERNAL_STORAGE según la versión): lo pide la pantalla antes de
+//    abrir el selector (ver ui/componentes/SelectorArchivos.kt). Nunca se pide
+//    WRITE_EXTERNAL_STORAGE ni MANAGE_EXTERNAL_STORAGE.
+//  - El usuario elige el archivo con el selector del sistema, y esta clase
+//    recibe acceso solo a ESE archivo.
 //  - El archivo se copia al almacenamiento interno de la app
 //    (filesDir/archivos): es privado, no lo ven otras apps, no necesita
 //    permisos y se borra si se desinstala la app.
