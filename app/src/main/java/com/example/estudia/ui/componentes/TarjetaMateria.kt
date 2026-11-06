@@ -20,6 +20,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -66,11 +68,11 @@ fun TarjetaMateria(
         modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // Franja del color de la materia a la izquierda.
-            Box(modifier = Modifier.width(6.dp).fillMaxHeight().background(color))
-
-            Column(modifier = Modifier.padding(14.dp).animateContentSize()) {
+        // Franja del color de la materia a la izquierda. Se dibuja detrás del
+        // contenido en lugar de medirla con IntrinsicSize: las tareas
+        // deslizables no admiten medidas intrínsecas y la pantalla se trababa.
+        Box(modifier = Modifier.drawBehind { drawRect(color, size = Size(6.dp.toPx(), size.height)) }) {
+            Column(modifier = Modifier.padding(start = 20.dp, top = 14.dp, end = 14.dp, bottom = 14.dp).animateContentSize()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().clickable { expandida = !expandida },
                     verticalAlignment = Alignment.CenterVertically
