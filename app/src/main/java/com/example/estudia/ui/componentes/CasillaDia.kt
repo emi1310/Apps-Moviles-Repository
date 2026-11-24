@@ -4,21 +4,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.estudia.ui.theme.LocalDegradado
 import java.time.LocalDate
 
-// Un casillero del calendario: muestra el número de día. Si es "hoy" lo
-// resalta con un círculo de fondo, y si es el día seleccionado, con el
-// color principal. Abajo dibuja un puntito por cada materia con eventos ese
-// día, con el color de la materia. Los casilleros vacíos (fecha == null) no
-// se pueden tocar. Los colores salen del tema, así se ven bien en modo claro
-// y oscuro.
+// Un casillero del calendario: un bloquecito redondeado con el número de
+// día. El día elegido va con el degradado violeta y "hoy" con un violeta
+// suave. Abajo dibuja un puntito por cada materia con eventos ese día, con
+// el color de la materia. Los casilleros vacíos (fecha == null) no se pueden
+// tocar. Los colores salen del tema, así se ven bien en modo claro y oscuro.
 @Composable
 fun CasillaDia(
     fecha: LocalDate?,
@@ -28,13 +34,15 @@ fun CasillaDia(
     modifier: Modifier = Modifier,
     onSeleccionar: () -> Unit
 ) {
-    val colorFondo = when {
-        seleccionado -> MaterialTheme.colorScheme.primary
-        esHoy -> MaterialTheme.colorScheme.secondaryContainer
-        else -> Color.Transparent
+    val forma = RoundedCornerShape(14.dp)
+    val fondo = when {
+        fecha == null -> Modifier
+        seleccionado -> Modifier.background(LocalDegradado.current, forma)
+        esHoy -> Modifier.background(MaterialTheme.colorScheme.secondaryContainer, forma)
+        else -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), forma)
     }
     val colorTexto = when {
-        seleccionado -> MaterialTheme.colorScheme.onPrimary
+        seleccionado -> Color.White
         esHoy -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onSurface
     }
@@ -43,13 +51,20 @@ fun CasillaDia(
         modifier = modifier
             .aspectRatio(1f)
             .padding(3.dp)
-            .background(colorFondo, shape = CircleShape)
-            .clickable(enabled = fecha != null, onClick = onSeleccionar),
+            .clip(forma)
+            .then(fondo)
+            .semantics { selected = seleccionado }
+            .clickable(enabled = fecha != null, role = Role.Button, onClick = onSeleccionar),
         contentAlignment = Alignment.Center
     ) {
         if (fecha != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = fecha.dayOfMonth.toString(), color = colorTexto)
+                Text(
+                    text = fecha.dayOfMonth.toString(),
+                    color = colorTexto,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (seleccionado || esHoy) FontWeight.Bold else FontWeight.Medium
+                )
                 if (coloresEventos.isNotEmpty()) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -60,7 +75,7 @@ fun CasillaDia(
                                 modifier = Modifier
                                     .size(5.dp)
                                     // Sobre el día elegido (fondo violeta) los
-                                    // puntitos van del color del texto, para que se vean.
+                                    // puntitos van en blanco, para que se vean.
                                     .background(if (seleccionado) colorTexto else Color(color), CircleShape)
                             )
                         }

@@ -6,7 +6,6 @@ import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
-import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
@@ -34,18 +33,16 @@ data class InicioUiState(
     val materiasActivas: List<Materia> = emptyList(),
     val minutosPorMateria: List<Pair<Materia, Long>> = emptyList(),
     val horasEstudio: Int = 0,
-    // Para los tres datos del encabezado.
-    val horasEstaSemana: Int = 0,
-    val metaHorasSemanales: Int? = null,     // null = sin meta
+    // Para el fueguito de la racha del encabezado.
     val rachaDias: Int = 0,
     val estudioHoy: Boolean = false          // si hoy ya hay un bloque de estudio
 ) {
-    // Avance de la meta semanal entre 0 y 1 (null si no hay meta).
-    val progresoMeta: Float?
-        get() {
-            val meta = metaHorasSemanales?.takeIf { it > 0 } ?: return null
-            return (horasEstaSemana.toFloat() / meta).coerceIn(0f, 1f)
-        }
+    // Para la tarjeta de tareas de Inicio.
+    val totalTareas: Int get() = materiasActivas.sumOf { it.tareas.size }
+    val tareasCompletadas: Int get() = materiasActivas.sumOf { materia -> materia.tareas.count { it.completada } }
+    val tareasVencidas: Int get() = tareasPendientes.count { it.tarea.estaVencida(hoy) }
+    val tareasParaHoy: Int get() = tareasPendientes.count { it.tarea.fechaLimite == hoy }
+    val progresoTareas: Float get() = if (totalTareas == 0) 0f else tareasCompletadas.toFloat() / totalTareas
 }
 
 // ViewModel de Inicio: arma el resumen a partir del usuario. Antes estos
@@ -59,10 +56,6 @@ class InicioViewModel(
     val uiState: StateFlow<InicioUiState> = repositorio.usuarioActual
         .map { usuario -> if (usuario == null) InicioUiState() else calcularResumen(usuario, hoy()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InicioUiState())
-
-    // Sesión del temporizador en curso (null si no hay), para la tarjeta de Inicio.
-    val sesionEstudio: StateFlow<SesionEstudio?> = repositorio.sesionEstudio
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun alternarTarea(item: TareaConMateria) {
         viewModelScope.launch {
@@ -103,8 +96,6 @@ fun calcularResumen(usuario: Usuario, hoy: LocalDate): InicioUiState {
         materiasActivas = activas,
         minutosPorMateria = minutos,
         horasEstudio = usuario.calcularHorasEstudio(),
-        horasEstaSemana = usuario.horasEstudioDeLaSemana(hoy),
-        metaHorasSemanales = usuario.metaHorasSemanales,
         rachaDias = usuario.rachaDeEstudio(hoy),
         estudioHoy = usuario.materias.any { materia ->
             materia.eventos.any { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == hoy }

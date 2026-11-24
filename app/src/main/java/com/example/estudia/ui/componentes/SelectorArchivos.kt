@@ -9,9 +9,9 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FolderOff
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,42 +64,40 @@ fun selectorDeArchivos(
     }
 
     if (mostrarExplicacion) {
-        AlertDialog(
-            onDismissRequest = { mostrarExplicacion = false },
-            title = { Text(stringResource(R.string.permiso_archivos_titulo)) },
-            text = { Text(stringResource(R.string.explicacion_permiso_archivos)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    mostrarExplicacion = false
-                    onExplicacionVista()
-                    pedirPermiso.launch(PERMISOS_ARCHIVOS)
-                }) { Text(stringResource(R.string.continuar)) }
+        DialogoApp(
+            titulo = stringResource(R.string.permiso_archivos_titulo),
+            icono = Icons.Filled.FolderOpen,
+            textoConfirmar = stringResource(R.string.continuar),
+            onConfirmar = {
+                mostrarExplicacion = false
+                onExplicacionVista()
+                pedirPermiso.launch(PERMISOS_ARCHIVOS)
             },
-            dismissButton = {
-                // Sin permiso no se adjunta: se cierra y la próxima vez se vuelve a pedir.
-                TextButton(onClick = {
-                    mostrarExplicacion = false
-                    onExplicacionVista()
-                }) { Text(stringResource(R.string.ahora_no)) }
-            }
-        )
+            // Sin permiso no se adjunta: se cierra y la próxima vez se vuelve a pedir.
+            textoCancelar = stringResource(R.string.ahora_no),
+            onCancelar = {
+                mostrarExplicacion = false
+                onExplicacionVista()
+            },
+            onDismissRequest = { mostrarExplicacion = false }
+        ) {
+            TextoDialogo(stringResource(R.string.explicacion_permiso_archivos))
+        }
     }
 
     if (mostrarSinPermiso) {
-        AlertDialog(
-            onDismissRequest = { mostrarSinPermiso = false },
-            title = { Text(stringResource(R.string.sin_permiso_archivos_titulo)) },
-            text = { Text(stringResource(R.string.sin_permiso_archivos)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    mostrarSinPermiso = false
-                    abrirAjustesDeLaApp(context)
-                }) { Text(stringResource(R.string.ir_a_ajustes)) }
+        DialogoApp(
+            titulo = stringResource(R.string.sin_permiso_archivos_titulo),
+            icono = Icons.Filled.FolderOff,
+            textoConfirmar = stringResource(R.string.ir_a_ajustes),
+            onConfirmar = {
+                mostrarSinPermiso = false
+                abrirAjustesDeLaApp(context)
             },
-            dismissButton = {
-                TextButton(onClick = { mostrarSinPermiso = false }) { Text(stringResource(R.string.cancelar)) }
-            }
-        )
+            onCancelar = { mostrarSinPermiso = false }
+        ) {
+            TextoDialogo(stringResource(R.string.sin_permiso_archivos))
+        }
     }
 
     return {

@@ -71,11 +71,9 @@ class InicioYUsuarioTest {
     }
 
     @Test
-    fun elEncabezadoMuestraLaMetaYLaRacha() {
-        // Estudió hoy (2 h de una meta de 4 h): racha de 1 día con el fueguito encendido.
-        val resumen = calcularResumen(usuario.copy(metaHorasSemanales = 4), hoy)
-        assertEquals(2, resumen.horasEstaSemana)
-        assertEquals(0.5f, resumen.progresoMeta!!, 0.001f)
+    fun elEncabezadoMuestraLaRacha() {
+        // Estudió hoy: racha de 1 día con el fueguito encendido.
+        val resumen = calcularResumen(usuario, hoy)
         assertEquals(1, resumen.rachaDias)
         assertTrue(resumen.estudioHoy)
 
@@ -83,7 +81,6 @@ class InicioYUsuarioTest {
         val manana = calcularResumen(usuario, hoy.plusDays(1))
         assertEquals(1, manana.rachaDias)
         assertFalse(manana.estudioHoy)
-        assertNull(manana.progresoMeta)   // sin meta
         // Pasado mañana ya se cortó.
         assertEquals(0, calcularResumen(usuario, hoy.plusDays(2)).rachaDias)
     }

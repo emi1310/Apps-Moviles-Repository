@@ -1,12 +1,12 @@
 package com.example.estudia.ui.componentes
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Schedule
@@ -14,16 +14,13 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
@@ -33,6 +30,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import com.example.estudia.ui.theme.LocalDegradado
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
@@ -43,40 +44,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 // Campos reutilizables de los formularios (diálogos).
-
-// Botón que muestra la opción elegida y abre un menú para elegir otra
-// (se usa para elegir la materia y el tipo de evento).
-@Composable
-fun <T> SelectorOpcion(
-    etiqueta: String,
-    opciones: List<T>,
-    seleccionada: T?,
-    texto: @Composable (T) -> String,
-    onSeleccionar: (T) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var abierto by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        OutlinedButton(onClick = { abierto = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = if (seleccionada != null) texto(seleccionada) else etiqueta,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-        }
-        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
-            opciones.forEach { opcion ->
-                DropdownMenuItem(
-                    text = { Text(texto(opcion)) },
-                    onClick = {
-                        onSeleccionar(opcion)
-                        abierto = false
-                    }
-                )
-            }
-        }
-    }
-}
 
 // Botón que muestra una fecha y abre el calendario de Material 3 para
 // elegirla. Si permitirVacio es true, se puede quitar la fecha.
@@ -91,12 +58,12 @@ fun CampoFecha(
     textoVacio: String? = null
 ) {
     var abierto by remember { mutableStateOf(false) }
-    Row(modifier = modifier) {
-        OutlinedButton(onClick = { abierto = true }, modifier = Modifier.weight(1f)) {
-            Icon(Icons.Filled.CalendarMonth, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(fecha?.aTexto() ?: textoVacio ?: stringResource(R.string.sin_fecha))
-        }
+    CampoBloque(
+        icono = Icons.Filled.CalendarMonth,
+        texto = fecha?.aTexto() ?: textoVacio ?: stringResource(R.string.sin_fecha),
+        onClick = { abierto = true },
+        modifier = modifier
+    ) {
         if (permitirVacio && fecha != null) {
             IconButton(onClick = { onCambiar(null) }) {
                 Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.quitar_fecha))
@@ -132,11 +99,12 @@ fun CampoHora(
     modifier: Modifier = Modifier
 ) {
     var abierto by remember { mutableStateOf(false) }
-    OutlinedButton(onClick = { abierto = true }, modifier = modifier) {
-        Icon(Icons.Filled.Schedule, contentDescription = null)
-        Spacer(Modifier.width(8.dp))
-        Text("$etiqueta ${hora.aTexto()}")
-    }
+    CampoBloque(
+        icono = Icons.Filled.Schedule,
+        texto = "$etiqueta ${hora.aTexto()}",
+        onClick = { abierto = true },
+        modifier = modifier
+    )
     if (abierto) {
         val estado = rememberTimePickerState(initialHour = hora.hour, initialMinute = hora.minute, is24Hour = true)
         AlertDialog(
@@ -155,14 +123,17 @@ fun CampoHora(
     }
 }
 
-// Campo de búsqueda con lupa y botón para borrar el texto.
+// Campo de búsqueda con forma de pastilla: fondo de tarjeta, sin borde ni
+// línea, la lupa en violeta y una X para borrar el texto.
 @Composable
 fun Buscador(texto: String, onCambiar: (String) -> Unit, sugerencia: String, modifier: Modifier = Modifier) {
-    OutlinedTextField(
+    TextField(
         value = texto,
         onValueChange = onCambiar,
-        placeholder = { Text(sugerencia) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        placeholder = { Text(sugerencia, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingIcon = {
+            Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        },
         trailingIcon = {
             if (texto.isNotEmpty()) {
                 IconButton(onClick = { onCambiar("") }) {
@@ -171,7 +142,29 @@ fun Buscador(texto: String, onCambiar: (String) -> Unit, sugerencia: String, mod
             }
         },
         singleLine = true,
-        modifier = modifier.fillMaxWidth()
+        shape = RoundedCornerShape(50),
+        colors = coloresSinLinea(MaterialTheme.colorScheme.surfaceContainer),
+        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
+    )
+}
+
+// Filtro de una lista (Activas / Archivadas, Todas / Recientes / Favoritas):
+// pastilla sin borde, como el buscador. La elegida va con el degradado
+// violeta y el texto en blanco.
+@Composable
+fun PastillaFiltro(texto: String, elegida: Boolean, onClick: () -> Unit) {
+    Text(
+        text = texto,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (elegida) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .then(
+                if (elegida) Modifier.background(LocalDegradado.current)
+                else Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
+            )
+            .selectable(selected = elegida, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     )
 }
 

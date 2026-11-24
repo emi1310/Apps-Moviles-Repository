@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.StickyNote2
 import androidx.compose.material3.*
@@ -18,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.Buscador
@@ -25,6 +25,7 @@ import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
 import com.example.estudia.ui.componentes.LocalAvisos
+import com.example.estudia.ui.componentes.PastillaFiltro
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaNota
 import com.example.estudia.ui.componentes.abrirArchivo
@@ -35,7 +36,12 @@ import com.example.estudia.viewmodel.NotasViewModel
 // Pantalla "Mis Notas": buscador, filtros Todas / Recientes / Favoritas y
 // la lista de notas, cada una con sus archivos adjuntos.
 @Composable
-fun NotasScreen(viewModel: NotasViewModel) {
+fun NotasScreen(
+    viewModel: NotasViewModel,
+    // true cuando se eligió crear desde el botón "+" del dock.
+    crearAlAbrir: Boolean = false,
+    onCreacionAbierta: () -> Unit = {}
+) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     RecolectarAvisos(viewModel.avisos)
     val context = LocalContext.current
@@ -55,29 +61,32 @@ fun NotasScreen(viewModel: NotasViewModel) {
         idNotaParaAdjuntar = null
     }
 
-    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
-    // va arriba de la lista, en la esquina de abajo a la derecha.
+    LaunchedEffect(crearAlAbrir) {
+        if (crearAlAbrir) {
+            crearNota = true
+            onCreacionAbierta()
+        }
+    }
+
+    // La lista pasa por detrás del dock flotante: abajo deja su espacio.
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp)
         ) {
             item {
                 EncabezadoPantalla(titulo = stringResource(R.string.mis_notas), subtitulo = stringResource(R.string.notas_subtitulo))
                 Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_notas))
                 Spacer(modifier = Modifier.height(8.dp))
-                Row {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 4.dp)) {
                     listOf(
                         FiltroNotas.TODAS to R.string.todas,
                         FiltroNotas.RECIENTES to R.string.recientes,
                         FiltroNotas.FAVORITAS to R.string.favoritas
                     ).forEach { (filtro, texto) ->
-                        FilterChip(
-                            selected = estado.filtro == filtro,
-                            onClick = { viewModel.cambiarFiltro(filtro) },
-                            label = { Text(stringResource(texto)) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        PastillaFiltro(stringResource(texto), elegida = estado.filtro == filtro) {
+                            viewModel.cambiarFiltro(filtro)
+                        }
                     }
                 }
                 if (estado.notas.isEmpty() && !estado.cargando) {
@@ -94,6 +103,7 @@ fun NotasScreen(viewModel: NotasViewModel) {
                 Deslizable(
                     modifier = Modifier.animateItem(),
                     onEliminar = { viewModel.eliminarNota(item) },
+                    forma = MaterialTheme.shapes.large,
                     margenVertical = 6.dp
                 ) {
                     TarjetaNota(
@@ -117,12 +127,6 @@ fun NotasScreen(viewModel: NotasViewModel) {
                 }
             }
         }
-        ExtendedFloatingActionButton(
-            onClick = { crearNota = true },
-            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            text = { Text(stringResource(R.string.nueva_nota)) },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-        )
     }
 
     if (crearNota) {

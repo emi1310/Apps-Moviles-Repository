@@ -1,24 +1,29 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.CasillaDia
@@ -34,7 +39,12 @@ import com.example.estudia.viewmodel.EventoConMateria
 // Pantalla "Mi Calendario": la grilla del mes y, debajo, los eventos del
 // día elegido (con opción de editarlos o eliminarlos).
 @Composable
-fun CalendarioScreen(viewModel: CalendarioViewModel) {
+fun CalendarioScreen(
+    viewModel: CalendarioViewModel,
+    // true cuando se eligió crear desde el botón "+" del dock.
+    crearAlAbrir: Boolean = false,
+    onCreacionAbierta: () -> Unit = {}
+) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     RecolectarAvisos(viewModel.avisos)
 
@@ -45,12 +55,18 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
     val meses = stringArrayResource(R.array.meses)
     val diasSemana = stringArrayResource(R.array.dias_semana_corto)
 
-    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
-    // va arriba de la lista, en la esquina de abajo a la derecha.
+    LaunchedEffect(crearAlAbrir) {
+        if (crearAlAbrir) {
+            eventoParaEditar = null; mostrarDialogo = true
+            onCreacionAbierta()
+        }
+    }
+
+    // La lista pasa por detrás del dock flotante: abajo deja su espacio.
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp)
         ) {
             item {
                 EncabezadoPantalla(
@@ -62,29 +78,37 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                     }
                 }
 
-                // ---------- El mes, dentro de una tarjeta ----------
+                // ---------- El mes, dentro de un bloque ----------
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    shape = MaterialTheme.shapes.large,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // Mes y año a la izquierda; flechas en círculos a la derecha.
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(onClick = viewModel::mesAnterior) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = meses[estado.mes.monthValue - 1],
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = estado.mes.year.toString(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            FilledTonalIconButton(onClick = viewModel::mesAnterior) {
                                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
                             }
-                            Text(
-                                text = "${meses[estado.mes.monthValue - 1]} ${estado.mes.year}",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            IconButton(onClick = viewModel::mesSiguiente) {
+                            FilledTonalIconButton(onClick = viewModel::mesSiguiente) {
                                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
                             diasSemana.forEach { letra ->
                                 Text(
@@ -113,9 +137,29 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(text = textoFecha(estado.seleccionado, estado.hoy), style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(4.dp))
+                // ---------- Día elegido: fecha y cuántos eventos tiene ----------
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
+                    Text(
+                        text = textoFecha(estado.seleccionado, estado.hoy),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (estado.eventosDelDia.isNotEmpty()) {
+                        val cantidad = estado.eventosDelDia.size
+                        Text(
+                            text = pluralStringResource(R.plurals.calendario_eventos_dia, cantidad, cantidad),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 if (estado.eventosDelDia.isEmpty()) {
                     EstadoVacio(
                         Icons.Filled.EventAvailable,
@@ -130,6 +174,7 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                 Deslizable(
                     modifier = Modifier.animateItem(),
                     onEliminar = { viewModel.eliminarEvento(item) },
+                    forma = MaterialTheme.shapes.large,
                     margenVertical = 4.dp
                 ) {
                     TarjetaEventoCalendario(
@@ -143,15 +188,6 @@ fun CalendarioScreen(viewModel: CalendarioViewModel) {
                 }
             }
         }
-        ExtendedFloatingActionButton(
-            onClick = {
-                eventoParaEditar = null
-                mostrarDialogo = true
-            },
-            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            text = { Text(stringResource(R.string.nuevo_evento)) },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-        )
     }
 
     if (mostrarDialogo) {

@@ -44,7 +44,7 @@ fun EncabezadoPantalla(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = titulo, style = MaterialTheme.typography.headlineSmall)
+            Text(text = titulo, style = MaterialTheme.typography.headlineMedium)
             if (subtitulo != null) {
                 Text(
                     text = subtitulo,
@@ -58,7 +58,8 @@ fun EncabezadoPantalla(
 }
 
 // Ícono dentro de un círculo de color suave (el color del ícono con poca
-// opacidad de fondo). Se usa en secciones, listas y estados vacíos.
+// opacidad de fondo). Se usa en secciones, listas y estados vacíos. Con
+// fondo lleno y el ícono en blanco, es el círculo de los bloques claros.
 @Composable
 fun IconoCircular(
     icono: ImageVector,
@@ -95,8 +96,9 @@ fun EstadoVacio(icono: ImageVector, titulo: String, mensaje: String, modifier: M
     }
 }
 
-// Tarjeta de una sección (ej: "Tareas pendientes" en Inicio), con ícono,
-// título y un detalle opcional a la derecha.
+// Tarjeta de una sección (ej: "Tareas pendientes" en Inicio): esquinas muy
+// redondeadas y sin sombra, título en negrita con su ícono de color, un
+// subtítulo gris opcional y un detalle a la derecha como pastilla.
 @Composable
 fun TarjetaSeccion(
     titulo: String,
@@ -104,22 +106,40 @@ fun TarjetaSeccion(
     color: Color,
     detalle: String? = null,
     modifier: Modifier = Modifier,
+    subtitulo: String? = null,
     contenido: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconoCircular(icono, color, tamano = 32.dp)
+                Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(text = titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 if (detalle != null) {
-                    Text(text = detalle, style = MaterialTheme.typography.labelMedium, color = color)
+                    Text(
+                        text = detalle,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = color,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(color.copy(alpha = 0.14f))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            if (subtitulo != null) {
+                Text(
+                    text = subtitulo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 32.dp, top = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
             contenido()
         }
     }

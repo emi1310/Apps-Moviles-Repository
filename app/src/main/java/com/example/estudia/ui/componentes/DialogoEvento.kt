@@ -1,21 +1,17 @@
 package com.example.estudia.ui.componentes
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,15 +19,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.sePuedeRepetir
+import com.example.estudia.ui.theme.LocalDegradado
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -47,8 +47,10 @@ fun nombreTipo(tipo: TipoEvento): Int = when (tipo) {
 private val TIPOS = listOf(TipoEvento.CLASE, TipoEvento.EXAMEN, TipoEvento.ENTREGA, TipoEvento.BLOQUE_ESTUDIO)
 
 // Ventana emergente para crear (evento == null) o editar un evento.
-// onConfirmar devuelve el error a mostrar (ej: la hora de fin es anterior
-// a la de inicio) o null si se guardó; esa regla la decide el ViewModel.
+// La materia se elige con pastillas de colores y el tipo con una grilla de
+// bloques con su ícono. onConfirmar devuelve el error a mostrar (ej: la hora
+// de fin es anterior a la de inicio) o null si se guardó; esa regla la
+// decide el ViewModel.
 @Composable
 fun DialogoEvento(
     evento: Evento?,
@@ -71,100 +73,119 @@ fun DialogoEvento(
     var repetirHasta by remember { mutableStateOf(evento?.repetirHasta) }
     var error by remember { mutableStateOf<Int?>(null) }
 
-    AlertDialog(
-        onDismissRequest = onCancelar,
-        title = { Text(stringResource(if (evento == null) R.string.nuevo_evento else R.string.editar_evento)) },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                SelectorOpcion(
-                    etiqueta = stringResource(R.string.elegir_materia),
-                    opciones = materias,
-                    seleccionada = materia,
-                    texto = { it.nombre },
-                    onSeleccionar = { materia = it; error = null },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                SelectorOpcion(
-                    etiqueta = stringResource(R.string.elegir_tipo),
-                    opciones = TIPOS,
-                    seleccionada = tipo,
-                    texto = { stringResource(nombreTipo(it)) },
-                    onSeleccionar = { tipo = it; error = null },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = titulo,
-                    onValueChange = { titulo = it; error = null },
-                    label = { Text(stringResource(R.string.titulo)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                CampoFecha(fecha = fecha, onCambiar = { if (it != null) fecha = it }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    CampoHora(stringResource(R.string.desde), inicio, { inicio = it; error = null }, Modifier.weight(1f))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    CampoHora(stringResource(R.string.hasta), fin, { fin = it; error = null }, Modifier.weight(1f))
-                }
-                // Solo las clases se pueden repetir: se muestran todas las
-                // semanas, el mismo día, hasta la última clase (si se eligió).
-                if (tipo?.sePuedeRepetir == true) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().toggleable(
-                            value = semanal,
-                            role = Role.Checkbox,
-                            onValueChange = { semanal = it; error = null }
-                        )
-                    ) {
-                        Checkbox(checked = semanal, onCheckedChange = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(stringResource(R.string.repetir_semanal), style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                text = stringResource(R.string.cada_dia_semana, nombreDiaSemana(fecha)),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    if (semanal) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(stringResource(R.string.repetir_hasta), style = MaterialTheme.typography.labelLarge)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        CampoFecha(
-                            fecha = repetirHasta,
-                            onCambiar = { repetirHasta = it; error = null },
-                            modifier = Modifier.fillMaxWidth(),
-                            permitirVacio = true,
-                            textoVacio = stringResource(R.string.repetir_sin_fin)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                TextoError(error?.let { stringResource(it) })
+    DialogoApp(
+        titulo = stringResource(if (evento == null) R.string.nuevo_evento else R.string.editar_evento),
+        icono = Icons.Filled.Event,
+        textoConfirmar = stringResource(if (evento == null) R.string.crear else R.string.guardar),
+        onConfirmar = {
+            val m = materia
+            val t = tipo
+            error = when {
+                m == null -> R.string.error_elegir_materia
+                t == null -> R.string.error_elegir_tipo
+                titulo.isBlank() -> R.string.error_titulo_evento
+                else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta)
             }
         },
-        confirmButton = {
-            TextButton(onClick = {
-                val m = materia
-                val t = tipo
-                error = when {
-                    m == null -> R.string.error_elegir_materia
-                    t == null -> R.string.error_elegir_tipo
-                    titulo.isBlank() -> R.string.error_titulo_evento
-                    else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta)
+        onCancelar = onCancelar
+    ) {
+        EtiquetaCampo(stringResource(R.string.elegir_materia))
+        SelectorMateria(materias, materia) { materia = it; error = null }
+
+        EtiquetaCampo(stringResource(R.string.elegir_tipo))
+        TIPOS.chunked(2).forEach { fila ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                fila.forEach { opcion ->
+                    BloqueTipo(opcion, elegido = tipo == opcion, modifier = Modifier.weight(1f)) {
+                        tipo = opcion
+                        error = null
+                    }
                 }
-            }) { Text(stringResource(if (evento == null) R.string.crear else R.string.guardar)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancelar) { Text(stringResource(R.string.cancelar)) }
+            }
         }
-    )
+
+        CampoTexto(
+            value = titulo,
+            onValueChange = { titulo = it; error = null },
+            label = { Text(stringResource(R.string.titulo)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        CampoFecha(fecha = fecha, onCambiar = { if (it != null) fecha = it }, modifier = Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CampoHora(stringResource(R.string.desde), inicio, { inicio = it; error = null }, Modifier.weight(1f))
+            CampoHora(stringResource(R.string.hasta), fin, { fin = it; error = null }, Modifier.weight(1f))
+        }
+
+        // Solo las clases se pueden repetir: se muestran todas las semanas,
+        // el mismo día, hasta la última clase (si se eligió).
+        if (tipo?.sePuedeRepetir == true) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .toggleable(value = semanal, role = Role.Switch, onValueChange = { semanal = it; error = null })
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.repetir_semanal), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = stringResource(R.string.cada_dia_semana, nombreDiaSemana(fecha)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = semanal, onCheckedChange = null)
+            }
+            if (semanal) {
+                EtiquetaCampo(stringResource(R.string.repetir_hasta))
+                CampoFecha(
+                    fecha = repetirHasta,
+                    onCambiar = { repetirHasta = it; error = null },
+                    modifier = Modifier.fillMaxWidth(),
+                    permitirVacio = true,
+                    textoVacio = stringResource(R.string.repetir_sin_fin)
+                )
+            }
+        }
+        TextoError(error?.let { stringResource(it) })
+    }
+}
+
+// Bloque elegible de un tipo de evento: su ícono y nombre. El elegido va con
+// el degradado violeta y el texto en blanco.
+@Composable
+private fun BloqueTipo(tipo: TipoEvento, elegido: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val colorContenido = if (elegido) Color.White else MaterialTheme.colorScheme.onSurface
+    Row(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .then(
+                if (elegido) Modifier.background(LocalDegradado.current)
+                else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            .selectable(selected = elegido, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            iconoTipo(tipo),
+            contentDescription = null,
+            tint = if (elegido) Color.White else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(nombreTipo(tipo)),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorContenido,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 // Nombre del día de la semana en minúscula (ej: "lunes"), para textos

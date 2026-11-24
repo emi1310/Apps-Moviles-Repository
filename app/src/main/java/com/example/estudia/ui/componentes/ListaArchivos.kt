@@ -4,13 +4,16 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Close
@@ -23,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,7 +36,8 @@ import com.example.estudia.modelo.Archivo
 import com.example.estudia.util.aTexto
 
 // Lista de archivos adjuntos (de una materia o de una nota). Tocar un
-// archivo lo abre; la X lo elimina (con "Deshacer").
+// archivo lo abre; la X lo elimina (con "Deshacer"). Cada archivo es un
+// bloque redondeado.
 @Composable
 fun ListaArchivos(
     archivos: List<Archivo>,
@@ -40,13 +45,15 @@ fun ListaArchivos(
     onAbrir: (Archivo) -> Unit,
     onEliminar: (Archivo) -> Unit
 ) {
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         archivos.forEach { archivo ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { onAbrir(archivo) }
-                    .padding(vertical = 2.dp),
+                    .padding(start = 12.dp, top = 2.dp, bottom = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(

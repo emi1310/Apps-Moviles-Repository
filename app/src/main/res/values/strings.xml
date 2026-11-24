@@ -43,7 +43,6 @@
     <string name="materias">Materias</string>
     <string name="calendario">Calendario</string>
     <string name="notas">Notas</string>
-    <string name="perfil">Perfil</string>
 
     <!-- Login y registro -->
     <string name="iniciar_sesion">Iniciar sesión</string>
@@ -63,7 +62,6 @@
 
     <!-- Inicio -->
     <string name="saludo">¡Hola, %1$s!</string>
-    <string name="saludo_subtitulo">Vamos por un día productivo</string>
     <string name="tareas_pendientes_titulo">Tareas pendientes</string>
     <string name="sin_tareas_pendientes">No hay tareas pendientes</string>
     <string name="proximos_eventos">Próximos exámenes y entregas</string>
@@ -71,7 +69,6 @@
     <string name="nota_destacada">Nota destacada</string>
     <string name="progreso_por_materia">Progreso por materia</string>
     <string name="horas_por_materia">Horas de estudio por materia</string>
-    <string name="horas_planificadas">Horas de estudio planificadas: %1$dh</string>
     <string name="sin_bloques_estudio">Todavía no hay bloques de estudio cargados</string>
     <string name="materia_horas">%1$s (%2$dh)</string>
     <plurals name="tareas_pendientes">
@@ -87,11 +84,11 @@
     <string name="sin_materias_activas">No hay materias activas</string>
     <string name="sin_materias_archivadas">No hay materias archivadas</string>
     <string name="nueva_materia">Nueva materia</string>
+    <string name="empezar_a_estudiar">Empezar a estudiar</string>
     <string name="editar_materia">Editar materia</string>
     <string name="nombre_materia">Nombre de la materia</string>
     <string name="error_nombre_materia">Ingresá un nombre para la materia</string>
     <string name="error_materia_repetida">Ya existe una materia con ese nombre</string>
-    <string name="progreso">Progreso: %1$d%%</string>
     <string name="sin_tareas">Todavía no hay tareas cargadas</string>
     <string name="agregar_tarea">Agregar tarea</string>
     <string name="nueva_tarea">Nueva tarea</string>
@@ -179,7 +176,6 @@
     <string name="aviso_nota_eliminada">Nota eliminada</string>
 
     <!-- Perfil -->
-    <string name="mi_perfil">Mi perfil</string>
     <string name="carrera_no_especificada">Carrera no especificada</string>
     <string name="email_no_especificado">Email no especificado</string>
     <string name="anio_carrera">%1$d° año - %2$s</string>
@@ -195,11 +191,10 @@
     <string name="meta_semanal">Meta semanal de estudio</string>
     <string name="meta_explicacion">¿Cuántas horas querés estudiar por semana? Se cuentan los bloques de estudio del calendario. Dejalo vacío para no tener meta.</string>
     <string name="horas_por_semana">Horas por semana</string>
-    <string name="sin_meta">Todavía no fijaste una meta. Tocá \"Metas de estudio\" para crear una.</string>
+    <string name="sin_meta">Todavía no fijaste una meta. Tocá este bloque para crear una.</string>
     <string name="meta_progreso">Esta semana: %1$dh de %2$dh planificadas</string>
     <string name="meta_cumplida">¡Meta cumplida! 🎉</string>
     <string name="tema">Tema</string>
-    <string name="tema_sistema">Sistema</string>
     <string name="tema_claro">Claro</string>
     <string name="tema_oscuro">Oscuro</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
@@ -253,6 +248,7 @@
         <item>¿Cómo cargo una clase que se repite todas las semanas?</item>
         <item>¿Hay atajos para completar o eliminar?</item>
         <item>¿Dónde cargo mis notas y veo mi promedio?</item>
+        <item>¿Para qué sirve el botón del medio de la barra?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -262,10 +258,11 @@
         <item>Es la cantidad de horas que querés estudiar por semana. Se compara con los bloques de estudio de esa semana: los que cargás en el calendario y las sesiones del temporizador.</item>
         <item>Sí: al eliminar una materia, una tarea, un evento, una nota o un archivo aparece el botón \"Deshacer\" durante unos segundos.</item>
         <item>En tu teléfono, en una base de datos privada de la app. Las contraseñas no se guardan: solo se guarda un hash que no se puede revertir.</item>
-        <item>En Inicio tocá la casilla \"Temporizador\", elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
+        <item>En Inicio tocá el botón del reloj, en el medio de la barra de abajo. Elegí la materia y cuántos minutos, y tocá \"Empezar\". Podés salir de la app: cuando termina te llega una notificación y la sesión se guarda sola como bloque de estudio.</item>
         <item>Creá un evento de tipo \"Clase\" con la fecha de la primera clase y marcá \"Repetir cada semana\". Si querés, elegí la fecha de la última clase; si no, se repite sin fin.</item>
         <item>Sí: en las listas, deslizá una tarea hacia la derecha para completarla, o cualquier tarea, nota o evento hacia la izquierda para eliminarlo (con \"Deshacer\").</item>
         <item>En Materias, expandí la materia y tocá \"Agregar nota de examen\" (de 1 a 10, se aprueba con 4). El promedio aparece en la tarjeta de la materia, y en Perfil → \"Estadísticas de estudio\" ves el promedio general, tu racha de días seguidos estudiando y las horas de cada semana.</item>
+        <item>Cambia según la pantalla: en Materias crea una materia, en Calendario un evento y en Notas una nota. En Inicio muestra un reloj y abre el temporizador. A tu perfil y los ajustes llegás tocando el círculo con tu inicial, arriba a la derecha en Inicio.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -276,22 +273,32 @@
     <string name="registro_subtitulo">En un minuto empezás a organizar tu estudio</string>
     <string name="sin_tareas_pendientes_feliz">¡Estás al día! No tenés tareas pendientes 🎉</string>
     <string name="fecha_larga">%1$s %2$d de %3$s</string>
-    <string name="inicio_meta_semanal">Meta semanal</string>
-    <string name="inicio_esta_semana">Esta semana</string>
-    <string name="inicio_horas_de_meta">%1$d/%2$dh</string>
-    <plurals name="inicio_dias_racha">
-        <item quantity="one">Día de racha</item>
-        <item quantity="other">Días de racha</item>
+    <string name="inicio_tus_tareas">Tus tareas</string>
+    <string name="inicio_tus_tareas_sub">Pendientes de todas tus materias</string>
+    <string name="inicio_completadas">Completadas</string>
+    <string name="inicio_completadas_valor">%1$d de %2$d</string>
+    <string name="inicio_para_hoy">Para hoy</string>
+    <string name="inicio_vencidas">Vencidas</string>
+    <plurals name="inicio_pendientes">
+        <item quantity="one">pendiente</item>
+        <item quantity="other">pendientes</item>
     </plurals>
-    <string name="inicio_temporizador">Temporizador</string>
-    <string name="inicio_temporizador_faltan">Faltan %1$d min</string>
+    <plurals name="inicio_racha_descripcion">
+        <item quantity="one">Racha de %d día de estudio</item>
+        <item quantity="other">Racha de %d días de estudio</item>
+    </plurals>
+    <string name="inicio_ir_perfil">Ir a tu perfil</string>
     <string name="notas_subtitulo">Tus apuntes de todas las materias</string>
     <string name="calendario_subtitulo">Clases, exámenes y bloques de estudio</string>
     <string name="sin_resultados_sugerencia">Probá con otra palabra</string>
-    <string name="sin_materias_activas_sugerencia">Tocá \"Nueva materia\" para agregar la primera</string>
+    <string name="sin_materias_activas_sugerencia">Tocá + para agregar la primera</string>
     <string name="sin_materias_archivadas_sugerencia">Las materias que archives van a aparecer acá</string>
-    <string name="sin_notas_sugerencia">Tocá \"Nueva nota\" para guardar tu primer apunte</string>
-    <string name="sin_eventos_fecha_sugerencia">Día libre. Podés agregar un evento con el botón de abajo</string>
+    <string name="sin_notas_sugerencia">Tocá + para guardar tu primer apunte</string>
+    <string name="sin_eventos_fecha_sugerencia">Día libre. Podés agregar un evento con el botón +</string>
+    <plurals name="calendario_eventos_dia">
+        <item quantity="one">%1$d evento</item>
+        <item quantity="other">%1$d eventos</item>
+    </plurals>
     <string name="preferencias">Preferencias</string>
     <string name="cuenta">Cuenta</string>
     <plurals name="materias_activas">
@@ -311,7 +318,6 @@
     <!-- Temporizador de estudio -->
     <string name="temporizador_titulo">Temporizador de estudio</string>
     <string name="temporizador_subtitulo">Concentrate un rato en una sola materia y después tomate 5 minutos de descanso</string>
-    <string name="temporizador_invitacion">Elegí una materia y empezá a concentrarte</string>
     <string name="temporizador_que_estudias">¿Qué vas a estudiar?</string>
     <string name="temporizador_duracion">Duración</string>
     <string name="minutos_corto">%1$d min</string>
@@ -329,7 +335,6 @@
     <string name="temporizador_listo">Listo para empezar</string>
     <string name="temporizador_en_pausa">En pausa</string>
     <string name="temporizador_estudiando">Estudiando %1$s</string>
-    <string name="temporizador_faltan">Faltan %1$d min · tocá para ver</string>
     <string name="temporizador_hoy">Estudiaste hoy</string>
     <string name="temporizador_consejo">Cada sesión terminada se guarda como bloque de estudio y suma a tu meta semanal.</string>
     <string name="temporizador_sin_materias">Todavía no tenés materias</string>

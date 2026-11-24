@@ -1,59 +1,69 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DonutLarge
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
-import com.example.estudia.modelo.SesionEstudio
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
+import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
 import com.example.estudia.ui.theme.AmarilloFavorita
+import com.example.estudia.ui.theme.DegradadoFin
+import com.example.estudia.ui.theme.DegradadoInicio
 import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.ui.theme.NaranjaRacha
 import com.example.estudia.viewmodel.InicioUiState
 import com.example.estudia.viewmodel.InicioViewModel
-import kotlinx.coroutines.delay
+import com.example.estudia.viewmodel.TareaConMateria
 
-// Pantalla "Inicio": resumen de todas las materias — tareas pendientes,
-// próximos exámenes y entregas, una nota destacada y las horas de estudio.
+// Pantalla "Inicio": arriba el saludo con la racha y el avatar (abre el
+// Perfil); después las tareas pendientes, que son lo principal, y debajo
+// los próximos exámenes, una nota destacada y las horas de estudio.
 // Solo dibuja el UiState: los cálculos los hace InicioViewModel.
 @Composable
-fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
+fun InicioScreen(viewModel: InicioViewModel, onAbrirPerfil: () -> Unit) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
-    val sesionEstudio by viewModel.sesionEstudio.collectAsStateWithLifecycle()
 
     if (estado.cargando) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -64,34 +74,12 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        EncabezadoInicio(estado, sesionEstudio, onAbrirTemporizador)
+        EncabezadoInicio(estado, onAbrirPerfil)
 
-        // ---------- Tareas pendientes ----------
-        TarjetaSeccion(
-            titulo = stringResource(R.string.tareas_pendientes_titulo),
-            icono = Icons.Filled.TaskAlt,
-            color = MaterialTheme.colorScheme.primary,
-            detalle = estado.tareasPendientes.size.toString()
-        ) {
-            if (estado.tareasPendientes.isEmpty()) {
-                TextoSecundario(stringResource(R.string.sin_tareas_pendientes_feliz))
-            }
-            estado.tareasPendientes.take(5).forEach { item ->
-                // Deslizar hacia la derecha la completa (y sale de la lista).
-                key(item.tarea.id) {
-                    Deslizable(
-                        onCompletar = { viewModel.alternarTarea(item) },
-                        forma = RoundedCornerShape(12.dp),
-                        fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ) {
-                        TarjetaTareaPendiente(item, estado.hoy, onAlternar = { viewModel.alternarTarea(item) })
-                    }
-                }
-            }
-        }
+        TarjetaTareas(estado, onAlternar = viewModel::alternarTarea)
 
         // ---------- Próximos exámenes y entregas ----------
         TarjetaSeccion(
@@ -143,10 +131,10 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirTemporizador: () -> Unit) {
     }
 }
 
-// Encabezado con degradado: saludo, fecha de hoy y tres casillas: la meta
-// semanal, la racha de días estudiando y el acceso al temporizador.
+// Encabezado: fecha y saludo a la izquierda; a la derecha la racha (un
+// fueguito con los días seguidos) y el avatar, que abre el Perfil.
 @Composable
-private fun EncabezadoInicio(estado: InicioUiState, sesionEstudio: SesionEstudio?, onAbrirTemporizador: () -> Unit) {
+private fun EncabezadoInicio(estado: InicioUiState, onAbrirPerfil: () -> Unit) {
     val dias = stringArrayResource(R.array.dias_semana_largo)
     val meses = stringArrayResource(R.array.meses)
     val hoy = estado.hoy
@@ -156,148 +144,143 @@ private fun EncabezadoInicio(estado: InicioUiState, sesionEstudio: SesionEstudio
         hoy.dayOfMonth,
         meses[hoy.monthValue - 1].lowercase()
     )
+    val descripcionRacha = pluralStringResource(R.plurals.inicio_racha_descripcion, estado.rachaDias, estado.rachaDias)
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(LocalDegradado.current)
-            .padding(20.dp)
-    ) {
-        Text(text = fecha, style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.8f))
-        Text(
-            text = stringResource(R.string.saludo, estado.nombre),
-            style = MaterialTheme.typography.headlineMedium,
-            color = Color.White
-        )
-        Text(
-            text = stringResource(R.string.saludo_subtitulo),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.85f)
-        )
-        Spacer(modifier = Modifier.height(18.dp))
-        // IntrinsicSize.Min: las tres casillas quedan de la misma altura.
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = fecha, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = stringResource(R.string.saludo, estado.nombre), style = MaterialTheme.typography.headlineMedium)
+        }
+        // Racha: el fueguito se enciende si hoy ya estudió; si no, queda gris
+        // (la racha sigue, pero hay que estudiar hoy para no cortarla).
         Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.height(IntrinsicSize.Min)
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .semantics(mergeDescendants = true) { contentDescription = descripcionRacha }
+                .padding(start = 10.dp, end = 14.dp, top = 8.dp, bottom = 8.dp)
         ) {
-            CasillaMeta(estado, Modifier.weight(1f))
-            CasillaRacha(estado, Modifier.weight(1f))
-            CasillaTemporizador(sesionEstudio, onAbrirTemporizador, Modifier.weight(1f))
-        }
-    }
-}
-
-// Horas estudiadas esta semana. Con meta: "3/10h" y una barrita de avance.
-@Composable
-private fun CasillaMeta(estado: InicioUiState, modifier: Modifier) {
-    val meta = estado.metaHorasSemanales?.takeIf { it > 0 }
-    CasillaEncabezado(
-        etiqueta = stringResource(if (meta != null) R.string.inicio_meta_semanal else R.string.inicio_esta_semana),
-        modifier = modifier
-    ) {
-        Text(
-            text = if (meta != null) stringResource(R.string.inicio_horas_de_meta, estado.horasEstaSemana, meta)
-            else stringResource(R.string.horas_corto, estado.horasEstaSemana),
-            style = MaterialTheme.typography.titleLarge,
-            color = Color.White
-        )
-        val progreso = estado.progresoMeta
-        if (progreso != null) {
-            val avance = progresoAnimado(progreso)
-            LinearProgressIndicator(
-                progress = { avance },
-                color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.25f),
-                // Sin el hueco entre lo cumplido y lo que falta (Material 3 lo
-                // agrega por defecto): en una barra tan chica parecen dos.
-                gapSize = 0.dp,
-                drawStopIndicator = {},
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
-                    .width(56.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(50))
-            )
-        }
-    }
-}
-
-// Días seguidos estudiando. El fueguito se enciende si hoy ya estudió; si
-// no, queda apagado (la racha sigue, pero hay que estudiar hoy para no cortarla).
-@Composable
-private fun CasillaRacha(estado: InicioUiState, modifier: Modifier) {
-    CasillaEncabezado(
-        etiqueta = pluralStringResource(R.plurals.inicio_dias_racha, estado.rachaDias),
-        modifier = modifier
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Filled.LocalFireDepartment,
                 contentDescription = null,
-                tint = if (estado.estudioHoy) NaranjaRacha else Color.White.copy(alpha = 0.55f),
-                modifier = Modifier.size(26.dp)
+                tint = if (estado.estudioHoy) NaranjaRacha else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(text = estado.rachaDias.toString(), style = MaterialTheme.typography.titleLarge, color = Color.White)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = estado.rachaDias.toString(), style = MaterialTheme.typography.titleMedium)
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(LocalDegradado.current)
+                .clickable(onClickLabel = stringResource(R.string.inicio_ir_perfil), role = Role.Button, onClick = onAbrirPerfil),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = estado.nombre.take(1).uppercase(), style = MaterialTheme.typography.titleLarge, color = Color.White)
         }
     }
 }
 
-// Acceso al temporizador. Si hay una sesión en curso, abajo dice cuánto
-// falta (se actualiza cada segundo) o que está en pausa.
+// Tarjeta principal: las tareas. Arriba los números (completadas, para hoy y
+// vencidas) con un anillo del avance; debajo, las tareas pendientes.
 @Composable
-private fun CasillaTemporizador(sesion: SesionEstudio?, onAbrir: () -> Unit, modifier: Modifier) {
-    val ahora by produceState(System.currentTimeMillis(), sesion) {
-        while (sesion != null && !sesion.enPausa) {
-            value = System.currentTimeMillis()
-            delay(1_000)
-        }
-    }
-    CasillaEncabezado(
-        etiqueta = when {
-            sesion == null -> stringResource(R.string.inicio_temporizador)
-            sesion.enPausa -> stringResource(R.string.temporizador_en_pausa)
-            else -> stringResource(R.string.inicio_temporizador_faltan, sesion.minutosRestantes(ahora))
-        },
-        modifier = modifier,
-        onClick = onAbrir,
-        descripcionClick = stringResource(R.string.temporizador_titulo)
+private fun TarjetaTareas(estado: InicioUiState, onAlternar: (TareaConMateria) -> Unit) {
+    Card(
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Icon(Icons.Filled.Timer, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(text = stringResource(R.string.inicio_tus_tareas), style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = stringResource(R.string.inicio_tus_tareas_sub),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {}) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.weight(1f)) {
+                    DatoTareas(
+                        Icons.Filled.CheckCircle, MaterialTheme.colorScheme.secondary, stringResource(R.string.inicio_completadas),
+                        stringResource(R.string.inicio_completadas_valor, estado.tareasCompletadas, estado.totalTareas)
+                    )
+                    DatoTareas(Icons.Filled.Today, MaterialTheme.colorScheme.primary, stringResource(R.string.inicio_para_hoy), estado.tareasParaHoy.toString())
+                    DatoTareas(Icons.Filled.Warning, MaterialTheme.colorScheme.error, stringResource(R.string.inicio_vencidas), estado.tareasVencidas.toString())
+                }
+                AnilloTareas(estado.progresoTareas, estado.tareasPendientes.size)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (estado.tareasPendientes.isEmpty()) {
+                TextoSecundario(stringResource(R.string.sin_tareas_pendientes_feliz))
+            }
+            estado.tareasPendientes.take(5).forEach { item ->
+                // Deslizar hacia la derecha la completa (y sale de la lista).
+                key(item.tarea.id) {
+                    Deslizable(
+                        onCompletar = { onAlternar(item) },
+                        forma = RoundedCornerShape(12.dp),
+                        fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ) {
+                        TarjetaTareaPendiente(item, estado.hoy, onAlternar = { onAlternar(item) })
+                    }
+                }
+            }
+        }
     }
 }
 
-// Casilla translúcida del encabezado: un dato arriba y su etiqueta abajo.
-// Se lee como un solo elemento con TalkBack (mergeDescendants).
 @Composable
-private fun CasillaEncabezado(
-    etiqueta: String,
-    modifier: Modifier,
-    onClick: (() -> Unit)? = null,
-    descripcionClick: String? = null,
-    contenido: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxHeight()
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.White.copy(alpha = 0.16f))
-            .then(
-                if (onClick != null) Modifier.clickable(onClickLabel = descripcionClick, role = Role.Button, onClick = onClick)
-                else Modifier.semantics(mergeDescendants = true) {}
+private fun DatoTareas(icono: ImageVector, color: Color, etiqueta: String, valor: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = valor, style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+
+// Anillo de las tareas: una pista gris y lo completado en degradado
+// violeta, con la cantidad de pendientes en el centro.
+@Composable
+private fun AnilloTareas(progreso: Float, pendientes: Int) {
+    val avance = progresoAnimado(progreso.coerceIn(0f, 1f))
+    val pista = MaterialTheme.colorScheme.surfaceVariant
+    val violeta = MaterialTheme.colorScheme.primary
+    Box(modifier = Modifier.size(148.dp), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val grosor = 14.dp.toPx()
+            val trazo = Stroke(width = grosor, cap = StrokeCap.Round)
+            val tamano = Size(size.width - grosor, size.height - grosor)
+            val esquina = Offset(grosor / 2, grosor / 2)
+            drawArc(pista, 0f, 360f, false, esquina, tamano, style = trazo)
+            if (avance > 0f) {
+                drawArc(
+                    brush = Brush.sweepGradient(listOf(DegradadoFin, violeta, DegradadoInicio, DegradadoFin)),
+                    startAngle = -90f,
+                    sweepAngle = 360f * avance,
+                    useCenter = false,
+                    topLeft = esquina,
+                    size = tamano,
+                    style = trazo
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = pendientes.toString(), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = pluralStringResource(R.plurals.inicio_pendientes, pendientes),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            .padding(vertical = 10.dp, horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        contenido()
-        Text(
-            text = etiqueta,
-            style = MaterialTheme.typography.labelMedium,
-            color = Color.White.copy(alpha = 0.85f),
-            textAlign = TextAlign.Center
-        )
+        }
     }
 }
 

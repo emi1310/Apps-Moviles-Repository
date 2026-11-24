@@ -47,7 +47,7 @@ private val EsquemaClaro = lightColorScheme(
 
 private val EsquemaOscuro = darkColorScheme(
     primary = VioletaPrincipalOscuro,
-    onPrimary = Color(0xFF26178A),
+    onPrimary = Color(0xFF1B0F70),
     primaryContainer = VioletaContenedorOscuro,
     onPrimaryContainer = VioletaSobreContenedorOscuro,
     secondary = VerdeSecundarioOscuro,
@@ -77,9 +77,9 @@ private val EsquemaOscuro = darkColorScheme(
 private val Formas = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(32.dp)
 )
 
 // Degradado de los encabezados. Se elige según el modo, así que se expone

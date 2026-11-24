@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -26,6 +25,7 @@ import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
@@ -39,6 +39,7 @@ import com.example.estudia.ui.componentes.DialogoTarea
 import com.example.estudia.ui.componentes.FilaTarea
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.OpcionMenu
+import com.example.estudia.ui.componentes.PastillaFiltro
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.abrirArchivo
@@ -49,7 +50,12 @@ import java.time.LocalDate
 // archivos, y un buscador de tareas. Todas las operaciones las hace
 // MateriasViewModel; esta pantalla solo dibuja y avisa de los eventos.
 @Composable
-fun MateriasScreen(viewModel: MateriasViewModel) {
+fun MateriasScreen(
+    viewModel: MateriasViewModel,
+    // true cuando se eligió crear desde el botón "+" del dock.
+    crearAlAbrir: Boolean = false,
+    onCreacionAbierta: () -> Unit = {}
+) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     RecolectarAvisos(viewModel.avisos)
     val context = LocalContext.current
@@ -76,12 +82,18 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
         idMateriaParaAdjuntar = null
     }
 
-    // Un solo Scaffold en la app (el de AppNavegacion): el botón flotante
-    // va arriba de la lista, en la esquina de abajo a la derecha.
+    LaunchedEffect(crearAlAbrir) {
+        if (crearAlAbrir) {
+            crearMateria = true
+            onCreacionAbierta()
+        }
+    }
+
+    // La lista pasa por detrás del dock flotante: abajo deja su espacio.
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp)
+            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp)
         ) {
             item {
                 EncabezadoPantalla(
@@ -123,7 +135,7 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                                 OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
                                     tareaEnDialogo = encontrada.materiaId to encontrada.tarea
                                 },
-                                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete) {
+                                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true) {
                                     viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
                                 }
                             )
@@ -133,18 +145,13 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
             } else {
                 // ---------- Filtro Activas / Archivadas ----------
                 item {
-                    Row {
-                        FilterChip(
-                            selected = !estado.mostrarArchivadas,
-                            onClick = { viewModel.mostrarArchivadas(false) },
-                            label = { Text(stringResource(R.string.activas)) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilterChip(
-                            selected = estado.mostrarArchivadas,
-                            onClick = { viewModel.mostrarArchivadas(true) },
-                            label = { Text(stringResource(R.string.archivadas)) }
-                        )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 4.dp)) {
+                        PastillaFiltro(stringResource(R.string.activas), elegida = !estado.mostrarArchivadas) {
+                            viewModel.mostrarArchivadas(false)
+                        }
+                        PastillaFiltro(stringResource(R.string.archivadas), elegida = estado.mostrarArchivadas) {
+                            viewModel.mostrarArchivadas(true)
+                        }
                     }
                     if (estado.materias.isEmpty() && !estado.cargando) {
                         if (estado.mostrarArchivadas) {
@@ -190,12 +197,6 @@ fun MateriasScreen(viewModel: MateriasViewModel) {
                 }
             }
         }
-        ExtendedFloatingActionButton(
-            onClick = { crearMateria = true },
-            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            text = { Text(stringResource(R.string.nueva_materia)) },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
-        )
     }
 
     if (crearMateria) {

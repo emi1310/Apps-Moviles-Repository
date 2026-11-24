@@ -13,11 +13,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Grade
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,8 +81,8 @@ fun FilaCalificacion(calificacion: Calificacion, onEditar: () -> Unit, onElimina
         EtiquetaNota(calificacion.nota)
         MenuOpciones(
             listOf(
-                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, onEditar),
-                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, onEliminar)
+                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
+                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
             ),
             descripcion = stringResource(R.string.opciones_de, calificacion.titulo)
         )
@@ -105,42 +103,31 @@ fun DialogoCalificacion(
     var fecha by remember { mutableStateOf(calificacion?.fecha ?: LocalDate.now()) }
     var error by remember { mutableStateOf<Int?>(null) }
 
-    AlertDialog(
-        onDismissRequest = onCancelar,
-        title = { Text(stringResource(if (calificacion == null) R.string.nueva_calificacion else R.string.editar_calificacion)) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = titulo,
-                    onValueChange = { titulo = it; error = null },
-                    label = { Text(stringResource(R.string.calificacion_examen)) },
-                    placeholder = { Text(stringResource(R.string.calificacion_examen_ejemplo)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = nota,
-                    onValueChange = { nota = it; error = null },
-                    label = { Text(stringResource(R.string.calificacion_nota)) },
-                    supportingText = { Text(stringResource(R.string.calificacion_nota_ayuda)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                CampoFecha(fecha = fecha, onCambiar = { if (it != null) fecha = it }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                TextoError(error?.let { stringResource(it) })
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { error = onConfirmar(titulo, nota, fecha) }) {
-                Text(stringResource(if (calificacion == null) R.string.agregar else R.string.guardar))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancelar) { Text(stringResource(R.string.cancelar)) }
-        }
-    )
+    DialogoApp(
+        titulo = stringResource(if (calificacion == null) R.string.nueva_calificacion else R.string.editar_calificacion),
+        icono = Icons.Filled.Grade,
+        textoConfirmar = stringResource(if (calificacion == null) R.string.agregar else R.string.guardar),
+        onConfirmar = { error = onConfirmar(titulo, nota, fecha) },
+        onCancelar = onCancelar
+    ) {
+        CampoTexto(
+            value = titulo,
+            onValueChange = { titulo = it; error = null },
+            label = { Text(stringResource(R.string.calificacion_examen)) },
+            placeholder = { Text(stringResource(R.string.calificacion_examen_ejemplo)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        CampoTexto(
+            value = nota,
+            onValueChange = { nota = it; error = null },
+            label = { Text(stringResource(R.string.calificacion_nota)) },
+            supportingText = { Text(stringResource(R.string.calificacion_nota_ayuda)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        CampoFecha(fecha = fecha, onCambiar = { if (it != null) fecha = it }, modifier = Modifier.fillMaxWidth())
+        TextoError(error?.let { stringResource(it) })
+    }
 }

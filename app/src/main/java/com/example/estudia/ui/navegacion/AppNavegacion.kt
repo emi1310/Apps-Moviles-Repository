@@ -15,18 +15,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.estudia.ui.componentes.BarraInferior
+import com.example.estudia.ui.componentes.AccionRapida
+import com.example.estudia.ui.componentes.DockFlotante
+import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.ControladorAvisos
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.pantallas.AyudaScreen
@@ -67,6 +73,17 @@ fun AppNavegacion(
     val alcance = rememberCoroutineScope()
     val recursos = LocalContext.current.resources
     val avisos = remember { ControladorAvisos(snackbarHostState, alcance, recursos) }
+
+    // Lo que pidió el botón "+" del dock: la pantalla en la que se está abre
+    // su diálogo de creación y después lo limpia.
+    var accionPendiente by rememberSaveable { mutableStateOf<AccionRapida?>(null) }
+    val irA: (Screen) -> Unit = { destino ->
+        navController.navigate(destino.ruta) {
+            popUpTo(Screen.Inicio.ruta) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 
     // Mientras se lee la sesión guardada, se muestra un indicador de carga.
     if (sesionUiState is SesionUiState.Cargando) {
@@ -109,26 +126,27 @@ fun AppNavegacion(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 if (mostrarBarra) {
-                    BarraInferior(
+                    DockFlotante(
                         rutaActual = rutaActual,
-                        onSeleccionar = { destino ->
-                            navController.navigate(destino.ruta) {
-                                popUpTo(Screen.Inicio.ruta) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                        onSeleccionar = irA,
+                        onCrear = { accion ->
+                            if (accion == AccionRapida.ESTUDIAR) navController.navigate(Screen.Temporizador.ruta)
+                            else accionPendiente = accion
                         }
                     )
                 }
             }
         ) { espacioInterno ->
+          // El contenido pasa por detrás del dock flotante: solo se respeta el
+          // espacio de arriba y las listas suman LocalEspacioDock abajo.
+          CompositionLocalProvider(LocalEspacioDock provides if (mostrarBarra) espacioInterno.calculateBottomPadding() else 0.dp) {
             NavHost(
                 navController = navController,
                 startDestination = destinoInicial,
                 // Las pantallas con barra inferior respetan el espacio del Scaffold;
                 // las demás (Bienvenida, Login, Registro, Ayuda, Temporizador, Estadísticas) dibujan
                 // borde y manejan ellas mismas las barras del sistema.
-                modifier = if (mostrarBarra) Modifier.padding(espacioInterno) else Modifier,
+                modifier = if (mostrarBarra) Modifier.padding(top = espacioInterno.calculateTopPadding()) else Modifier,
                 // Transición entre pantallas: un fundido corto con un leve
                 // deslizamiento hacia arriba (el de Navigation dura 700 ms).
                 enterTransition = { fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 30 } },
@@ -165,20 +183,32 @@ fun AppNavegacion(
                 composable(Screen.Inicio.ruta) {
                     InicioScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
-                        onAbrirTemporizador = { navController.navigate(Screen.Temporizador.ruta) }
+                        onAbrirPerfil = { irA(Screen.Perfil) }
                     )
                 }
 
                 composable(Screen.Materias.ruta) {
-                    MateriasScreen(viewModel(factory = AppViewModelProvider.Factory))
+                    MateriasScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        crearAlAbrir = accionPendiente == AccionRapida.MATERIA,
+                        onCreacionAbierta = { accionPendiente = null }
+                    )
                 }
 
                 composable(Screen.Calendario.ruta) {
-                    CalendarioScreen(viewModel(factory = AppViewModelProvider.Factory))
+                    CalendarioScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        crearAlAbrir = accionPendiente == AccionRapida.EVENTO,
+                        onCreacionAbierta = { accionPendiente = null }
+                    )
                 }
 
                 composable(Screen.Notas.ruta) {
-                    NotasScreen(viewModel(factory = AppViewModelProvider.Factory))
+                    NotasScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        crearAlAbrir = accionPendiente == AccionRapida.NOTA,
+                        onCreacionAbierta = { accionPendiente = null }
+                    )
                 }
 
                 composable(Screen.Perfil.ruta) {
@@ -213,6 +243,8 @@ fun AppNavegacion(
                     AyudaScreen(onVolver = { navController.popBackStack() })
                 }
             }
+          }
         }
+
     }
 }

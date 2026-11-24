@@ -2,13 +2,11 @@ package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -95,8 +94,9 @@ fun TarjetaEventoResumen(item: EventoConMateria, hoy: LocalDate) {
     }
 }
 
-// Evento del día elegido en el Calendario: la hora a la izquierda, una
-// franja del color de la materia y el detalle, con menú para editar o eliminar.
+// Evento del día elegido en el Calendario: un bloque del color de la
+// materia con la hora en un bloquecito translúcido a la izquierda, el título,
+// el tipo y la materia, el ícono del tipo y el menú para editar o eliminar.
 @Composable
 fun TarjetaEventoCalendario(
     item: EventoConMateria,
@@ -104,52 +104,59 @@ fun TarjetaEventoCalendario(
     onEliminar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val color = Color(item.colorMateria)
-    Card(
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    BloqueColor(color = Color(item.colorMateria), modifier = modifier.padding(vertical = 4.dp)) {
         Row(
-            modifier = Modifier.height(IntrinsicSize.Min).padding(start = 14.dp),
+            modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
-                Text(text = item.evento.horaInicio.aTexto(), style = MaterialTheme.typography.labelLarge)
+            // Horario: inicio en grande y fin debajo.
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(64.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(BlancoTranslucido)
+                    .padding(vertical = 10.dp)
+            ) {
+                Text(text = item.evento.horaInicio.aTexto(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 Text(
                     text = item.evento.horaFin.aTexto(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White.copy(alpha = 0.85f)
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .clip(CircleShape)
-                    .background(color)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f).padding(vertical = 12.dp)) {
-                Text(text = item.evento.titulo, style = MaterialTheme.typography.titleSmall)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ChipMateria(item.nombreMateria, item.colorMateria)
-                    Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.evento.titulo,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${stringResource(nombreTipo(item.evento.tipo))} · ${item.nombreMateria}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                // Las clases semanales muestran además el día: "Cada lunes".
+                if (item.evento.semanal) {
                     Text(
-                        // Las clases semanales muestran además el día: "Clase · Cada lunes".
-                        text = stringResource(nombreTipo(item.evento.tipo)) +
-                            if (item.evento.semanal) " · " + stringResource(R.string.cada_dia_semana, nombreDiaSemana(item.evento.fecha)) else "",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(R.string.cada_dia_semana, nombreDiaSemana(item.evento.fecha)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.85f)
                     )
                 }
             }
+            CirculoBloque(tamano = 40.dp) {
+                Icon(iconoTipo(item.evento.tipo), contentDescription = null, modifier = Modifier.size(22.dp))
+            }
             MenuOpciones(
                 listOf(
-                    OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, onEditar),
-                    OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, onEliminar)
+                    OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
+                    OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
                 ),
                 descripcion = stringResource(R.string.opciones_de, item.evento.titulo)
             )

@@ -40,7 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.notificaciones.Notificaciones
+import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.EstadoVacio
+import com.example.estudia.ui.componentes.PastillaFiltro
+import com.example.estudia.ui.componentes.SelectorMateria
+import com.example.estudia.ui.componentes.TextoDialogo
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.viewmodel.DURACIONES_TEMPORIZADOR
@@ -83,25 +87,25 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     }
 
     if (mostrarExplicacion) {
-        AlertDialog(
-            onDismissRequest = { mostrarExplicacion = false },
-            title = { Text(stringResource(R.string.permiso_temporizador_titulo)) },
-            text = { Text(stringResource(R.string.explicacion_permiso_temporizador)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    mostrarExplicacion = false
-                    yaSeExplico = true
-                    pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }) { Text(stringResource(R.string.continuar)) }
+        DialogoApp(
+            titulo = stringResource(R.string.permiso_temporizador_titulo),
+            icono = Icons.Filled.Timer,
+            textoConfirmar = stringResource(R.string.continuar),
+            onConfirmar = {
+                mostrarExplicacion = false
+                yaSeExplico = true
+                pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    mostrarExplicacion = false
-                    yaSeExplico = true
-                    viewModel.empezar()
-                }) { Text(stringResource(R.string.ahora_no)) }
-            }
-        )
+            textoCancelar = stringResource(R.string.ahora_no),
+            onCancelar = {
+                mostrarExplicacion = false
+                yaSeExplico = true
+                viewModel.empezar()
+            },
+            onDismissRequest = { mostrarExplicacion = false }
+        ) {
+            TextoDialogo(stringResource(R.string.explicacion_permiso_temporizador))
+        }
     }
 
     Column(
@@ -137,34 +141,16 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             // ---------- Elegir materia y duración ----------
             Text(stringResource(R.string.temporizador_que_estudias), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            // Si hay muchas materias, la fila se desliza hacia los costados.
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.horizontalScroll(rememberScrollState())
-            ) {
-                estado.materias.forEach { materia ->
-                    FilterChip(
-                        selected = materia.id == estado.materiaElegida?.id,
-                        onClick = { viewModel.elegirMateria(materia) },
-                        label = { Text(materia.nombre) },
-                        leadingIcon = {
-                            Box(Modifier.size(10.dp).padding(1.dp)) {
-                                Canvas(Modifier.fillMaxSize()) { drawCircle(Color(materia.color)) }
-                            }
-                        }
-                    )
-                }
-            }
+            // Pastillas con el color de cada materia (se deslizan si son muchas).
+            SelectorMateria(estado.materias, estado.materiaElegida, viewModel::elegirMateria)
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.temporizador_duracion), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DURACIONES_TEMPORIZADOR.forEach { minutos ->
-                    FilterChip(
-                        selected = minutos == estado.minutosElegidos,
-                        onClick = { viewModel.elegirMinutos(minutos) },
-                        label = { Text(stringResource(R.string.minutos_corto, minutos)) }
-                    )
+                    PastillaFiltro(stringResource(R.string.minutos_corto, minutos), elegida = minutos == estado.minutosElegidos) {
+                        viewModel.elegirMinutos(minutos)
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

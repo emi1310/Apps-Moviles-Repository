@@ -11,8 +11,8 @@ private val Base = Typography()
 
 val Typography = Typography(
     headlineLarge = Base.headlineLarge.copy(fontWeight = FontWeight.Bold),
-    headlineMedium = Base.headlineMedium.copy(fontWeight = FontWeight.Bold),
-    headlineSmall = Base.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = 26.sp),
+    headlineMedium = Base.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.5).sp),
+    headlineSmall = Base.headlineSmall.copy(fontWeight = FontWeight.Bold, fontSize = 30.sp, letterSpacing = (-0.5).sp),
     titleLarge = Base.titleLarge.copy(fontWeight = FontWeight.SemiBold),
     titleMedium = Base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
     titleSmall = Base.titleSmall.copy(fontWeight = FontWeight.SemiBold),
