@@ -1,9 +1,11 @@
 package com.example.estudia.ui.navegacion
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -131,7 +133,13 @@ fun AppNavegacion(
             // todas las pantallas.
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
-                if (mostrarBarra) {
+                // El dock sube desde abajo al volver a una sección y baja al
+                // abrir una pantalla sin dock (Temporizador, Estadísticas...).
+                AnimatedVisibility(
+                    visible = mostrarBarra,
+                    enter = slideInVertically(tween(300)) { it } + fadeIn(tween(300)),
+                    exit = slideOutVertically(tween(200)) { it } + fadeOut(tween(200))
+                ) {
                     DockFlotante(
                         rutaActual = rutaActual,
                         onSeleccionar = irA,
@@ -153,12 +161,11 @@ fun AppNavegacion(
                 // las demás (Bienvenida, Login, Registro, Ayuda, Temporizador, Estadísticas) dibujan
                 // borde y manejan ellas mismas las barras del sistema.
                 modifier = if (mostrarBarra) Modifier.padding(top = espacioInterno.calculateTopPadding()) else Modifier,
-                // Transición entre pantallas: un fundido corto con un leve
-                // deslizamiento hacia arriba (el de Navigation dura 700 ms).
-                enterTransition = { fadeIn(tween(250)) + slideInVertically(tween(250)) { it / 30 } },
-                exitTransition = { fadeOut(tween(150)) },
-                popEnterTransition = { fadeIn(tween(250)) },
-                popExitTransition = { fadeOut(tween(150)) }
+                // Transiciones entre pantallas: ver Transiciones.kt.
+                enterTransition = { entrar() },
+                exitTransition = { salir() },
+                popEnterTransition = { volverAEntrar() },
+                popExitTransition = { volverASalir() }
             ) {
                 composable(Screen.Bienvenida.ruta) {
                     BienvenidaScreen(onComenzar = { navController.navigate(Screen.Login.ruta) })
