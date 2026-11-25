@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import java.time.Duration
 import java.time.LocalDateTime
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeUnit
 //  - Un aviso por cada examen o entrega: la noche anterior a las 20:00, o
 //    2 horas antes si ya pasó ese momento (EventoWorker).
 //  - Un aviso 15 minutos antes de cada clase (también EventoWorker).
+//  - El aviso de cada tarea que lo tenga, a las 9:00 (TareaWorker).
+//  - El aviso de racha en riesgo, todos los días a las 20:00 (RachaWorker).
 //  - El fin del temporizador de estudio (TemporizadorWorker).
 class ProgramadorRecordatorios(context: Context) {
 
@@ -32,6 +35,32 @@ class ProgramadorRecordatorios(context: Context) {
             .build()
         workManager.enqueueUniquePeriodicWork(TRABAJO_DIARIO, ExistingPeriodicWorkPolicy.UPDATE, diario)
         workManager.enqueue(OneTimeWorkRequestBuilder<RecordatorioWorker>().build())
+        // Y a las 20:00, el aviso de racha en riesgo (si todavía no estudió).
+        val racha = PeriodicWorkRequestBuilder<RachaWorker>(1, TimeUnit.DAYS)
+            .setInitialDelay(milisHasta(proximaHora(LocalTime.of(20, 0))), TimeUnit.MILLISECONDS)
+            .build()
+        workManager.enqueueUniquePeriodicWork(TRABAJO_RACHA, ExistingPeriodicWorkPolicy.UPDATE, racha)
+    }
+
+    // Aviso de una tarea a las 9:00 del día elegido (Tarea.momentoDelAviso).
+    // Si no corresponde avisar (sin aviso, sin fecha, hecha o ya pasó), se
+    // cancela el que hubiera. REPLACE: al editar la tarea se reemplaza.
+    fun programarTarea(tarea: Tarea, ahora: LocalDateTime = LocalDateTime.now()) {
+        val momento = tarea.momentoDelAviso(ahora)
+        if (momento == null) {
+            cancelarTarea(tarea.id)
+            return
+        }
+        val trabajo = OneTimeWorkRequestBuilder<TareaWorker>()
+            .setInitialDelay(Duration.between(ahora, momento).toMillis(), TimeUnit.MILLISECONDS)
+            .setInputData(workDataOf(TareaWorker.CLAVE_TAREA_ID to tarea.id))
+            .addTag(ETIQUETA_TAREAS)
+            .build()
+        workManager.enqueueUniqueWork(nombreTrabajoTarea(tarea.id), ExistingWorkPolicy.REPLACE, trabajo)
+    }
+
+    fun cancelarTarea(tareaId: Int) {
+        workManager.cancelUniqueWork(nombreTrabajoTarea(tareaId))
     }
 
     // desdeElAviso = true cuando lo llama el propio EventoWorker para programar
@@ -61,7 +90,9 @@ class ProgramadorRecordatorios(context: Context) {
 
     fun cancelarTodo() {
         workManager.cancelUniqueWork(TRABAJO_DIARIO)
+        workManager.cancelUniqueWork(TRABAJO_RACHA)
         workManager.cancelAllWorkByTag(ETIQUETA_EVENTOS)
+        workManager.cancelAllWorkByTag(ETIQUETA_TAREAS)
     }
 
     // Fin del temporizador de estudio: aunque la app esté cerrada, al llegar
@@ -87,9 +118,13 @@ class ProgramadorRecordatorios(context: Context) {
 
     private fun nombreTrabajoEvento(id: Int) = "recordatorio_evento_$id"
 
+    private fun nombreTrabajoTarea(id: Int) = "recordatorio_tarea_$id"
+
     companion object {
         private const val TRABAJO_DIARIO = "recordatorio_diario"
         private const val ETIQUETA_EVENTOS = "recordatorio_evento"
+        private const val ETIQUETA_TAREAS = "recordatorio_tarea"
+        private const val TRABAJO_RACHA = "aviso_racha"
         private const val TRABAJO_TEMPORIZADOR = "fin_temporizador"
     }
 }

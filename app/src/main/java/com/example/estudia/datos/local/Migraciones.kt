@@ -175,3 +175,56 @@ val MIGRACION_4_5 = object : Migration(4, 5) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_calificaciones_materiaId` ON `calificaciones` (`materiaId`)")
     }
 }
+
+// Versión 5 -> 6: prioridad de las tareas, subtareas y foto de perfil.
+// Las tareas que ya existían quedan con prioridad media (1) y sin
+// subtareas; los usuarios, sin foto. El SQL es el que genera Room (6.json).
+val MIGRACION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `tareas` ADD COLUMN `prioridad` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE `usuarios` ADD COLUMN `fotoPerfil` TEXT")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `subtareas` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`tareaId` INTEGER NOT NULL, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`completada` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`tareaId`) REFERENCES `tareas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_subtareas_tareaId` ON `subtareas` (`tareaId`)")
+    }
+}
+
+// Versión 6 -> 7: aviso de cada tarea y temario de los exámenes. Las tareas
+// que ya existían quedan sin aviso (null) y los exámenes, sin temas.
+val MIGRACION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `tareas` ADD COLUMN `avisoDiasAntes` INTEGER")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `temas` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`eventoId` INTEGER NOT NULL, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`estudiado` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`eventoId`) REFERENCES `eventos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_temas_eventoId` ON `temas` (`eventoId`)")
+    }
+}
+
+// Versión 7 -> 8: tabla nueva con las tarjetas de estudio de cada materia.
+val MIGRACION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `tarjetas` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`materiaId` INTEGER NOT NULL, " +
+                "`pregunta` TEXT NOT NULL, " +
+                "`respuesta` TEXT NOT NULL, " +
+                "`caja` INTEGER NOT NULL, " +
+                "`proximoRepaso` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`materiaId`) REFERENCES `materias`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_tarjetas_materiaId` ON `tarjetas` (`materiaId`)")
+    }
+}

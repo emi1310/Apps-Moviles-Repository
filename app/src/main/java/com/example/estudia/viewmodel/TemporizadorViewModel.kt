@@ -27,7 +27,8 @@ data class TemporizadorUiState(
     val minutosElegidos: Int = 25,
     val sesion: SesionEstudio? = null,              // null = no hay sesión en curso
     val ahora: Long = 0,                            // hora actual, se actualiza cada segundo
-    val minutosHoy: Int = 0                         // estudiados hoy (todas las materias)
+    val minutosHoy: Int = 0,                        // estudiados hoy (todas las materias)
+    val silenciar: Boolean = false                  // "Silenciar el teléfono" mientras corre
 ) {
     val restanteMillis: Long get() = sesion?.restanteMillis(ahora) ?: (minutosElegidos * 60_000L)
     val avance: Float get() = sesion?.avance(ahora) ?: 0f
@@ -66,7 +67,13 @@ class TemporizadorViewModel(
     private val elecciones = combine(materiaElegidaId, minutosElegidos) { id, minutos -> id to minutos }
 
     val uiState: StateFlow<TemporizadorUiState> =
-        combine(repositorio.usuarioActual, repositorio.sesionEstudio, elecciones, tic) { usuario, sesion, (id, minutos), ahora ->
+        combine(
+            repositorio.usuarioActual,
+            repositorio.sesionEstudio,
+            elecciones,
+            tic,
+            repositorio.silenciarAlEstudiar
+        ) { usuario, sesion, (id, minutos), ahora, silenciar ->
             val activas = usuario?.materias?.filter { !it.archivada } ?: emptyList()
             val hoy = LocalDate.now()
             TemporizadorUiState(
@@ -79,7 +86,8 @@ class TemporizadorViewModel(
                 ahora = ahora,
                 minutosHoy = activas.flatMap { it.eventos }
                     .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == hoy }
-                    .sumOf { it.duracionMinutos() }.toInt()
+                    .sumOf { it.duracionMinutos() }.toInt(),
+                silenciar = silenciar
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TemporizadorUiState())
 
@@ -104,6 +112,16 @@ class TemporizadorViewModel(
 
     fun elegirMinutos(minutos: Int) {
         minutosElegidos.value = minutos
+    }
+
+    // "Silenciar el teléfono": se guarda la elección y se aplica ya a la
+    // sesión en curso. El acceso a No molestar lo revisa la UI antes de
+    // llamar con true (se da desde Ajustes).
+    fun cambiarSilenciar(activo: Boolean) {
+        viewModelScope.launch {
+            repositorio.cambiarSilenciarAlEstudiar(activo)
+            avisosSistema.cambiarSilencio(activo, uiState.value.sesion)
+        }
     }
 
     fun empezar() {

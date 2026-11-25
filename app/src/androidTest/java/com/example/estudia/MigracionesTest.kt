@@ -7,6 +7,9 @@ import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.datos.local.MIGRACION_2_3
 import com.example.estudia.datos.local.MIGRACION_3_4
 import com.example.estudia.datos.local.MIGRACION_4_5
+import com.example.estudia.datos.local.MIGRACION_5_6
+import com.example.estudia.datos.local.MIGRACION_6_7
+import com.example.estudia.datos.local.MIGRACION_7_8
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -126,6 +129,86 @@ class MigracionesTest {
         }
         db.execSQL("DELETE FROM materias WHERE id = 1")
         db.query("SELECT COUNT(*) FROM calificaciones").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    // 5 -> 6: las tareas que ya existían quedan con prioridad media, el
+    // usuario sin foto, y las subtareas se borran junto con su tarea.
+    @Test
+    fun migrar5a6AgregaPrioridadSubtareasYFoto() {
+        ayudante.createDatabase(nombreBase, 5).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO tareas (id, materiaId, titulo, fechaLimite, completada) VALUES (1, 1, 'TP 1', NULL, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 6, true, MIGRACION_5_6)
+
+        db.query("SELECT titulo, prioridad FROM tareas").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("TP 1", c.getString(0))
+            assertEquals(1, c.getInt(1))
+        }
+        db.query("SELECT fotoPerfil FROM usuarios").use { c ->
+            assertTrue(c.moveToFirst())
+            assertTrue(c.isNull(0))
+        }
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO subtareas (tareaId, titulo, completada) VALUES (1, 'Leer el apunte', 0)")
+        db.execSQL("DELETE FROM tareas WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM subtareas").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    // 6 -> 7: las tareas quedan sin aviso y los temas se borran con su examen.
+    @Test
+    fun migrar6a7AgregaAvisoDeTareasYTemario() {
+        ayudante.createDatabase(nombreBase, 6).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO tareas (id, materiaId, titulo, fechaLimite, completada, prioridad) VALUES (1, 1, 'TP 1', NULL, 0, 1)")
+            execSQL("INSERT INTO eventos (id, materiaId, titulo, tipo, fecha, horaInicio, horaFin, semanal) VALUES (1, 1, 'Parcial', 'EXAMEN', 0, 540, 660, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 7, true, MIGRACION_6_7)
+
+        db.query("SELECT avisoDiasAntes FROM tareas").use { c ->
+            assertTrue(c.moveToFirst())
+            assertTrue(c.isNull(0))
+        }
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO temas (eventoId, titulo, estudiado) VALUES (1, 'Unidad 1', 0)")
+        db.execSQL("DELETE FROM eventos WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM temas").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    // 7 -> 8: aparece la tabla de tarjetas y se borra junto con su materia.
+    @Test
+    fun migrar7a8CreaLaTablaDeTarjetas() {
+        ayudante.createDatabase(nombreBase, 7).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 8, true, MIGRACION_7_8)
+
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO tarjetas (materiaId, pregunta, respuesta, caja, proximoRepaso) VALUES (1, '¿Qué es una onda?', 'Una perturbación', 1, 0)")
+        db.execSQL("DELETE FROM materias WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM tarjetas").use { c ->
             c.moveToFirst()
             assertEquals(0, c.getInt(0))
         }

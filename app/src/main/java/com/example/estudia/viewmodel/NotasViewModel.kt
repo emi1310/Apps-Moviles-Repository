@@ -141,4 +141,22 @@ class NotasViewModel(
     }
 
     fun uriParaAbrir(archivo: Archivo): String = repositorio.uriParaAbrir(archivo)
+
+    // OCR: lee el texto de una foto adjunta (ej: el pizarrón) y lo suma al
+    // final del contenido de la nota. Se puede deshacer.
+    fun pasarATexto(item: NotaConMateria, archivo: Archivo) {
+        viewModelScope.launch {
+            val texto = repositorio.leerTextoDeImagen(archivo)
+            when {
+                texto == null -> avisar(Aviso(Mensaje.AVISO_OCR_ERROR))
+                texto.isBlank() -> avisar(Aviso(Mensaje.AVISO_OCR_SIN_TEXTO))
+                else -> {
+                    val anterior = item.nota.contenido.trimEnd()
+                    val contenido = if (anterior.isEmpty()) texto else "$anterior\n\n$texto"
+                    repositorio.actualizarNota(item.materiaId, item.nota.copy(contenido = contenido))
+                    avisar(Aviso(Mensaje.AVISO_OCR_AGREGADO, alDeshacer = { repositorio.actualizarNota(item.materiaId, item.nota) }))
+                }
+            }
+        }
+    }
 }

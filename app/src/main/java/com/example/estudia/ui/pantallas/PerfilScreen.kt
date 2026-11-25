@@ -8,6 +8,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.estudia.ui.componentes.BloqueColor
 import com.example.estudia.ui.componentes.DialogoApp
+import com.example.estudia.ui.componentes.Avatar
+import com.example.estudia.ui.componentes.colorAcentoTexto
+import com.example.estudia.ui.componentes.DialogoFotoPerfil
+import com.example.estudia.ui.componentes.Medalla
+import com.example.estudia.ui.componentes.camaraDeFotos
+import com.example.estudia.ui.componentes.selectorDeArchivos
+import com.example.estudia.viewmodel.Logro
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Restore
+import java.time.LocalDate
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.example.estudia.ui.componentes.IconoCircular
 import com.example.estudia.ui.componentes.TextoDialogo
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -83,6 +97,7 @@ fun PerfilScreen(
     viewModel: PerfilViewModel,
     onAbrirAyuda: () -> Unit,
     onAbrirEstadisticas: () -> Unit,
+    onAbrirLogros: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
@@ -92,6 +107,28 @@ fun PerfilScreen(
     var confirmarCierreSesion by remember { mutableStateOf(false) }
     var mostrarEditarPerfil by remember { mutableStateOf(false) }
     var mostrarMeta by remember { mutableStateOf(false) }
+    var mostrarFoto by remember { mutableStateOf(false) }
+    var confirmarRestaurar by remember { mutableStateOf(false) }
+
+    // ---------- Copia de seguridad ----------
+    // CreateDocument / OpenDocument: el usuario elige dónde guardarla o cuál
+    // abrir, y la app recibe acceso solo a ese archivo (no hace falta permiso).
+    val nombreCopia = "estudia_copia_${LocalDate.now()}.zip"
+    val guardarCopia = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) viewModel.exportarCopia(uri.toString())
+    }
+    val abrirCopia = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.importarCopia(uri.toString())
+    }
+
+    // ---------- Foto de perfil: cámara o galería ----------
+    // Cada una pide su permiso (cámara, o fotos y archivos) antes de abrirse.
+    val sacarFoto = camaraDeFotos { viewModel.cambiarFotoPerfil(it) }
+    val elegirDeGaleria = selectorDeArchivos(
+        estado.permisoArchivosPedido,
+        viewModel::marcarPermisoArchivosPedido,
+        tipos = arrayOf("image/*")
+    ) { uri -> if (uri != null) viewModel.cambiarFotoPerfil(uri.toString()) }
 
     // ---------- Permiso de notificaciones ----------
     // Buenas prácticas: el permiso se pide recién cuando el usuario activa
@@ -144,17 +181,33 @@ fun PerfilScreen(
                 .padding(start = 18.dp, top = 18.dp, end = 8.dp, bottom = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier.size(68.dp).clip(CircleShape).background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = usuario.nombre.take(1).uppercase(),
-                    style = MaterialTheme.typography.headlineMedium,
+            // Avatar: la foto de perfil o la inicial. Al tocarlo se elige la foto.
+            // Con la cámara como insignia, para que se note que se puede tocar.
+            Box {
+                Avatar(
+                    nombre = usuario.nombre,
+                    fotoUri = estado.fotoUri,
+                    tamano = 68.dp,
+                    fondo = SolidColor(Color.White),
                     // El círculo es blanco también en modo oscuro: se usa el
                     // violeta fuerte fijo (el primary oscuro es lila claro y no se lee).
-                    color = VioletaPrincipal
+                    colorInicial = VioletaPrincipal,
+                    estiloInicial = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.clickable(
+                        onClickLabel = stringResource(R.string.foto_cambiar),
+                        role = Role.Button
+                    ) { mostrarFoto = true }
                 )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.PhotoCamera, contentDescription = null, tint = VioletaPrincipal, modifier = Modifier.size(14.dp))
+                }
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -216,7 +269,7 @@ fun PerfilScreen(
                             text = if (meta == null || progreso == null) stringResource(R.string.sin_meta)
                             else stringResource(R.string.meta_progreso, estado.horasEstaSemana, meta),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.85f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -231,6 +284,7 @@ fun PerfilScreen(
                             text = "${(progreso * 100).toInt()}%",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
+                            color = colorAcentoTexto(BloqueAzul),
                             modifier = Modifier.weight(1f)
                         )
                         if (progreso >= 1f) {
@@ -241,8 +295,8 @@ fun PerfilScreen(
                     val avance = progresoAnimado(progreso)
                     LinearProgressIndicator(
                         progress = { avance },
-                        color = Color.White,
-                        trackColor = Color.White.copy(alpha = 0.28f),
+                        color = BloqueAzul,
+                        trackColor = BloqueAzul.copy(alpha = 0.16f),
                         strokeCap = StrokeCap.Round,
                         gapSize = 0.dp,
                         drawStopIndicator = {},
@@ -251,6 +305,11 @@ fun PerfilScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ---------- Tus logros: cuántos van y las medallas conseguidas ----------
+        BloqueLogros(estado.logros, onAbrirLogros)
 
         Spacer(modifier = Modifier.height(20.dp))
         TituloGrupo(stringResource(R.string.preferencias))
@@ -318,6 +377,17 @@ fun PerfilScreen(
             BloqueCuenta(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Filled.HelpOutline, BloqueNaranja, Modifier.weight(1f), onAbrirAyuda)
         }
         Spacer(modifier = Modifier.height(10.dp))
+        // Copia de seguridad: el archivo se elige con el selector del sistema
+        // (Descargas, Drive...), sin pedir permisos.
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            BloqueCuenta(stringResource(R.string.copia_guardar), Icons.Filled.Backup, BloqueAzul, Modifier.weight(1f)) {
+                guardarCopia.launch(nombreCopia)
+            }
+            BloqueCuenta(stringResource(R.string.copia_restaurar), Icons.Filled.Restore, BloqueVioleta, Modifier.weight(1f)) {
+                confirmarRestaurar = true
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
         val rojo = MaterialTheme.colorScheme.error
         Row(
             modifier = Modifier
@@ -363,6 +433,41 @@ fun PerfilScreen(
                 mostrarMeta = false
             },
             onCancelar = { mostrarMeta = false }
+        )
+    }
+
+    if (confirmarRestaurar) {
+        DialogoApp(
+            titulo = stringResource(R.string.copia_restaurar),
+            icono = Icons.Filled.Restore,
+            textoConfirmar = stringResource(R.string.restaurar),
+            onConfirmar = {
+                confirmarRestaurar = false
+                abrirCopia.launch(arrayOf("application/zip", "application/octet-stream"))
+            },
+            onCancelar = { confirmarRestaurar = false },
+            destructivo = true
+        ) {
+            TextoDialogo(stringResource(R.string.confirmar_restaurar_copia))
+        }
+    }
+
+    if (mostrarFoto) {
+        DialogoFotoPerfil(
+            tieneFoto = estado.fotoUri != null,
+            onSacarFoto = {
+                mostrarFoto = false
+                sacarFoto()
+            },
+            onElegirDeGaleria = {
+                mostrarFoto = false
+                elegirDeGaleria()
+            },
+            onQuitar = {
+                mostrarFoto = false
+                viewModel.cambiarFotoPerfil(null)
+            },
+            onCerrar = { mostrarFoto = false }
         )
     }
 
@@ -457,8 +562,8 @@ private fun BotonTema(icono: ImageVector, descripcion: String, elegido: Boolean,
     }
 }
 
-// Bloque de color con un número grande y su etiqueta (materias, horas de
-// estudio, notas), con el ícono en un círculo translúcido arriba.
+// Bloque con un número grande (en su color) y su etiqueta (materias, horas
+// de estudio, notas), con el ícono en un círculo del color arriba.
 @Composable
 private fun BloqueEstadistica(valor: String, etiqueta: String, icono: ImageVector, color: Color, modifier: Modifier) {
     BloqueColor(color = color, modifier = modifier.semantics(mergeDescendants = true) {}) {
@@ -467,8 +572,8 @@ private fun BloqueEstadistica(valor: String, etiqueta: String, icono: ImageVecto
                 Icon(icono, contentDescription = null, modifier = Modifier.size(18.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = valor, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-            Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f), maxLines = 1)
+            Text(text = valor, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = colorAcentoTexto(color), maxLines = 1)
+            Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
     }
 }
@@ -514,5 +619,54 @@ private fun BloqueCuenta(texto: String, icono: ImageVector, color: Color, modifi
         }
         Spacer(modifier = Modifier.weight(1f))
         Text(text = texto, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+// Bloque "Tus logros": cuántos se consiguieron, una barra de avance y las
+// medallas (las conseguidas en color). Al tocarlo se abre la pantalla de Logros.
+@Composable
+private fun BloqueLogros(logros: List<Logro>, onAbrir: () -> Unit) {
+    val conseguidos = logros.count { it.conseguido }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(onClickLabel = stringResource(R.string.logros_ver_todos), role = Role.Button, onClick = onAbrir)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoCircular(Icons.Filled.EmojiEvents, Color.White, fondo = BloqueNaranja)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = stringResource(R.string.logros_tus_logros), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = stringResource(R.string.logros_resumen, conseguidos, logros.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        val avance = progresoAnimado(if (logros.isEmpty()) 0f else conseguidos.toFloat() / logros.size)
+        LinearProgressIndicator(
+            progress = { avance },
+            color = BloqueNaranja,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+            modifier = Modifier.fillMaxWidth().height(8.dp)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        // Las primeras medallas (las conseguidas van primero).
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.clearAndSetSemantics { }) {
+            logros.take(6).forEach { Medalla(it.tipo, it.conseguido, tamano = 36.dp) }
+        }
     }
 }

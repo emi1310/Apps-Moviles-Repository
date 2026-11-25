@@ -17,6 +17,11 @@ import androidx.room.TypeConverters
 //      archivos adjuntos a notas.
 //  4 - clases que se repiten cada semana (eventos.semanal y repetirHasta).
 //  5 - notas de los exámenes (tabla "calificaciones").
+//  6 - prioridad de las tareas, subtareas (tabla "subtareas") y foto de
+//      perfil del usuario.
+//  7 - aviso de cada tarea (tareas.avisoDiasAntes) y temario de los
+//      exámenes (tabla "temas").
+//  8 - tarjetas de estudio con repetición espaciada (tabla "tarjetas").
 // Cada vez que cambia el esquema se sube "version" y se agrega una
 // migración (Migraciones.kt), para no perder los datos ya guardados.
 @Database(
@@ -27,9 +32,12 @@ import androidx.room.TypeConverters
         EventoEntity::class,
         NotaEntity::class,
         ArchivoEntity::class,
-        CalificacionEntity::class
+        CalificacionEntity::class,
+        SubtareaEntity::class,
+        TemaEntity::class,
+        TarjetaEntity::class
     ],
-    version = 5,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Conversores::class)
@@ -42,6 +50,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notaDao(): NotaDao
     abstract fun archivoDao(): ArchivoDao
     abstract fun calificacionDao(): CalificacionDao
+    abstract fun temaDao(): TemaDao
+    abstract fun tarjetaDao(): TarjetaDao
 
     companion object {
         @Volatile
@@ -54,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "estudia_db"
                 )
-                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3, MIGRACION_3_4, MIGRACION_4_5)
+                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3, MIGRACION_3_4, MIGRACION_4_5, MIGRACION_5_6, MIGRACION_6_7, MIGRACION_7_8)
                     .build()
                     .also {
                         INSTANCE = it

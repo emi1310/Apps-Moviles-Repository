@@ -53,6 +53,9 @@ fun permisoArchivosConcedido(context: Context): Boolean = PERMISOS_ARCHIVOS.any 
 fun selectorDeArchivos(
     explicacionVista: Boolean,
     onExplicacionVista: () -> Unit,
+    // Qué se puede elegir: por defecto cualquier archivo; la foto de perfil
+    // pide solo imágenes.
+    tipos: Array<String> = TIPOS_ARCHIVO,
     onElegido: (Uri?) -> Unit
 ): () -> Unit {
     val context = LocalContext.current
@@ -60,7 +63,7 @@ fun selectorDeArchivos(
     var mostrarExplicacion by rememberSaveable { mutableStateOf(false) }
     var mostrarSinPermiso by rememberSaveable { mutableStateOf(false) }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (permisoArchivosConcedido(context)) selector.launch(TIPOS_ARCHIVO) else mostrarSinPermiso = true
+        if (permisoArchivosConcedido(context)) selector.launch(tipos) else mostrarSinPermiso = true
     }
 
     if (mostrarExplicacion) {
@@ -102,7 +105,7 @@ fun selectorDeArchivos(
 
     return {
         when {
-            permisoArchivosConcedido(context) -> selector.launch(TIPOS_ARCHIVO)
+            permisoArchivosConcedido(context) -> selector.launch(tipos)
             !explicacionVista -> mostrarExplicacion = true
             else -> pedirPermiso.launch(PERMISOS_ARCHIVOS)
         }

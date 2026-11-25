@@ -6,7 +6,11 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.Prioridad
+import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.modelo.Tema
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
 
@@ -26,6 +30,7 @@ fun UsuarioConMaterias.aModelo(): Usuario = Usuario(
     anio = usuario.anio,
     email = usuario.email,
     metaHorasSemanales = usuario.metaHorasSemanales,
+    fotoPerfil = usuario.fotoPerfil,
     materias = materias.map { it.aModelo() }.sortedBy { it.nombre.lowercase() }
 )
 
@@ -38,25 +43,51 @@ fun MateriaConDetalle.aModelo(): Materia {
         nombre = materia.nombre,
         color = materia.color,
         archivada = materia.archivada,
+        // Pendientes primero; entre ellas, las de prioridad alta y después
+        // las que vencen antes (las que no tienen fecha, al final).
         tareas = tareas.map { it.aModelo() }
-            .sortedWith(compareBy<Tarea> { it.completada }.thenBy { it.fechaLimite == null }.thenBy { it.fechaLimite }),
+            .sortedWith(
+                compareBy<Tarea> { it.completada }
+                    .thenByDescending { it.prioridad.peso }
+                    .thenBy { it.fechaLimite == null }
+                    .thenBy { it.fechaLimite }
+            ),
         eventos = eventos.map { it.aModelo() }.sortedBy { it.inicio },
         notas = notas.map { nota ->
             nota.aModelo(archivosModelo.filter { it.notaId == nota.id })
         },
         archivos = archivosModelo.filter { it.notaId == null },
-        calificaciones = calificaciones.map { it.aModelo() }.sortedBy { it.fecha }
+        calificaciones = calificaciones.map { it.aModelo() }.sortedBy { it.fecha },
+        tarjetas = tarjetas.map { it.aModelo() }.sortedBy { it.id }
     )
 }
 
-fun TareaEntity.aModelo(): Tarea = Tarea(
+fun TarjetaEntity.aModelo(): Tarjeta = Tarjeta(id, pregunta, respuesta, caja, proximoRepaso)
+
+fun Tarjeta.aEntidad(materiaId: Int): TarjetaEntity = TarjetaEntity(id, materiaId, pregunta, respuesta, caja, proximoRepaso)
+
+fun TareaConSubtareas.aModelo(): Tarea = tarea.aModelo(subtareas.map { it.aModelo() }.sortedBy { it.id })
+
+// Sin subtareas cuando viene de una consulta que no las trae (el buscador).
+fun TareaEntity.aModelo(subtareas: List<Subtarea> = emptyList()): Tarea = Tarea(
     id = id,
     titulo = titulo,
     fechaLimite = fechaLimite,
-    completada = completada
+    completada = completada,
+    prioridad = Prioridad.desdePeso(prioridad),
+    subtareas = subtareas,
+    avisoDiasAntes = avisoDiasAntes
 )
 
-fun EventoEntity.aModelo(): Evento = Evento(
+fun SubtareaEntity.aModelo(): Subtarea = Subtarea(id = id, titulo = titulo, completada = completada)
+
+fun Subtarea.aEntidad(tareaId: Int): SubtareaEntity =
+    SubtareaEntity(id = id, tareaId = tareaId, titulo = titulo, completada = completada)
+
+fun EventoConTemas.aModelo(): Evento = evento.aModelo(temas.map { it.aModelo() }.sortedBy { it.id })
+
+// Sin temas cuando viene de una consulta que no los trae (los recordatorios).
+fun EventoEntity.aModelo(temas: List<Tema> = emptyList()): Evento = Evento(
     id = id,
     titulo = titulo,
     tipo = textoATipo(tipo),
@@ -64,8 +95,13 @@ fun EventoEntity.aModelo(): Evento = Evento(
     horaInicio = horaInicio,
     horaFin = horaFin,
     semanal = semanal,
-    repetirHasta = repetirHasta
+    repetirHasta = repetirHasta,
+    temas = temas
 )
+
+fun TemaEntity.aModelo(): Tema = Tema(id = id, titulo = titulo, estudiado = estudiado)
+
+fun Tema.aEntidad(eventoId: Int): TemaEntity = TemaEntity(id = id, eventoId = eventoId, titulo = titulo, estudiado = estudiado)
 
 fun NotaEntity.aModelo(archivos: List<Archivo> = emptyList()): Nota = Nota(
     id = id,
@@ -103,7 +139,9 @@ fun Tarea.aEntidad(materiaId: Int): TareaEntity = TareaEntity(
     materiaId = materiaId,
     titulo = titulo,
     fechaLimite = fechaLimite,
-    completada = completada
+    completada = completada,
+    prioridad = prioridad.peso,
+    avisoDiasAntes = avisoDiasAntes
 )
 
 fun Evento.aEntidad(materiaId: Int): EventoEntity = EventoEntity(

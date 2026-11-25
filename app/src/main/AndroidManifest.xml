@@ -16,6 +16,27 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <!-- CAMERA: sacar la foto de perfil o una foto para una nota o materia.
+         Se pide al tocar "Sacar foto", después de explicar para qué es.
+         uses-feature con required="false": la app se puede instalar en
+         teléfonos sin cámara (el botón avisa que no hay cámara). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
+    <!-- ACCESS_NOTIFICATION_POLICY: activar "No molestar" mientras corre el
+         temporizador. No es un permiso que se pida con un diálogo: el
+         usuario lo da en Ajustes (la app lo lleva a esa pantalla). -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <!-- READ_CALENDAR / WRITE_CALENDAR: pasar las clases, exámenes y
+         entregas al calendario del teléfono. Se piden al tocar "Pasar al
+         calendario del teléfono", después de explicar para qué son. La app
+         solo usa su propio calendario ("Estudia+"). -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
     <application
         android:name=".EstudiaApp"
         android:allowBackup="true"
@@ -43,6 +64,20 @@
         <receiver
             android:name=".notificaciones.TemporizadorReceiver"
             android:exported="false" />
+
+        <!-- Widget de la pantalla de inicio (racha y próximas tareas). Tiene
+             que ser "exported" para que el launcher lo pueda mostrar y el
+             sistema le mande las actualizaciones. -->
+        <receiver
+            android:name=".widget.WidgetEstudia"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/info_widget" />
+        </receiver>
 
         <!-- Comparte los adjuntos (filesDir/archivos) con otras apps para
              abrirlos, con acceso temporal de solo lectura. No es exportado:

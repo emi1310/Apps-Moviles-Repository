@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.DonutLarge
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -41,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.Deslizable
+import com.example.estudia.ui.componentes.Avatar
 import com.example.estudia.ui.componentes.GraficoBarrasProgreso
 import com.example.estudia.ui.componentes.GraficoTortaHoras
 import com.example.estudia.ui.componentes.LocalEspacioDock
+import com.example.estudia.ui.componentes.PastillaFiltro
 import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaSeccion
@@ -55,6 +58,7 @@ import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.ui.theme.NaranjaRacha
 import com.example.estudia.viewmodel.InicioUiState
 import com.example.estudia.viewmodel.InicioViewModel
+import com.example.estudia.viewmodel.OrdenTareas
 import com.example.estudia.viewmodel.TareaConMateria
 
 // Pantalla "Inicio": arriba el saludo con la racha y el avatar (abre el
@@ -62,7 +66,12 @@ import com.example.estudia.viewmodel.TareaConMateria
 // los próximos exámenes, una nota destacada y las horas de estudio.
 // Solo dibuja el UiState: los cálculos los hace InicioViewModel.
 @Composable
-fun InicioScreen(viewModel: InicioViewModel, onAbrirPerfil: () -> Unit) {
+fun InicioScreen(
+    viewModel: InicioViewModel,
+    onAbrirPerfil: () -> Unit,
+    onAbrirRacha: () -> Unit,
+    onRepasar: () -> Unit
+) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (estado.cargando) {
@@ -77,9 +86,29 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirPerfil: () -> Unit) {
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        EncabezadoInicio(estado, onAbrirPerfil)
+        EncabezadoInicio(estado, onAbrirPerfil, onAbrirRacha)
 
-        TarjetaTareas(estado, onAlternar = viewModel::alternarTarea)
+        TarjetaTareas(estado, onAlternar = viewModel::alternarTarea, onCambiarOrden = viewModel::cambiarOrden)
+
+        // ---------- Tarjetas para repasar (si tiene tarjetas) ----------
+        if (estado.totalTarjetas > 0) {
+            TarjetaSeccion(
+                titulo = stringResource(R.string.inicio_tarjetas_titulo),
+                icono = Icons.Filled.Style,
+                color = MaterialTheme.colorScheme.primary,
+                detalle = estado.tarjetasParaHoy.toString()
+            ) {
+                TextoSecundario(
+                    if (estado.tarjetasParaHoy > 0)
+                        pluralStringResource(R.plurals.tarjetas_para_hoy, estado.tarjetasParaHoy, estado.tarjetasParaHoy)
+                    else stringResource(R.string.repaso_nada_hoy)
+                )
+                if (estado.tarjetasParaHoy > 0) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    PastillaFiltro(stringResource(R.string.tarjetas_repasar), elegida = true, onClick = onRepasar)
+                }
+            }
+        }
 
         // ---------- Próximos exámenes y entregas ----------
         TarjetaSeccion(
@@ -134,7 +163,7 @@ fun InicioScreen(viewModel: InicioViewModel, onAbrirPerfil: () -> Unit) {
 // Encabezado: fecha y saludo a la izquierda; a la derecha la racha (un
 // fueguito con los días seguidos) y el avatar, que abre el Perfil.
 @Composable
-private fun EncabezadoInicio(estado: InicioUiState, onAbrirPerfil: () -> Unit) {
+private fun EncabezadoInicio(estado: InicioUiState, onAbrirPerfil: () -> Unit, onAbrirRacha: () -> Unit) {
     val dias = stringArrayResource(R.array.dias_semana_largo)
     val meses = stringArrayResource(R.array.meses)
     val hoy = estado.hoy
@@ -153,11 +182,13 @@ private fun EncabezadoInicio(estado: InicioUiState, onAbrirPerfil: () -> Unit) {
         }
         // Racha: el fueguito se enciende si hoy ya estudió; si no, queda gris
         // (la racha sigue, pero hay que estudiar hoy para no cortarla).
+        // Al tocarlo se abren las Estadísticas, donde está el detalle de la racha.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .clickable(onClickLabel = stringResource(R.string.inicio_ver_racha), role = Role.Button, onClick = onAbrirRacha)
                 .semantics(mergeDescendants = true) { contentDescription = descripcionRacha }
                 .padding(start = 10.dp, end = 14.dp, top = 8.dp, bottom = 8.dp)
         ) {
@@ -171,23 +202,26 @@ private fun EncabezadoInicio(estado: InicioUiState, onAbrirPerfil: () -> Unit) {
             Text(text = estado.rachaDias.toString(), style = MaterialTheme.typography.titleMedium)
         }
         Spacer(modifier = Modifier.width(10.dp))
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(LocalDegradado.current)
-                .clickable(onClickLabel = stringResource(R.string.inicio_ir_perfil), role = Role.Button, onClick = onAbrirPerfil),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = estado.nombre.take(1).uppercase(), style = MaterialTheme.typography.titleLarge, color = Color.White)
-        }
+        Avatar(
+            nombre = estado.nombre,
+            fotoUri = estado.fotoUri,
+            tamano = 52.dp,
+            fondo = LocalDegradado.current,
+            colorInicial = Color.White,
+            estiloInicial = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.clickable(onClickLabel = stringResource(R.string.inicio_ir_perfil), role = Role.Button, onClick = onAbrirPerfil)
+        )
     }
 }
 
 // Tarjeta principal: las tareas. Arriba los números (completadas, para hoy y
 // vencidas) con un anillo del avance; debajo, las tareas pendientes.
 @Composable
-private fun TarjetaTareas(estado: InicioUiState, onAlternar: (TareaConMateria) -> Unit) {
+private fun TarjetaTareas(
+    estado: InicioUiState,
+    onAlternar: (TareaConMateria) -> Unit,
+    onCambiarOrden: (OrdenTareas) -> Unit
+) {
     Card(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -218,6 +252,16 @@ private fun TarjetaTareas(estado: InicioUiState, onAlternar: (TareaConMateria) -
             Spacer(modifier = Modifier.height(8.dp))
             if (estado.tareasPendientes.isEmpty()) {
                 TextoSecundario(stringResource(R.string.sin_tareas_pendientes_feliz))
+            } else {
+                // Orden de la lista: por fecha (lo que vence antes) o por prioridad.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 6.dp)) {
+                    PastillaFiltro(stringResource(R.string.inicio_orden_fecha), elegida = estado.orden == OrdenTareas.FECHA) {
+                        onCambiarOrden(OrdenTareas.FECHA)
+                    }
+                    PastillaFiltro(stringResource(R.string.inicio_orden_prioridad), elegida = estado.orden == OrdenTareas.PRIORIDAD) {
+                        onCambiarOrden(OrdenTareas.PRIORIDAD)
+                    }
+                }
             }
             estado.tareasPendientes.take(5).forEach { item ->
                 // Deslizar hacia la derecha la completa (y sale de la lista).

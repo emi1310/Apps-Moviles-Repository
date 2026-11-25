@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
+import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
@@ -58,6 +59,11 @@ fun NotasScreen(
     val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val nota = estado.notas.firstOrNull { it.nota.id == idNotaParaAdjuntar }
         if (uri != null && nota != null) viewModel.adjuntarArchivo(nota, uri.toString())
+        idNotaParaAdjuntar = null
+    }
+    // Cámara: por ejemplo, una foto del pizarrón que queda adjunta a la nota.
+    val sacarFoto = camaraDeFotos { uri ->
+        estado.notas.firstOrNull { it.nota.id == idNotaParaAdjuntar }?.let { viewModel.adjuntarArchivo(it, uri) }
         idNotaParaAdjuntar = null
     }
 
@@ -115,6 +121,10 @@ fun NotasScreen(
                             idNotaParaAdjuntar = item.nota.id
                             elegirArchivo()
                         },
+                        alSacarFoto = {
+                            idNotaParaAdjuntar = item.nota.id
+                            sacarFoto()
+                        },
                         alEditar = { notaParaEditar = item },
                         alEliminar = { viewModel.eliminarNota(item) },
                         alAbrirArchivo = { archivo ->
@@ -122,7 +132,8 @@ fun NotasScreen(
                                 avisos.mostrarTexto(textoSinApp)
                             }
                         },
-                        alEliminarArchivo = { viewModel.eliminarArchivo(item, it) }
+                        alEliminarArchivo = { viewModel.eliminarArchivo(item, it) },
+                        alPasarATexto = { viewModel.pasarATexto(item, it) }
                     )
                 }
             }

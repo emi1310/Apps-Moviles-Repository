@@ -47,7 +47,9 @@ private val RojoPeligro = Color(0xFFD93A3F)
 fun DialogoApp(
     titulo: String?,
     icono: ImageVector,
-    textoConfirmar: String,
+    // null = sin botón de confirmar (ej: cuando las opciones están en el
+    // contenido); queda solo "Cancelar", de todo el ancho.
+    textoConfirmar: String?,
     onConfirmar: () -> Unit,
     onCancelar: () -> Unit,
     textoCancelar: String = stringResource(R.string.cancelar),
@@ -104,13 +106,15 @@ fun DialogoApp(
                         onClick = onCancelar,
                         modifier = Modifier.weight(1f)
                     )
-                    BotonPastilla(
-                        texto = textoConfirmar,
-                        fondo = if (destructivo) SolidColor(rojo) else LocalDegradado.current,
-                        colorTexto = Color.White,
-                        onClick = onConfirmar,
-                        modifier = Modifier.weight(1f)
-                    )
+                    if (textoConfirmar != null) {
+                        BotonPastilla(
+                            texto = textoConfirmar,
+                            fondo = if (destructivo) SolidColor(rojo) else LocalDegradado.current,
+                            colorTexto = Color.White,
+                            onClick = onConfirmar,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -162,13 +166,15 @@ fun CampoTexto(
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = false,
-    minLines: Int = 1
+    minLines: Int = 1,
+    trailingIcon: @Composable (() -> Unit)? = null
 ) {
     TextField(
         value = value,
         onValueChange = onValueChange,
         label = label,
         placeholder = placeholder,
+        trailingIcon = trailingIcon,
         isError = isError,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,

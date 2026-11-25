@@ -18,8 +18,12 @@ data class Materia(
     val eventos: List<Evento> = emptyList(),
     val notas: List<Nota> = emptyList(),
     val archivos: List<Archivo> = emptyList(),  // adjuntos de la materia (no de sus notas)
-    val calificaciones: List<Calificacion> = emptyList()   // notas de los exámenes
+    val calificaciones: List<Calificacion> = emptyList(),  // notas de los exámenes
+    val tarjetas: List<Tarjeta> = emptyList()              // tarjetas de estudio (versión 8)
 ) {
+    // Tarjetas que tocan repasar hoy (o que se atrasaron).
+    fun tarjetasParaHoy(hoy: java.time.LocalDate): List<Tarjeta> = tarjetas.filter { it.tocaRepasar(hoy) }
+
     // Archivos de la materia y de todas sus notas (para borrarlos del disco).
     fun todosLosArchivos(): List<Archivo> = archivos + notas.flatMap { it.archivos }
 

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Carpetas que el FileProvider puede compartir con otras apps.
-     Solo se expone filesDir/archivos (los adjuntos), nada más. -->
+     - filesDir/archivos: los adjuntos, para abrirlos con otra app.
+     - cacheDir/fotos: la foto que saca la app de cámara. Es temporal: la
+       app la copia a filesDir/archivos y la borra la próxima vez. -->
 <paths>
     <files-path name="archivos" path="archivos/" />
+    <cache-path name="fotos" path="fotos/" />
 </paths>

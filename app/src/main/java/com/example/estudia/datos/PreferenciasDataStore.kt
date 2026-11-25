@@ -17,6 +17,7 @@ private val Context.preferenciasDataStore by preferencesDataStore(name = "prefer
 private val CLAVE_RECORDATORIOS = booleanPreferencesKey("recordatorios_activos")
 private val CLAVE_TEMA = stringPreferencesKey("tema")
 private val CLAVE_PERMISO_ARCHIVOS = booleanPreferencesKey("permiso_archivos_pedido")
+private val CLAVE_SILENCIAR = booleanPreferencesKey("silenciar_al_estudiar")
 
 class PreferenciasDataStore(private val context: Context) {
 
@@ -35,6 +36,17 @@ class PreferenciasDataStore(private val context: Context) {
     // archivos (la explicación se muestra una sola vez).
     val permisoArchivosPedido: Flow<Boolean> = context.preferenciasDataStore.data
         .map { preferencias -> preferencias[CLAVE_PERMISO_ARCHIVOS] ?: false }
+
+    // Si el usuario quiere silenciar el teléfono (No molestar) mientras
+    // corre el temporizador. Por defecto no: necesita un acceso especial.
+    val silenciarAlEstudiar: Flow<Boolean> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[CLAVE_SILENCIAR] ?: false }
+
+    suspend fun guardarSilenciarAlEstudiar(activo: Boolean) {
+        context.preferenciasDataStore.edit { preferencias ->
+            preferencias[CLAVE_SILENCIAR] = activo
+        }
+    }
 
     suspend fun guardarPermisoArchivosPedido() {
         context.preferenciasDataStore.edit { preferencias ->

@@ -2,6 +2,16 @@ package com.example.estudia.ui.pantallas
 
 import android.Manifest
 import android.os.Build
+import android.app.NotificationManager
+import android.content.Intent
+import android.provider.Settings
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.DoNotDisturbOn
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.example.estudia.ui.componentes.IconoCircular
+import com.example.estudia.ui.theme.BloqueVioleta
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
@@ -83,6 +93,37 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             mostrarExplicacion = true
         } else {
             viewModel.empezar()
+        }
+    }
+
+    // ---------- Acceso a No molestar ----------
+    // No es un permiso con diálogo: se da en Ajustes. Antes se explica para
+    // qué es; al volver a la app se revisa y, si lo dio, se activa solo.
+    val gestorNotificaciones = remember { context.getSystemService(NotificationManager::class.java) }
+    var accesoNoMolestar by remember { mutableStateOf(gestorNotificaciones.isNotificationPolicyAccessGranted) }
+    var mostrarExplicacionNoMolestar by remember { mutableStateOf(false) }
+    var esperandoAcceso by rememberSaveable { mutableStateOf(false) }
+    LifecycleResumeEffect(Unit) {
+        accesoNoMolestar = gestorNotificaciones.isNotificationPolicyAccessGranted
+        if (esperandoAcceso && accesoNoMolestar) viewModel.cambiarSilenciar(true)
+        esperandoAcceso = false
+        onPauseOrDispose { }
+    }
+
+    if (mostrarExplicacionNoMolestar) {
+        DialogoApp(
+            titulo = stringResource(R.string.permiso_no_molestar_titulo),
+            icono = Icons.Filled.DoNotDisturbOn,
+            textoConfirmar = stringResource(R.string.ir_a_ajustes),
+            onConfirmar = {
+                mostrarExplicacionNoMolestar = false
+                esperandoAcceso = true
+                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+            },
+            textoCancelar = stringResource(R.string.ahora_no),
+            onCancelar = { mostrarExplicacionNoMolestar = false }
+        ) {
+            TextoDialogo(stringResource(R.string.explicacion_permiso_no_molestar))
         }
     }
 
@@ -183,6 +224,39 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             TextButton(onClick = viewModel::descartar, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text(stringResource(R.string.temporizador_descartar))
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        // ---------- Silenciar el teléfono (No molestar) ----------
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
+            IconoCircular(Icons.Filled.DoNotDisturbOn, Color.White, fondo = BloqueVioleta)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.no_molestar_titulo), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = stringResource(if (estado.silenciar && !accesoNoMolestar) R.string.no_molestar_sin_acceso else R.string.no_molestar_descripcion),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Switch(
+                checked = estado.silenciar && accesoNoMolestar,
+                onCheckedChange = { activar ->
+                    when {
+                        !activar -> viewModel.cambiarSilenciar(false)
+                        accesoNoMolestar -> viewModel.cambiarSilenciar(true)
+                        else -> mostrarExplicacionNoMolestar = true
+                    }
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

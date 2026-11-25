@@ -25,8 +25,11 @@ import com.example.estudia.R
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.ui.componentes.DialogoTarjeta
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
+import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.DialogoCalificacion
@@ -54,7 +57,9 @@ fun MateriasScreen(
     viewModel: MateriasViewModel,
     // true cuando se eligió crear desde el botón "+" del dock.
     crearAlAbrir: Boolean = false,
-    onCreacionAbierta: () -> Unit = {}
+    onCreacionAbierta: () -> Unit = {},
+    // Abre el repaso de las tarjetas de esa materia.
+    onRepasar: (Int) -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     RecolectarAvisos(viewModel.avisos)
@@ -69,6 +74,8 @@ fun MateriasScreen(
     var tareaEnDialogo by remember { mutableStateOf<Pair<Int, Tarea?>?>(null) }
     // Nota de examen a crear (calificación == null) o editar, junto con su materia.
     var calificacionEnDialogo by remember { mutableStateOf<Pair<Int, Calificacion?>?>(null) }
+    // Tarjeta de estudio a crear (tarjeta == null) o editar, junto con su materia.
+    var tarjetaEnDialogo by remember { mutableStateOf<Pair<Int, Tarjeta?>?>(null) }
     // rememberSaveable: si Android recrea la pantalla mientras el usuario
     // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
     var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -79,6 +86,11 @@ fun MateriasScreen(
     val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val id = idMateriaParaAdjuntar
         if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri.toString())
+        idMateriaParaAdjuntar = null
+    }
+    // Cámara: la foto se guarda como un archivo más de la materia.
+    val sacarFoto = camaraDeFotos { uri ->
+        idMateriaParaAdjuntar?.let { viewModel.adjuntarArchivo(it, uri) }
         idMateriaParaAdjuntar = null
     }
 
@@ -133,7 +145,9 @@ fun MateriasScreen(
                             onAlternar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
                             opciones = listOf(
                                 OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
-                                    tareaEnDialogo = encontrada.materiaId to encontrada.tarea
+                                    // El buscador no trae las subtareas: se edita la tarea completa.
+                                    val completa = estado.todas.flatMap { it.tareas }.firstOrNull { it.id == encontrada.tarea.id }
+                                    tareaEnDialogo = encontrada.materiaId to (completa ?: encontrada.tarea)
                                 },
                                 OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true) {
                                     viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
@@ -174,12 +188,17 @@ fun MateriasScreen(
                         modifier = Modifier.animateItem(),
                         materia = materia,
                         onAlternarTarea = { viewModel.alternarTarea(materia.id, it) },
+                        onAlternarSubtarea = viewModel::alternarSubtarea,
                         onAgregarTarea = { tareaEnDialogo = materia.id to null },
                         onEditarTarea = { tareaEnDialogo = materia.id to it },
                         onEliminarTarea = { viewModel.eliminarTarea(materia.id, it) },
                         onAdjuntarArchivo = {
                             idMateriaParaAdjuntar = materia.id
                             elegirArchivo()
+                        },
+                        onSacarFoto = {
+                            idMateriaParaAdjuntar = materia.id
+                            sacarFoto()
                         },
                         onAbrirArchivo = { archivo ->
                             if (!abrirArchivo(context, Uri.parse(viewModel.uriParaAbrir(archivo)), archivo.tipoMime)) {
@@ -190,6 +209,10 @@ fun MateriasScreen(
                         onAgregarCalificacion = { calificacionEnDialogo = materia.id to null },
                         onEditarCalificacion = { calificacionEnDialogo = materia.id to it },
                         onEliminarCalificacion = { viewModel.eliminarCalificacion(materia.id, it) },
+                        onAgregarTarjeta = { tarjetaEnDialogo = materia.id to null },
+                        onEditarTarjeta = { tarjetaEnDialogo = materia.id to it },
+                        onEliminarTarjeta = { viewModel.eliminarTarjeta(materia.id, it) },
+                        onRepasar = { onRepasar(materia.id) },
                         onEditar = { materiaParaEditar = materia },
                         onArchivar = { viewModel.alternarArchivada(materia) },
                         onEliminar = { materiaParaEliminar = materia }
@@ -226,11 +249,23 @@ fun MateriasScreen(
     tareaEnDialogo?.let { (materiaId, tarea) ->
         DialogoTarea(
             tarea = tarea,
-            onConfirmar = { titulo, fecha ->
-                viewModel.guardarTarea(materiaId, tarea, titulo, fecha)
+            onConfirmar = { titulo, fecha, prioridad, subtareas, aviso ->
+                viewModel.guardarTarea(materiaId, tarea, titulo, fecha, prioridad, subtareas, aviso)
                 tareaEnDialogo = null
             },
             onCancelar = { tareaEnDialogo = null }
+        )
+    }
+
+    tarjetaEnDialogo?.let { (materiaId, tarjeta) ->
+        DialogoTarjeta(
+            tarjeta = tarjeta,
+            onConfirmar = { pregunta, respuesta ->
+                val guardada = viewModel.guardarTarjeta(materiaId, tarjeta, pregunta, respuesta)
+                if (guardada) tarjetaEnDialogo = null
+                guardada
+            },
+            onCancelar = { tarjetaEnDialogo = null }
         )
     }
 

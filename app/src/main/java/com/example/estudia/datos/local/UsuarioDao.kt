@@ -39,4 +39,15 @@ interface UsuarioDao {
 
     @Query("UPDATE usuarios SET metaHorasSemanales = :horas WHERE id = :id")
     suspend fun actualizarMetaSemanal(id: Int, horas: Int?)
+
+    // Versión 6: foto de perfil (null = sin foto).
+    @Query("UPDATE usuarios SET fotoPerfil = :ruta WHERE id = :id")
+    suspend fun actualizarFotoPerfil(id: Int, ruta: String?)
+
+    @Query("SELECT fotoPerfil FROM usuarios WHERE id = :id")
+    suspend fun fotoPerfil(id: Int): String?
+
+    // Para no borrar las fotos de perfil al limpiar archivos huérfanos.
+    @Query("SELECT fotoPerfil FROM usuarios WHERE fotoPerfil IS NOT NULL")
+    suspend fun todasLasFotos(): List<String>
 }

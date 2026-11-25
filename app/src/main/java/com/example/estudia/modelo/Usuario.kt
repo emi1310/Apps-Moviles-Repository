@@ -19,6 +19,9 @@ data class Usuario(
     val anio: Int? = null,
     val email: String? = null,
     val metaHorasSemanales: Int? = null,
+    // Versión 6: foto de perfil, guardada en la carpeta interna de la app
+    // (igual que los adjuntos). null = se muestra la inicial.
+    val fotoPerfil: String? = null,
     val materias: List<Materia> = emptyList()
 ) {
 

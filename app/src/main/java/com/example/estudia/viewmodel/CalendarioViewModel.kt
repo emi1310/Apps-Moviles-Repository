@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.Tema
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.sePuedeRepetir
 import com.example.estudia.notificaciones.AvisosSistema
@@ -117,6 +118,37 @@ class CalendarioViewModel(
         seleccionar(fecha)
         mes.value = YearMonth.from(fecha)
         return null
+    }
+
+    // ---------- Calendario del teléfono ----------
+
+    // La UI lo llama cuando ya tiene el permiso de calendario.
+    fun sincronizarConTelefono(nombreCalendario: String) {
+        viewModelScope.launch {
+            val cantidad = repositorio.sincronizarCalendario(nombreCalendario)
+            avisar(
+                if (cantidad != null) Aviso(Mensaje.AVISO_CALENDARIO_SINCRONIZADO, listOf(cantidad))
+                else Aviso(Mensaje.AVISO_CALENDARIO_ERROR)
+            )
+        }
+    }
+
+    // ---------- Temario de un examen ----------
+
+    fun agregarTema(eventoId: Int, titulo: String) {
+        if (titulo.isBlank()) return
+        viewModelScope.launch { repositorio.agregarTema(eventoId, titulo.trim()) }
+    }
+
+    fun alternarTema(eventoId: Int, tema: Tema) {
+        viewModelScope.launch { repositorio.alternarTema(eventoId, tema) }
+    }
+
+    fun eliminarTema(eventoId: Int, tema: Tema) {
+        viewModelScope.launch {
+            repositorio.eliminarTema(eventoId, tema)
+            avisar(Aviso(Mensaje.AVISO_TEMA_ELIMINADO, alDeshacer = { repositorio.restaurarTema(eventoId, tema) }))
+        }
     }
 
     fun eliminarEvento(item: EventoConMateria) {

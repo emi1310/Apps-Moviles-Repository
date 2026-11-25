@@ -33,6 +33,9 @@ object Notificaciones {
     const val ID_BASE_EVENTOS = 1000
     const val ID_TEMPORIZADOR = 2
     const val ID_TEMPORIZADOR_EN_CURSO = 3
+    const val ID_RACHA = 4
+    // Cada tarea con aviso usa 500000 + su id (lejos de los ids de eventos).
+    const val ID_BASE_TAREAS = 500_000
 
     // Desde Android 8 cada notificación pertenece a un canal, que el usuario
     // puede configurar por separado en Ajustes. Crearlos varias veces no pasa nada.

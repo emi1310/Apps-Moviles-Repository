@@ -295,7 +295,7 @@
 
       <div class="card">
         <h3>El encabezado</h3>
-        <p>Arriba ves la fecha y el saludo. A la derecha están tu <strong>racha</strong> (🔥 con los días seguidos que estudiaste; el fueguito se enciende cuando ya estudiaste hoy) y el círculo con tu inicial, que abre tu <a href="#perfil">Perfil</a>.</p>
+        <p>Arriba ves la fecha y el saludo. A la derecha están tu <strong>racha</strong> (🔥 con los días seguidos que estudiaste; el fueguito se enciende cuando ya estudiaste hoy, y al tocarlo se abren las <a href="#estadisticas">Estadísticas</a> con el detalle) y el círculo con tu inicial, que abre tu <a href="#perfil">Perfil</a>.</p>
       </div>
 
       <div class="card">
@@ -306,7 +306,7 @@
           <tr><td><span class="dot" style="background:var(--purple)"></span><strong>Para hoy</strong></td><td>Las pendientes que vencen hoy.</td></tr>
           <tr><td><span class="dot" style="background:var(--orange)"></span><strong>Vencidas</strong></td><td>Las pendientes cuya fecha ya pasó.</td></tr>
         </table>
-        <p style="margin-top:10px">A la derecha, un anillo muestra el avance y cuántas tareas te quedan pendientes. Debajo aparecen hasta 5 pendientes, ordenadas por fecha (las vencidas en rojo); podés marcarlas como hechas desde ahí.</p>
+        <p style="margin-top:10px">A la derecha, un anillo muestra el avance y cuántas tareas te quedan pendientes. Debajo aparecen hasta 5 pendientes (las vencidas en rojo), que podés marcar como hechas desde ahí. Con <strong>Por fecha</strong> y <strong>Por prioridad</strong> elegís cómo se ordenan: primero lo que vence antes, o primero lo más importante.</p>
       </div>
 
       <div class="grid2">
@@ -322,6 +322,11 @@
           <h3>Progreso y horas por materia</h3>
           <p>Un gráfico con el % de tareas completadas de cada materia activa y otro con cómo se reparten tus horas de estudio entre materias.</p>
         </div>
+      </div>
+
+      <div class="card">
+        <h3>Widget en la pantalla de inicio del teléfono</h3>
+        <p>Mantené apretado un lugar vacío de la pantalla de inicio del teléfono, tocá <strong>Widgets</strong> y elegí <strong>Estudia+</strong>. Muestra tu 🔥 racha, cuántas tareas pendientes tenés y las 3 más urgentes (primero las vencidas y las de fecha más cercana). Se actualiza solo cada vez que cambiás algo en la app, y tocarlo abre Estudia+.</p>
       </div>
     </section>
 
@@ -344,9 +349,12 @@
         <ol class="steps">
           <li>Tocá la tarjeta de la materia para expandirla: aparecen tres bloques, con las tareas, las notas de exámenes y los archivos.</li>
           <li>Tocá <strong>Agregar tarea</strong>, escribí el título y, si querés, elegí la fecha límite en el calendario.</li>
+          <li>Elegí la <strong>prioridad</strong> (Baja, Media o Alta) y, si la tarea tiene varias partes, tocá <strong>Agregar paso</strong> para sumar sus pasos.</li>
+          <li>Si tiene fecha límite, en <strong>Recordarme</strong> elegí cuándo avisarte: el mismo día, 1, 2 o 7 días antes (llega a las 9:00, con los <a href="#perfil">Recordatorios</a> activados). La tarea muestra una campanita.</li>
           <li>Marcá el casillero para completarla: el % de progreso de la materia se actualiza al instante.</li>
         </ol>
-        <p style="margin-top:10px">Atajos: deslizá una tarea hacia la derecha para completarla, o hacia la izquierda para eliminarla.</p>
+        <p style="margin-top:10px">Las tareas de prioridad alta van primero y llevan una banderita roja (las de baja, una verde). Los pasos aparecen debajo de la tarea y se marcan de a uno: la tarea muestra cuántos hiciste (por ejemplo, "2 de 4 pasos").</p>
+        <p style="margin-top:6px">Atajos: deslizá una tarea hacia la derecha para completarla, o hacia la izquierda para eliminarla.</p>
       </div>
 
       <div class="grid2">
@@ -356,8 +364,13 @@
         </div>
         <div class="card">
           <h3>Archivos adjuntos</h3>
-          <p>Tocá <strong>Adjuntar archivo</strong> y elegí una foto, un PDF u otro archivo. Se copia dentro de la app, así que no se pierde aunque borres el original. Necesita el <a href="#permisos">permiso de fotos y archivos</a>.</p>
+          <p>Tocá <strong>Adjuntar archivo</strong> y elegí una foto, un PDF u otro archivo, o <strong>Sacar foto</strong> para sacarle una al pizarrón con la cámara. Se copia dentro de la app, así que no se pierde aunque borres el original. Necesita el <a href="#permisos">permiso de fotos y archivos o el de cámara</a>.</p>
         </div>
+      </div>
+
+      <div class="card">
+        <h3>Tarjetas de estudio</h3>
+        <p>En cada materia, en <strong>Tarjetas de estudio</strong>, cargá una pregunta y su respuesta. Con <strong>Repasar</strong> (o desde la tarjeta de Inicio) vas viendo las preguntas: tocá <strong>Ver respuesta</strong> y elegí <strong>La sabía</strong> o <strong>No la sabía</strong>. Usa repetición espaciada: si la sabías, la tarjeta sube de caja y vuelve en 2, 4, 8 o 16 días; si no, vuelve a la caja 1 y aparece mañana. Así repasás más lo que te cuesta.</p>
       </div>
 
       <div class="card">
@@ -395,6 +408,18 @@
           <p>El menú ⋮ del evento tiene <strong>Editar</strong> y <strong>Eliminar</strong>. También podés deslizarlo hacia la izquierda para eliminarlo.</p>
         </div>
       </div>
+      <div class="card">
+        <h3>Horario semanal</h3>
+        <p>Tocá el botón de arriba a la derecha que muestra la semana (al lado del de hoy). Ahí ves tus clases de cada día, de lunes a viernes (y sábado o domingo si cursás), cada una con su horario y en el color de su materia, y cuántas horas de cursada tenés por semana. Salen de las clases que cargaste en el Calendario.</p>
+      </div>
+      <div class="card">
+        <h3>Pasar al calendario del teléfono</h3>
+        <p>Tocá el botón de arriba a la derecha con el calendario y las flechas. La primera vez te pide <a href="#permisos">permiso de calendario</a>. La app crea un calendario propio llamado <strong>Estudia+</strong> (no toca tus otros calendarios) con tus clases (las semanales se repiten), exámenes y entregas. Si cambiás algo, volvé a tocarlo para actualizarlo.</p>
+      </div>
+      <div class="card">
+        <h3>Temario de un examen</h3>
+        <p>Los exámenes muestran cuántos días faltan y cuánto del temario llevás. Tocá el examen (o <strong>Ver temario</strong> en su menú ⋮) para cargar los temas que entran y marcarlos a medida que los estudiás. En Inicio, los próximos exámenes también muestran cuántos temas llevás.</p>
+      </div>
       <p>Los bloques de estudio suman a tus horas de la semana, a tu meta y a tu racha.</p>
     </section>
 
@@ -414,7 +439,15 @@
         </div>
         <div class="card">
           <h3>Favorita, editar, adjuntar o eliminar</h3>
-          <p>La estrella ⭐ la marca como favorita. El menú ⋮ tiene <strong>Adjuntar archivo</strong>, <strong>Editar</strong> y <strong>Eliminar</strong>. También podés deslizarla hacia la izquierda para eliminarla.</p>
+          <p>La estrella ⭐ la marca como favorita. El menú ⋮ tiene <strong>Adjuntar archivo</strong>, <strong>Sacar foto</strong> (por ejemplo, del pizarrón), <strong>Editar</strong> y <strong>Eliminar</strong>. También podés deslizarla hacia la izquierda para eliminarla.</p>
+        </div>
+        <div class="card">
+          <h3>Dictar una nota</h3>
+          <p>Al crear o editar una nota, tocá el 🎤 micrófono del campo <strong>Contenido</strong> y hablá: lo que dictás se suma al final del texto. Usa el reconocimiento de voz del teléfono, así que el permiso del micrófono lo pide esa ventana, no Estudia+.</p>
+        </div>
+        <div class="card">
+          <h3>Pasar a texto la foto del pizarrón</h3>
+          <p>En los archivos de la nota, las fotos tienen el botón <strong>Pasar a texto</strong> (el ícono de la T). La app lee el texto de la foto y lo agrega al final del contenido de la nota; si no era lo que querías, tocá <strong>Deshacer</strong>. Funciona sin internet y la foto no sale del teléfono. Lee mejor la letra clara y de imprenta.</p>
         </div>
       </div>
     </section>
@@ -441,6 +474,10 @@
           <h3>Si salís de la app</h3>
           <p>Una notificación muestra cuánto falta y tiene los botones Pausar, Seguir y Terminar. Al terminar te avisa y la sesión se guarda sola como bloque de estudio.</p>
         </div>
+      </div>
+      <div class="card">
+        <h3>Silenciar el teléfono</h3>
+        <p>Activá <strong>Silenciar el teléfono</strong> para que se ponga "No molestar" mientras corre la sesión. Al pausar o terminar, el teléfono vuelve a como estaba (si ya tenías No molestar puesto, la app no lo toca). La primera vez te lleva a Ajustes para darle a Estudia+ <a href="#permisos">acceso a No molestar</a>.</p>
       </div>
     </section>
 
@@ -469,12 +506,20 @@
 
     <section id="perfil">
       <h2>9. Perfil</h2>
-      <p class="kicker">Tus datos, tus números y las opciones de la app. Se abre tocando el círculo con tu inicial en Inicio.</p>
+      <p class="kicker">Tus datos, tus números y las opciones de la app. Se abre tocando tu foto (o el círculo con tu inicial) en Inicio.</p>
 
       <div class="grid2">
         <div class="card">
           <h3>Editar perfil</h3>
           <p>Tocá el lápiz de tu tarjeta (arriba de todo) para cambiar tu nombre, carrera, año y email. Carrera, año y email son opcionales.</p>
+        </div>
+        <div class="card">
+          <h3>Foto de perfil</h3>
+          <p>Tocá tu foto (o tu inicial) en la tarjeta de arriba: podés <strong>Sacar foto</strong> con la cámara, <strong>Elegir de la galería</strong> o <strong>Quitar foto</strong>. Se ve en el Perfil y en Inicio.</p>
+        </div>
+        <div class="card">
+          <h3>Tus logros</h3>
+          <p>Medallas que ganás estudiando: completar tareas, mantener la racha, sumar horas, cumplir tu meta, aprobar exámenes o guardar notas. El bloque muestra cuántas conseguiste; tocalo para ver todas y cuánto te falta para cada una.</p>
         </div>
         <div class="card">
           <h3>Tus números</h3>
@@ -486,7 +531,7 @@
         </div>
         <div class="card">
           <h3>Recordatorios</h3>
-          <p>Un resumen diario a las 8:00, un aviso antes de cada examen o entrega y otro 15 minutos antes de cada clase. Al activarlos te pide <a href="#permisos">permiso de notificaciones</a>.</p>
+          <p>Un resumen diario a las 8:00, un aviso antes de cada examen o entrega, otro 15 minutos antes de cada clase, el aviso de cada tarea que lo tenga y, a las 20:00, uno si todavía no estudiaste y podés perder tu racha. Al activarlos te pide <a href="#permisos">permiso de notificaciones</a>.</p>
         </div>
         <div class="card">
           <h3>Tema</h3>
@@ -497,11 +542,15 @@
         <h3>Estadísticas, ayuda y cerrar sesión</h3>
         <p>En <strong>Cuenta</strong> están <a href="#estadisticas">Estadísticas de estudio</a> y <strong>Ayuda y soporte</strong>, que tiene preguntas frecuentes y un botón para escribir a soporte. <strong>Cerrar sesión</strong> te pide confirmación y te lleva a la pantalla de inicio de sesión.</p>
       </div>
+      <div class="card">
+        <h3>Copia de seguridad</h3>
+        <p><strong>Guardar copia</strong> crea un archivo <code>.zip</code> con todas tus materias, tareas, eventos, notas, archivos y tu foto; elegís dónde guardarlo (Descargas, Drive…). <strong>Restaurar copia</strong> lee ese archivo y reemplaza tus datos actuales (te pide confirmación). No necesita permisos: solo accede al archivo que elegís.</p>
+      </div>
     </section>
 
     <section id="permisos">
       <h2>10. Permisos</h2>
-      <p class="kicker">Estudia+ pide solo dos permisos, y nunca al abrir la app: siempre cuando vas a usar la función, y antes te explica para qué es.</p>
+      <p class="kicker">Estudia+ pide sus permisos nunca al abrir la app: siempre cuando vas a usar la función, y antes te explica para qué es.</p>
       <div class="grid2">
         <div class="card">
           <h3>Notificaciones</h3>
@@ -509,7 +558,19 @@
         </div>
         <div class="card">
           <h3>Fotos y archivos</h3>
-          <p>Se pide al tocar <strong>Adjuntar archivo</strong>. Sin este permiso no se pueden adjuntar archivos. Si lo rechazaste, la app te ofrece ir a Ajustes para darlo.</p>
+          <p>Se pide al tocar <strong>Adjuntar archivo</strong> o <strong>Elegir de la galería</strong>. Sin este permiso no se pueden adjuntar archivos. Si lo rechazaste, la app te ofrece ir a Ajustes para darlo.</p>
+        </div>
+        <div class="card">
+          <h3>Cámara</h3>
+          <p>Se pide al tocar <strong>Sacar foto</strong> (foto de perfil, de una nota o de una materia). Sin este permiso no se abre la cámara; si lo bloqueaste, la app te ofrece ir a Ajustes.</p>
+        </div>
+        <div class="card">
+          <h3>Calendario</h3>
+          <p>Se pide al tocar <strong>Pasar al calendario del teléfono</strong>. Sin este permiso no se toca el calendario; si lo bloqueaste, la app te ofrece ir a Ajustes.</p>
+        </div>
+        <div class="card">
+          <h3>No molestar</h3>
+          <p>Solo si activás <strong>Silenciar el teléfono</strong> en el temporizador. No es un diálogo: Android lo da desde Ajustes, y la app te lleva a esa pantalla después de explicarte para qué es.</p>
         </div>
       </div>
     </section>
@@ -537,6 +598,9 @@
 
         <dt>¿La app puede ver mis otros archivos?</dt>
         <dd>Para adjuntar necesita permiso de fotos y archivos. Aunque lo des, solo guarda el archivo que vos elegís.</dd>
+
+        <dt>¿El dictado o "Pasar a texto" necesitan internet?</dt>
+        <dd>"Pasar a texto" no: lee la foto dentro del teléfono. El dictado usa el reconocimiento de voz del teléfono; algunos teléfonos lo hacen sin conexión y otros necesitan internet.</dd>
 
         <dt>¿Cómo veo cuánto me falta de una materia?</dt>
         <dd>Expandí su tarjeta en Materias: ahí ves las tareas pendientes, el % de progreso y el promedio de tus notas de exámenes.</dd>

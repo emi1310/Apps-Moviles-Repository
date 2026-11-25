@@ -2,6 +2,7 @@ package com.example.estudia.notificaciones
 
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.SesionEstudio
+import com.example.estudia.modelo.Tarea
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -26,19 +27,30 @@ interface AvisosSistema {
 
     fun cancelarEvento(eventoId: Int)
 
-    // Al activar: el resumen diario y los avisos de todos los eventos.
-    // Al desactivar: se cancela todo.
-    suspend fun activarRecordatorios(eventos: List<Evento>)
+    // Aviso de una tarea (versión 7): solo con los recordatorios activados.
+    suspend fun programarTarea(tarea: Tarea)
+    fun cancelarTarea(tareaId: Int)
+
+    // Al activar: el resumen diario, el aviso de racha y los avisos de todos
+    // los eventos y tareas. Al desactivar: se cancela todo.
+    suspend fun activarRecordatorios(eventos: List<Evento>, tareas: List<Tarea> = emptyList())
     fun desactivarRecordatorios()
 
     // Deja la notificación y el aviso de fin del temporizador de acuerdo con
     // la sesión: corriendo, en pausa o sin sesión (null = se ocultan).
+    // También activa "No molestar" mientras la sesión corre (si el usuario
+    // lo eligió) y lo apaga al pausar o terminar.
     fun actualizarTemporizador(sesion: SesionEstudio?, ahora: Long = System.currentTimeMillis())
+
+    // El usuario prendió o apagó "Silenciar el teléfono": se aplica ya a la
+    // sesión en curso (si hay).
+    fun cambiarSilencio(activo: Boolean, sesion: SesionEstudio?)
 }
 
 class AvisosSistemaImpl(
     private val programador: ProgramadorRecordatorios,
     private val notificacionTemporizador: NotificacionTemporizador,
+    private val noMolestar: ModoNoMolestar,
     // La preferencia del usuario (DataStore), solo para leerla.
     private val recordatoriosActivos: Flow<Boolean>
 ) : AvisosSistema {
@@ -59,9 +71,18 @@ class AvisosSistemaImpl(
         programador.cancelarEvento(eventoId)
     }
 
-    override suspend fun activarRecordatorios(eventos: List<Evento>) {
+    override suspend fun programarTarea(tarea: Tarea) {
+        if (recordatoriosActivos.first()) programador.programarTarea(tarea)
+    }
+
+    override fun cancelarTarea(tareaId: Int) {
+        programador.cancelarTarea(tareaId)
+    }
+
+    override suspend fun activarRecordatorios(eventos: List<Evento>, tareas: List<Tarea>) {
         programador.programarDiario()
         programarEventos(eventos)
+        tareas.forEach { programarTarea(it) }
     }
 
     override fun desactivarRecordatorios() {
@@ -73,15 +94,23 @@ class AvisosSistemaImpl(
             sesion == null -> {
                 programador.cancelarFinTemporizador()
                 notificacionTemporizador.ocultar()
+                noMolestar.restaurar()
             }
             sesion.enPausa -> {
                 programador.cancelarFinTemporizador()
                 notificacionTemporizador.mostrar(sesion)
+                noMolestar.restaurar()
             }
             else -> {
                 programador.programarFinTemporizador(sesion.restanteMillis(ahora))
                 notificacionTemporizador.mostrar(sesion)
+                noMolestar.activar()
             }
         }
+    }
+
+    override fun cambiarSilencio(activo: Boolean, sesion: SesionEstudio?) {
+        noMolestar.elegido = activo
+        if (activo && sesion != null && !sesion.enPausa) noMolestar.activar() else noMolestar.restaurar()
     }
 }

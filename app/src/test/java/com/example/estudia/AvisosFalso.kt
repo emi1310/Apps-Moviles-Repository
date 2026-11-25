@@ -2,6 +2,7 @@ package com.example.estudia
 
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.SesionEstudio
+import com.example.estudia.modelo.Tarea
 import com.example.estudia.notificaciones.AvisosSistema
 
 // AvisosSistema falso para los tests: en vez de usar WorkManager y mostrar
@@ -31,9 +32,21 @@ class AvisosFalso : AvisosSistema {
         eventosCancelados += eventoId
     }
 
-    override suspend fun activarRecordatorios(eventos: List<Evento>) {
+    val tareasProgramadas = mutableListOf<Tarea>()
+    val tareasCanceladas = mutableListOf<Int>()
+
+    override suspend fun programarTarea(tarea: Tarea) {
+        tareasProgramadas += tarea
+    }
+
+    override fun cancelarTarea(tareaId: Int) {
+        tareasCanceladas += tareaId
+    }
+
+    override suspend fun activarRecordatorios(eventos: List<Evento>, tareas: List<Tarea>) {
         recordatoriosActivos = true
         programarEventos(eventos)
+        tareas.forEach { programarTarea(it) }
     }
 
     override fun desactivarRecordatorios() {
@@ -42,5 +55,11 @@ class AvisosFalso : AvisosSistema {
 
     override fun actualizarTemporizador(sesion: SesionEstudio?, ahora: Long) {
         sesionEnNotificacion = sesion
+    }
+
+    var silencioElegido: Boolean? = null
+
+    override fun cambiarSilencio(activo: Boolean, sesion: SesionEstudio?) {
+        silencioElegido = activo
     }
 }

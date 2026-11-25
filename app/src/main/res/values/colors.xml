@@ -9,4 +9,10 @@
     <color name="white">#FFFFFFFF</color>
     <!-- Fondo de la ventana (pantalla de carga): FondoClaro de Color.kt -->
     <color name="fondo_ventana">#FFF6F5FB</color>
+    <!-- Widget de la pantalla de inicio: tarjeta clara con el violeta de la app -->
+    <color name="widget_fondo">#FFFFFFFF</color>
+    <color name="widget_texto">#FF1D1B26</color>
+    <color name="widget_texto_secundario">#FF6E6A7C</color>
+    <color name="widget_acento">#FF6C5CE7</color>
+    <color name="widget_fuego">#FFFF9F43</color>
 </resources>

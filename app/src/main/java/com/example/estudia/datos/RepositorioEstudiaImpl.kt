@@ -7,7 +7,14 @@ import com.example.estudia.datos.local.CalificacionDao
 import com.example.estudia.datos.local.EventoDao
 import com.example.estudia.datos.local.MateriaDao
 import com.example.estudia.datos.local.NotaDao
+import com.example.estudia.datos.local.SubtareaEntity
 import com.example.estudia.datos.local.TareaDao
+import com.example.estudia.datos.local.TemaDao
+import com.example.estudia.datos.local.TarjetaDao
+import com.example.estudia.datos.local.TarjetaEntity
+import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.datos.local.TemaEntity
+import com.example.estudia.modelo.Tema
 import com.example.estudia.datos.local.UsuarioDao
 import com.example.estudia.datos.local.UsuarioEntity
 import com.example.estudia.datos.local.aEntidad
@@ -20,7 +27,9 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
+import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.SesionEstudio
+import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
@@ -58,10 +67,15 @@ class RepositorioEstudiaImpl(
     private val notaDao: NotaDao,
     private val archivoDao: ArchivoDao,
     private val calificacionDao: CalificacionDao,
+    private val temaDao: TemaDao,
+    private val tarjetaDao: TarjetaDao,
     private val sesion: SesionDataStore,
     private val preferencias: PreferenciasDataStore,
     private val almacenamiento: AlmacenamientoArchivos,
     private val temporizador: TemporizadorDataStore,
+    private val copiaDeSeguridad: CopiaDeSeguridad,
+    private val calendarioTelefono: CalendarioTelefono,
+    private val lectorTexto: LectorTexto,
     // Título de los bloques de estudio que guarda el temporizador. Lo lee
     // EstudiaApp de strings.xml, así el Repository no necesita Context.
     private val tituloSesionEstudio: String
@@ -85,6 +99,7 @@ class RepositorioEstudiaImpl(
 
     override val tema: Flow<PreferenciaTema> = preferencias.tema
     override val permisoArchivosPedido: Flow<Boolean> = preferencias.permisoArchivosPedido
+    override val silenciarAlEstudiar: Flow<Boolean> = preferencias.silenciarAlEstudiar
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> =
         notaDao.buscar(usuarioId, texto).map { filas ->
@@ -105,7 +120,8 @@ class RepositorioEstudiaImpl(
         if (usuarioDao.contar() == 0) {
             insertarUsuarioCompleto(crearUsuarioDePrueba(), contrasena = "demo")
         }
-        almacenamiento.limpiarHuerfanos(archivoDao.todasLasRutas().toSet())
+        // Las fotos de perfil también viven en esa carpeta: no se tocan.
+        almacenamiento.limpiarHuerfanos((archivoDao.todasLasRutas() + usuarioDao.todasLasFotos()).toSet())
     }
 
     // Se busca el usuario por nombre y se verifica la contraseña contra el hash.
@@ -148,6 +164,16 @@ class RepositorioEstudiaImpl(
         usuarioDao.actualizarMetaSemanal(usuarioId, horas)
     }
 
+    override suspend fun cambiarFotoPerfil(usuarioId: Int, uri: String?): Boolean {
+        val anterior = usuarioDao.fotoPerfil(usuarioId)
+        val nueva = if (uri == null) null else (almacenamiento.copiarDesde(Uri.parse(uri)) ?: return false).ruta
+        usuarioDao.actualizarFotoPerfil(usuarioId, nueva)
+        if (anterior != null) almacenamiento.eliminar(anterior)
+        return true
+    }
+
+    override fun uriDeFoto(ruta: String): String = almacenamiento.uriParaAbrir(ruta).toString()
+
     // ---------- Materias ----------
 
     override suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long) {
@@ -169,30 +195,49 @@ class RepositorioEstudiaImpl(
     // ForeignKey: primero la materia, después las notas y al final los archivos.
     override suspend fun restaurarMateria(usuarioId: Int, materia: Materia) {
         materiaDao.insertar(materia.aEntidad(usuarioId))
-        materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materia.id)) }
-        materia.eventos.forEach { eventoDao.insertar(it.aEntidad(materia.id)) }
+        materia.tareas.forEach { restaurarTarea(materia.id, it) }
+        materia.eventos.forEach { restaurarEvento(materia.id, it) }
         materia.notas.forEach { notaDao.insertar(it.aEntidad(materia.id)) }
         archivoDao.insertarTodos(materia.todosLosArchivos().map { it.aEntidad(materia.id) })
         materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materia.id)) }
+        materia.tarjetas.forEach { tarjetaDao.insertar(it.aEntidad(materia.id)) }
     }
 
     // ---------- Tareas ----------
 
-    override suspend fun agregarTarea(materiaId: Int, titulo: String, fechaLimite: LocalDate?) {
-        tareaDao.insertar(Tarea(id = 0, titulo = titulo, fechaLimite = fechaLimite).aEntidad(materiaId))
+    override suspend fun agregarTarea(
+        materiaId: Int,
+        titulo: String,
+        fechaLimite: LocalDate?,
+        prioridad: Prioridad,
+        subtareas: List<String>,
+        avisoDiasAntes: Int?
+    ): Tarea {
+        val nueva = Tarea(id = 0, titulo = titulo, fechaLimite = fechaLimite, prioridad = prioridad, avisoDiasAntes = avisoDiasAntes)
+        val id = tareaDao.insertarConSubtareas(nueva.aEntidad(materiaId), subtareas.map { SubtareaEntity(tareaId = 0, titulo = it) })
+        return nueva.copy(id = id)
     }
 
     override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea) {
         tareaDao.actualizar(tarea.aEntidad(materiaId))
     }
 
+    override suspend fun guardarSubtareas(tareaId: Int, subtareas: List<Subtarea>) {
+        tareaDao.reemplazarSubtareas(tareaId, subtareas.map { it.aEntidad(tareaId) })
+    }
+
+    override suspend fun alternarSubtarea(tareaId: Int, subtarea: Subtarea) {
+        tareaDao.actualizarSubtarea(subtarea.copy(completada = !subtarea.completada).aEntidad(tareaId))
+    }
+
     override suspend fun eliminarTarea(materiaId: Int, tarea: Tarea) {
         tareaDao.eliminar(tarea.aEntidad(materiaId))
     }
 
-    // Se inserta con el mismo id que tenía, así queda igual que antes.
+    // Se inserta con el mismo id que tenía (y sus subtareas también), así
+    // queda igual que antes.
     override suspend fun restaurarTarea(materiaId: Int, tarea: Tarea) {
-        tareaDao.insertar(tarea.aEntidad(materiaId))
+        tareaDao.insertarConSubtareas(tarea.aEntidad(materiaId), tarea.subtareas.map { it.aEntidad(tarea.id) })
     }
 
     // ---------- Calificaciones ----------
@@ -213,6 +258,25 @@ class RepositorioEstudiaImpl(
         calificacionDao.insertar(calificacion.aEntidad(materiaId))
     }
 
+    // ---------- Tarjetas de estudio ----------
+
+    // Una tarjeta nueva arranca en la caja 1, para repasarla hoy.
+    override suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String) {
+        tarjetaDao.insertar(TarjetaEntity(materiaId = materiaId, pregunta = pregunta, respuesta = respuesta, caja = 1, proximoRepaso = LocalDate.now()))
+    }
+
+    override suspend fun actualizarTarjeta(materiaId: Int, tarjeta: Tarjeta) {
+        tarjetaDao.actualizar(tarjeta.aEntidad(materiaId))
+    }
+
+    override suspend fun eliminarTarjeta(materiaId: Int, tarjeta: Tarjeta) {
+        tarjetaDao.eliminar(tarjeta.aEntidad(materiaId))
+    }
+
+    override suspend fun restaurarTarjeta(materiaId: Int, tarjeta: Tarjeta) {
+        tarjetaDao.insertar(tarjeta.aEntidad(materiaId))
+    }
+
     // ---------- Eventos ----------
 
     override suspend fun agregarEvento(materiaId: Int, evento: Evento): Evento {
@@ -228,8 +292,28 @@ class RepositorioEstudiaImpl(
         eventoDao.eliminar(evento.aEntidad(materiaId))
     }
 
+    // Con su temario (los temas vuelven con los mismos ids).
     override suspend fun restaurarEvento(materiaId: Int, evento: Evento) {
         eventoDao.insertar(evento.aEntidad(materiaId))
+        temaDao.insertarTodos(evento.temas.map { it.aEntidad(evento.id) })
+    }
+
+    // ---------- Temario de los exámenes ----------
+
+    override suspend fun agregarTema(eventoId: Int, titulo: String) {
+        temaDao.insertar(TemaEntity(eventoId = eventoId, titulo = titulo))
+    }
+
+    override suspend fun alternarTema(eventoId: Int, tema: Tema) {
+        temaDao.actualizar(tema.copy(estudiado = !tema.estudiado).aEntidad(eventoId))
+    }
+
+    override suspend fun eliminarTema(eventoId: Int, tema: Tema) {
+        temaDao.eliminar(tema.aEntidad(eventoId))
+    }
+
+    override suspend fun restaurarTema(eventoId: Int, tema: Tema) {
+        temaDao.insertar(tema.aEntidad(eventoId))
     }
 
     // ---------- Notas ----------
@@ -287,6 +371,9 @@ class RepositorioEstudiaImpl(
 
     override fun uriParaAbrir(archivo: Archivo): String = almacenamiento.uriParaAbrir(archivo.ruta).toString()
 
+    override suspend fun leerTextoDeImagen(archivo: Archivo): String? =
+        if (!archivo.esImagen) null else lectorTexto.leer(almacenamiento.uriParaAbrir(archivo.ruta))
+
     // ---------- Preferencias ----------
 
     override suspend fun cambiarRecordatorios(activos: Boolean) {
@@ -299,6 +386,10 @@ class RepositorioEstudiaImpl(
 
     override suspend fun marcarPermisoArchivosPedido() {
         preferencias.guardarPermisoArchivosPedido()
+    }
+
+    override suspend fun cambiarSilenciarAlEstudiar(activo: Boolean) {
+        preferencias.guardarSilenciarAlEstudiar(activo)
     }
 
     // ---------- Temporizador de estudio ----------
@@ -391,6 +482,23 @@ class RepositorioEstudiaImpl(
     override suspend fun buscarEvento(eventoId: Int): Evento? =
         eventoDao.buscarConMateria(eventoId)?.evento?.aModelo()
 
+    override suspend fun tareaParaRecordatorio(tareaId: Int): TareaParaAviso? {
+        if (!preferencias.recordatoriosActivos.first()) return null
+        val fila = tareaDao.buscarConMateria(tareaId) ?: return null
+        if (sesion.idUsuarioActivo.first() != fila.usuarioId) return null
+        val tarea = fila.tarea.aModelo()
+        if (tarea.completada) return null
+        return TareaParaAviso(tarea, fila.nombreMateria)
+    }
+
+    override suspend fun rachaEnRiesgo(hoy: LocalDate): Int? {
+        if (!preferencias.recordatoriosActivos.first()) return null
+        val usuario = usuarioActual.first() ?: return null
+        val estudioHoy = usuario.materias.any { m -> m.eventos.any { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == hoy } }
+        if (estudioHoy) return null
+        return usuario.rachaDeEstudio(hoy).takeIf { it > 0 }
+    }
+
     // ---------- Privados ----------
 
     // Inserta un usuario con todo su contenido. Los id del objeto se ignoran
@@ -408,12 +516,65 @@ class RepositorioEstudiaImpl(
                 metaHorasSemanales = usuario.metaHorasSemanales
             )
         ).toInt()
-        for (materia in usuario.materias) {
+        insertarMaterias(usuarioId, usuario.materias)
+    }
+
+    // Inserta materias con todo su contenido como nuevas (los ids del objeto
+    // se ignoran). Los archivos de las notas se enlazan con el id nuevo de su
+    // nota. La usan los datos de prueba y la copia de seguridad.
+    private suspend fun insertarMaterias(usuarioId: Int, materias: List<Materia>) {
+        for (materia in materias) {
             val materiaId = materiaDao.insertar(materia.aEntidad(usuarioId).copy(id = 0)).toInt()
-            materia.tareas.forEach { tareaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
-            materia.eventos.forEach { eventoDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
-            materia.notas.forEach { notaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.tareas.forEach { tarea ->
+                tareaDao.insertarConSubtareas(
+                    tarea.aEntidad(materiaId).copy(id = 0),
+                    tarea.subtareas.map { it.aEntidad(0).copy(id = 0) }
+                )
+            }
+            materia.eventos.forEach { evento ->
+                val eventoId = eventoDao.insertar(evento.aEntidad(materiaId).copy(id = 0)).toInt()
+                temaDao.insertarTodos(evento.temas.map { it.aEntidad(eventoId).copy(id = 0) })
+            }
+            materia.notas.forEach { nota ->
+                val notaId = notaDao.insertar(nota.aEntidad(materiaId).copy(id = 0)).toInt()
+                archivoDao.insertarTodos(nota.archivos.map { it.aEntidad(materiaId).copy(id = 0, notaId = notaId) })
+            }
+            archivoDao.insertarTodos(materia.archivos.map { it.aEntidad(materiaId).copy(id = 0, notaId = null) })
             materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.tarjetas.forEach { tarjetaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
         }
+    }
+
+    // ---------- Calendario del teléfono ----------
+
+    // Los bloques de estudio no se pasan: son un registro de lo que ya se estudió.
+    override suspend fun sincronizarCalendario(nombreCalendario: String): Int? {
+        val usuario = usuarioActual.first() ?: return null
+        val eventos = usuario.materias.filter { !it.archivada }.flatMap { materia ->
+            materia.eventos.filter { it.tipo != TipoEvento.BLOQUE_ESTUDIO }
+                .map { CalendarioTelefono.EventoAPasar(it, materia.nombre) }
+        }
+        return calendarioTelefono.sincronizar(eventos, nombreCalendario)
+    }
+
+    // ---------- Copia de seguridad ----------
+
+    override suspend fun exportarCopia(uri: String): Boolean {
+        val usuario = usuarioActual.first() ?: return false
+        return copiaDeSeguridad.exportar(usuario, uri)
+    }
+
+    // Reemplaza las materias del usuario por las de la copia y trae su
+    // perfil y su foto. Las materias viejas se borran (con CASCADE); sus
+    // archivos en disco los limpia limpiarHuerfanos la próxima vez que abre la app.
+    override suspend fun importarCopia(uri: String): Boolean {
+        val usuario = usuarioActual.first() ?: return false
+        val copia = copiaDeSeguridad.importar(uri) ?: return false
+        usuario.materias.forEach { materiaDao.eliminar(it.aEntidad(usuario.id)) }
+        usuarioDao.actualizarPerfil(usuario.id, copia.nombre, copia.carrera, copia.anio, copia.email)
+        usuarioDao.actualizarMetaSemanal(usuario.id, copia.metaHorasSemanales)
+        usuarioDao.actualizarFotoPerfil(usuario.id, copia.fotoPerfil)
+        insertarMaterias(usuario.id, copia.materias)
+        return true
     }
 }

@@ -1,6 +1,7 @@
 package com.example.estudia.viewmodel
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -22,6 +23,12 @@ object AppViewModelProvider {
         initializer { PerfilViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
         initializer { TemporizadorViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
         initializer { EstadisticasViewModel(estudiaApp().repositorio) }
+        initializer { HorarioViewModel(estudiaApp().repositorio) }
+        initializer { LogrosViewModel(estudiaApp().repositorio) }
+        // El id de la materia llega por la ruta de navegación (SavedStateHandle).
+        initializer {
+            RepasoViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)
+        }
     }
 }
 

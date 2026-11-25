@@ -4,6 +4,9 @@ import android.app.Application
 import android.app.UiModeManager
 import android.os.Build
 import com.example.estudia.datos.AlmacenamientoArchivos
+import com.example.estudia.datos.CopiaDeSeguridad
+import com.example.estudia.datos.CalendarioTelefono
+import com.example.estudia.datos.LectorTexto
 import com.example.estudia.datos.PreferenciasDataStore
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.datos.RepositorioEstudiaImpl
@@ -13,9 +16,11 @@ import com.example.estudia.datos.local.AppDatabase
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.notificaciones.AvisosSistema
 import com.example.estudia.notificaciones.AvisosSistemaImpl
+import com.example.estudia.notificaciones.ModoNoMolestar
 import com.example.estudia.notificaciones.NotificacionTemporizador
 import com.example.estudia.notificaciones.Notificaciones
 import com.example.estudia.notificaciones.ProgramadorRecordatorios
+import com.example.estudia.widget.WidgetEstudia
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,18 +48,26 @@ class EstudiaApp : Application() {
             notaDao = db.notaDao(),
             archivoDao = db.archivoDao(),
             calificacionDao = db.calificacionDao(),
+            temaDao = db.temaDao(),
+            tarjetaDao = db.tarjetaDao(),
             sesion = SesionDataStore(this),
             preferencias = preferencias,
             almacenamiento = AlmacenamientoArchivos(this),
             temporizador = TemporizadorDataStore(this),
+            copiaDeSeguridad = CopiaDeSeguridad(this),
+            calendarioTelefono = CalendarioTelefono(this),
+            lectorTexto = LectorTexto(this),
             tituloSesionEstudio = getString(R.string.sesion_estudio_titulo)
         )
     }
+
+    private val noMolestar by lazy { ModoNoMolestar(this) }
 
     val avisos: AvisosSistema by lazy {
         AvisosSistemaImpl(
             programador = ProgramadorRecordatorios(this),
             notificacionTemporizador = NotificacionTemporizador(this),
+            noMolestar = noMolestar,
             recordatoriosActivos = preferencias.recordatoriosActivos
         )
     }
@@ -67,6 +80,16 @@ class EstudiaApp : Application() {
         // temporizador sigue guardada: al arrancar la app se vuelve a mostrar.
         // Si ya terminó, no se toca: la guarda TemporizadorWorker.
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        // "Silenciar el teléfono" se lee de DataStore y se mantiene al día en
+        // ModoNoMolestar, que lo necesita al instante (sin corrutinas).
+        scope.launch {
+            preferencias.silenciarAlEstudiar.collect { noMolestar.elegido = it }
+        }
+        // El widget se redibuja cada vez que cambian los datos del usuario
+        // (una tarea hecha, una sesión de estudio, cerrar sesión...).
+        scope.launch {
+            repositorio.usuarioActual.distinctUntilChanged().collect { WidgetEstudia.actualizarTodos(this@EstudiaApp) }
+        }
         scope.launch {
             val sesion = repositorio.sesionEstudio.first() ?: return@launch
             if (!sesion.terminada(System.currentTimeMillis())) avisos.actualizarTemporizador(sesion)

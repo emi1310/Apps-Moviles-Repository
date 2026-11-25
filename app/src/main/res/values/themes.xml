@@ -5,4 +5,15 @@
     <style name="Theme.Estudia" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/fondo_ventana</item>
     </style>
+
+    <!-- Cada tarea del widget: una línea, cortada con "..." si no entra. -->
+    <style name="TareaWidget">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/widget_texto</item>
+        <item name="android:textSize">14sp</item>
+    </style>
 </resources>

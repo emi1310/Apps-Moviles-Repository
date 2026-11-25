@@ -90,6 +90,9 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     // Íconos de Material (Add, Delete, Edit, AttachFile, etc.)
     implementation(libs.androidx.compose.material.icons.extended)
+    // OCR: pasar a texto la foto del pizarrón. El modelo viene dentro de la
+    // app, así funciona sin internet.
+    implementation(libs.mlkit.text.recognition)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     constraints {
         // room-testing (MigrationTestHelper) necesita kotlinx-serialization 1.8+,

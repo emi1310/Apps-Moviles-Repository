@@ -9,9 +9,10 @@ import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.Usuario
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -22,8 +23,14 @@ data class TareaConMateria(val tarea: Tarea, val materiaId: Int, val nombreMater
 
 data class EventoConMateria(val evento: Evento, val materiaId: Int, val nombreMateria: String, val colorMateria: Long)
 
+// Cómo se ordenan las pendientes de Inicio.
+enum class OrdenTareas { FECHA, PRIORIDAD }
+
 // Todo lo que muestra la pantalla de Inicio, ya calculado.
 data class InicioUiState(
+    val orden: OrdenTareas = OrdenTareas.FECHA,
+    // Uri de la foto de perfil para el avatar (null = se muestra la inicial).
+    val fotoUri: String? = null,
     val cargando: Boolean = true,
     val nombre: String = "",
     val hoy: LocalDate = LocalDate.now(),
@@ -33,6 +40,9 @@ data class InicioUiState(
     val materiasActivas: List<Materia> = emptyList(),
     val minutosPorMateria: List<Pair<Materia, Long>> = emptyList(),
     val horasEstudio: Int = 0,
+    // Tarjetas de estudio: cuántas hay en total y cuántas tocan hoy.
+    val totalTarjetas: Int = 0,
+    val tarjetasParaHoy: Int = 0,
     // Para el fueguito de la racha del encabezado.
     val rachaDias: Int = 0,
     val estudioHoy: Boolean = false          // si hoy ya hay un bloque de estudio
@@ -53,9 +63,16 @@ class InicioViewModel(
     private val hoy: () -> LocalDate = { LocalDate.now() }
 ) : ViewModel() {
 
-    val uiState: StateFlow<InicioUiState> = repositorio.usuarioActual
-        .map { usuario -> if (usuario == null) InicioUiState() else calcularResumen(usuario, hoy()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InicioUiState())
+    private val orden = MutableStateFlow(OrdenTareas.FECHA)
+
+    val uiState: StateFlow<InicioUiState> = combine(repositorio.usuarioActual, orden) { usuario, orden ->
+        if (usuario == null) InicioUiState(orden = orden)
+        else calcularResumen(usuario, hoy(), orden).copy(fotoUri = usuario.fotoPerfil?.let { repositorio.uriDeFoto(it) })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), InicioUiState())
+
+    fun cambiarOrden(nuevo: OrdenTareas) {
+        orden.value = nuevo
+    }
 
     fun alternarTarea(item: TareaConMateria) {
         viewModelScope.launch {
@@ -65,14 +82,18 @@ class InicioViewModel(
 }
 
 // Función pura (sin Android ni corrutinas): fácil de testear.
-fun calcularResumen(usuario: Usuario, hoy: LocalDate): InicioUiState {
+fun calcularResumen(usuario: Usuario, hoy: LocalDate, orden: OrdenTareas = OrdenTareas.FECHA): InicioUiState {
     val activas = usuario.materias.filter { !it.archivada }
 
-    // Pendientes de todas las materias activas: primero las vencidas y las
-    // más próximas; las que no tienen fecha, al final.
+    // Pendientes de todas las materias activas. Por fecha: primero las
+    // vencidas y las más próximas (las que no tienen fecha, al final), y a
+    // igual fecha la más importante. Por prioridad: alta primero y, dentro
+    // de cada prioridad, por fecha.
+    val porFecha = compareBy<TareaConMateria> { it.tarea.fechaLimite == null }.thenBy { it.tarea.fechaLimite }
+    val porPrioridad = compareByDescending<TareaConMateria> { it.tarea.prioridad.peso }
     val pendientes = activas.flatMap { materia ->
         materia.tareas.filter { !it.completada }.map { TareaConMateria(it, materia.id, materia.nombre, materia.color) }
-    }.sortedWith(compareBy<TareaConMateria> { it.tarea.fechaLimite == null }.thenBy { it.tarea.fechaLimite })
+    }.sortedWith(if (orden == OrdenTareas.FECHA) porFecha.then(porPrioridad) else porPrioridad.then(porFecha))
 
     // Exámenes y entregas desde hoy en adelante, en orden de fecha.
     val proximos = activas.flatMap { materia ->
@@ -87,6 +108,7 @@ fun calcularResumen(usuario: Usuario, hoy: LocalDate): InicioUiState {
     }
 
     return InicioUiState(
+        orden = orden,
         cargando = false,
         nombre = usuario.nombre.substringBefore(" "),
         hoy = hoy,
@@ -96,6 +118,8 @@ fun calcularResumen(usuario: Usuario, hoy: LocalDate): InicioUiState {
         materiasActivas = activas,
         minutosPorMateria = minutos,
         horasEstudio = usuario.calcularHorasEstudio(),
+        totalTarjetas = activas.sumOf { it.tarjetas.size },
+        tarjetasParaHoy = activas.sumOf { it.tarjetasParaHoy(hoy).size },
         rachaDias = usuario.rachaDeEstudio(hoy),
         estudioHoy = usuario.materias.any { materia ->
             materia.eventos.any { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == hoy }

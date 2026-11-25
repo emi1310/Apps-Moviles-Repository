@@ -6,7 +6,10 @@ import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.Prioridad
+import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.Tarjeta
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.notificaciones.AvisosSistema
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -122,31 +125,78 @@ class MateriasViewModel(
 
     // ---------- Tareas ----------
 
-    fun guardarTarea(materiaId: Int, existente: Tarea?, titulo: String, fechaLimite: LocalDate?) {
+    // Crea o edita una tarea con su prioridad, sus subtareas y su aviso. Las
+    // subtareas vacías se descartan; las nuevas llegan con id 0. Sin fecha
+    // límite no hay aviso. Después se (re)programa el aviso de la tarea.
+    fun guardarTarea(
+        materiaId: Int,
+        existente: Tarea?,
+        titulo: String,
+        fechaLimite: LocalDate?,
+        prioridad: Prioridad = Prioridad.MEDIA,
+        subtareas: List<Subtarea> = emptyList(),
+        avisoDiasAntes: Int? = null
+    ) {
+        val pasos = subtareas.map { it.copy(titulo = it.titulo.trim()) }.filter { it.titulo.isNotEmpty() }
+        val aviso = avisoDiasAntes.takeIf { fechaLimite != null }
         viewModelScope.launch {
-            if (existente == null) {
-                repositorio.agregarTarea(materiaId, titulo.trim(), fechaLimite)
+            val guardada = if (existente == null) {
+                repositorio.agregarTarea(materiaId, titulo.trim(), fechaLimite, prioridad, pasos.map { it.titulo }, aviso)
             } else {
-                repositorio.actualizarTarea(materiaId, existente.copy(titulo = titulo.trim(), fechaLimite = fechaLimite))
+                val editada = existente.copy(titulo = titulo.trim(), fechaLimite = fechaLimite, prioridad = prioridad, avisoDiasAntes = aviso)
+                repositorio.actualizarTarea(materiaId, editada)
+                if (pasos != existente.subtareas) repositorio.guardarSubtareas(existente.id, pasos)
+                editada
             }
+            avisosSistema.programarTarea(guardada)
         }
     }
 
+    fun alternarSubtarea(tarea: Tarea, subtarea: Subtarea) {
+        viewModelScope.launch { repositorio.alternarSubtarea(tarea.id, subtarea) }
+    }
+
+    // Al completarla se cancela su aviso; al desmarcarla vuelve a programarse.
     fun alternarTarea(materiaId: Int, tarea: Tarea) {
+        val cambiada = tarea.copy(completada = !tarea.completada)
         viewModelScope.launch {
-            repositorio.actualizarTarea(materiaId, tarea.copy(completada = !tarea.completada))
+            repositorio.actualizarTarea(materiaId, cambiada)
+            if (cambiada.completada) avisosSistema.cancelarTarea(tarea.id) else avisosSistema.programarTarea(cambiada)
         }
     }
 
     fun eliminarTarea(materiaId: Int, tarea: Tarea) {
         viewModelScope.launch {
             repositorio.eliminarTarea(materiaId, tarea)
+            avisosSistema.cancelarTarea(tarea.id)
             avisar(
                 Aviso(
                     Mensaje.AVISO_TAREA_ELIMINADA,
-                    alDeshacer = { repositorio.restaurarTarea(materiaId, tarea) }
+                    alDeshacer = {
+                        repositorio.restaurarTarea(materiaId, tarea)
+                        avisosSistema.programarTarea(tarea)
+                    }
                 )
             )
+        }
+    }
+
+    // ---------- Tarjetas de estudio ----------
+
+    // Crea o edita una tarjeta. false si falta la pregunta o la respuesta.
+    fun guardarTarjeta(materiaId: Int, existente: Tarjeta?, pregunta: String, respuesta: String): Boolean {
+        if (pregunta.isBlank() || respuesta.isBlank()) return false
+        viewModelScope.launch {
+            if (existente == null) repositorio.agregarTarjeta(materiaId, pregunta.trim(), respuesta.trim())
+            else repositorio.actualizarTarjeta(materiaId, existente.copy(pregunta = pregunta.trim(), respuesta = respuesta.trim()))
+        }
+        return true
+    }
+
+    fun eliminarTarjeta(materiaId: Int, tarjeta: Tarjeta) {
+        viewModelScope.launch {
+            repositorio.eliminarTarjeta(materiaId, tarjeta)
+            avisar(Aviso(Mensaje.AVISO_TARJETA_ELIMINADA, alDeshacer = { repositorio.restaurarTarjeta(materiaId, tarjeta) }))
         }
     }
 

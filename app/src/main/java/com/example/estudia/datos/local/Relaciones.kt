@@ -10,16 +10,34 @@ import androidx.room.Relation
 // incluyen los de sus notas: Mapeos.kt los reparte según notaId).
 data class MateriaConDetalle(
     @Embedded val materia: MateriaEntity,
-    @Relation(parentColumn = "id", entityColumn = "materiaId")
-    val tareas: List<TareaEntity>,
-    @Relation(parentColumn = "id", entityColumn = "materiaId")
-    val eventos: List<EventoEntity>,
+    // Cada tarea viene con sus subtareas (una relación dentro de otra).
+    @Relation(entity = TareaEntity::class, parentColumn = "id", entityColumn = "materiaId")
+    val tareas: List<TareaConSubtareas>,
+    // Cada evento viene con los temas de su temario (versión 7).
+    @Relation(entity = EventoEntity::class, parentColumn = "id", entityColumn = "materiaId")
+    val eventos: List<EventoConTemas>,
     @Relation(parentColumn = "id", entityColumn = "materiaId")
     val notas: List<NotaEntity>,
     @Relation(parentColumn = "id", entityColumn = "materiaId")
     val archivos: List<ArchivoEntity>,
     @Relation(parentColumn = "id", entityColumn = "materiaId")
-    val calificaciones: List<CalificacionEntity>
+    val calificaciones: List<CalificacionEntity>,
+    @Relation(parentColumn = "id", entityColumn = "materiaId")
+    val tarjetas: List<TarjetaEntity>
+)
+
+// Un evento con los temas de su temario (versión 7).
+data class EventoConTemas(
+    @Embedded val evento: EventoEntity,
+    @Relation(parentColumn = "id", entityColumn = "eventoId")
+    val temas: List<TemaEntity>
+)
+
+// Una tarea con sus subtareas (versión 6).
+data class TareaConSubtareas(
+    @Embedded val tarea: TareaEntity,
+    @Relation(parentColumn = "id", entityColumn = "tareaId")
+    val subtareas: List<SubtareaEntity>
 )
 
 // Un usuario con todas sus materias (y, dentro de cada una, su detalle).
@@ -43,6 +61,12 @@ data class TareaConMateriaFila(
     @Embedded val tarea: TareaEntity,
     val nombreMateria: String,
     val colorMateria: Long
+)
+
+data class TareaConUsuarioFila(
+    @Embedded val tarea: TareaEntity,
+    val nombreMateria: String,
+    val usuarioId: Int
 )
 
 data class EventoConMateriaFila(

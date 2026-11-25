@@ -64,3 +64,8 @@ val BloqueVioleta = Color(0xFF6C5CE7)
 val BloqueVerde = Color(0xFF00B894)
 val BloqueNaranja = Color(0xFFFDA43C)
 val BloqueAzul = Color(0xFF0984E3)
+
+// Colores de la prioridad de las tareas.
+val PrioridadAlta = Color(0xFFE5484D)
+val PrioridadMedia = Color(0xFFF5A524)
+val PrioridadBaja = Color(0xFF00B894)

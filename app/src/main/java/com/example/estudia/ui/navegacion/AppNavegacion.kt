@@ -39,6 +39,11 @@ import com.example.estudia.ui.pantallas.AyudaScreen
 import com.example.estudia.ui.pantallas.BienvenidaScreen
 import com.example.estudia.ui.pantallas.CalendarioScreen
 import com.example.estudia.ui.pantallas.EstadisticasScreen
+import com.example.estudia.ui.pantallas.HorarioScreen
+import com.example.estudia.ui.pantallas.LogrosScreen
+import com.example.estudia.ui.pantallas.RepasoScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.estudia.ui.pantallas.InicioScreen
 import com.example.estudia.ui.pantallas.LoginScreen
 import com.example.estudia.ui.pantallas.MateriasScreen
@@ -49,6 +54,7 @@ import com.example.estudia.ui.pantallas.TemporizadorScreen
 import com.example.estudia.viewmodel.AppViewModelProvider
 import com.example.estudia.viewmodel.SesionUiState
 import com.example.estudia.viewmodel.SesionViewModel
+import com.example.estudia.viewmodel.TODAS_LAS_MATERIAS
 
 // Grafo de navegación de la app: rutas, barra inferior y el Snackbar.
 // Cada pantalla pide su propio ViewModel con viewModel(factory = ...):
@@ -183,7 +189,9 @@ fun AppNavegacion(
                 composable(Screen.Inicio.ruta) {
                     InicioScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
-                        onAbrirPerfil = { irA(Screen.Perfil) }
+                        onAbrirPerfil = { irA(Screen.Perfil) },
+                        onAbrirRacha = { navController.navigate(Screen.Estadisticas.ruta) },
+                        onRepasar = { navController.navigate(Screen.Repaso.de(TODAS_LAS_MATERIAS)) }
                     )
                 }
 
@@ -191,6 +199,7 @@ fun AppNavegacion(
                     MateriasScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.MATERIA,
+                        onRepasar = { navController.navigate(Screen.Repaso.de(it)) },
                         onCreacionAbierta = { accionPendiente = null }
                     )
                 }
@@ -199,7 +208,8 @@ fun AppNavegacion(
                     CalendarioScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.EVENTO,
-                        onCreacionAbierta = { accionPendiente = null }
+                        onCreacionAbierta = { accionPendiente = null },
+                        onAbrirHorario = { navController.navigate(Screen.Horario.ruta) }
                     )
                 }
 
@@ -216,6 +226,7 @@ fun AppNavegacion(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         onAbrirAyuda = { navController.navigate(Screen.Ayuda.ruta) },
                         onAbrirEstadisticas = { navController.navigate(Screen.Estadisticas.ruta) },
+                        onAbrirLogros = { navController.navigate(Screen.Logros.ruta) },
                         onCerrarSesion = {
                             sesionViewModel.cerrarSesion()
                             navController.navigate(Screen.Login.ruta) {
@@ -227,6 +238,30 @@ fun AppNavegacion(
 
                 composable(Screen.Estadisticas.ruta) {
                     EstadisticasScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.Horario.ruta) {
+                    HorarioScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    Screen.Repaso.ruta,
+                    arguments = listOf(navArgument(Screen.Repaso.ARGUMENTO) { type = NavType.IntType })
+                ) {
+                    RepasoScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+
+                composable(Screen.Logros.ruta) {
+                    LogrosScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         onVolver = { navController.popBackStack() }
                     )

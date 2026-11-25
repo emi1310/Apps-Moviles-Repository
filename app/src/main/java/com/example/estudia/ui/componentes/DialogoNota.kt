@@ -2,7 +2,10 @@ package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.StickyNote2
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,12 +58,22 @@ fun DialogoNota(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+        // El micrófono suma lo dictado al final del contenido.
+        val dictar = rememberDictado(
+            onTexto = { contenido = agregarDictado(contenido, it) },
+            onSinDictado = { error = R.string.error_sin_dictado }
+        )
         CampoTexto(
             value = contenido,
             onValueChange = { contenido = it },
             label = { Text(stringResource(R.string.contenido)) },
             minLines = 4,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(onClick = dictar) {
+                    Icon(Icons.Filled.Mic, contentDescription = stringResource(R.string.dictar))
+                }
+            }
         )
         TextoError(error?.let { stringResource(it) })
     }

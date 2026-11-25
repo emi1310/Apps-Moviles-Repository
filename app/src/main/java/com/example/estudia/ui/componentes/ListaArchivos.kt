@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +44,9 @@ fun ListaArchivos(
     archivos: List<Archivo>,
     color: Color,
     onAbrir: (Archivo) -> Unit,
-    onEliminar: (Archivo) -> Unit
+    onEliminar: (Archivo) -> Unit,
+    // OCR (solo en las notas): las imágenes muestran "Pasar a texto".
+    onPasarATexto: ((Archivo) -> Unit)? = null
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         archivos.forEach { archivo ->
@@ -77,6 +80,11 @@ fun ListaArchivos(
                         text = "${archivo.tamanoLegible()} · ${archivo.fechaAgregado.aTexto()}",
                         style = MaterialTheme.typography.bodySmall
                     )
+                }
+                if (onPasarATexto != null && archivo.esImagen) {
+                    IconButton(onClick = { onPasarATexto(archivo) }) {
+                        Icon(Icons.Filled.TextFields, contentDescription = stringResource(R.string.pasar_a_texto), tint = color)
+                    }
                 }
                 IconButton(onClick = { onEliminar(archivo) }) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.eliminar_archivo, archivo.nombre))

@@ -34,7 +34,9 @@ data class UsuarioEntity(
     val carrera: String? = null,
     val anio: Int? = null,
     val email: String? = null,
-    val metaHorasSemanales: Int? = null
+    val metaHorasSemanales: Int? = null,
+    // Versión 6: nombre del archivo de la foto dentro de filesDir/archivos.
+    val fotoPerfil: String? = null
 )
 
 @Entity(
@@ -76,6 +78,79 @@ data class TareaEntity(
     val materiaId: Int,
     val titulo: String,
     val fechaLimite: LocalDate?,
+    val completada: Boolean = false,
+    // Versión 6: 0 = baja, 1 = media, 2 = alta (ver Prioridad.peso). Las
+    // tareas que ya existían quedan en media.
+    @ColumnInfo(defaultValue = "1")
+    val prioridad: Int = 1,
+    // Versión 7: días antes de la fecha límite en que se avisa (null = sin aviso).
+    val avisoDiasAntes: Int? = null
+)
+
+// Versión 8: tarjetas de estudio de una materia (pregunta y respuesta), con
+// su caja de Leitner y la fecha del próximo repaso.
+@Entity(
+    tableName = "tarjetas",
+    foreignKeys = [
+        ForeignKey(
+            entity = MateriaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["materiaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("materiaId")]
+)
+data class TarjetaEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val materiaId: Int,
+    val pregunta: String,
+    val respuesta: String,
+    val caja: Int,
+    val proximoRepaso: LocalDate
+)
+
+// Versión 7: temas del temario de un examen. Se borran con su evento.
+@Entity(
+    tableName = "temas",
+    foreignKeys = [
+        ForeignKey(
+            entity = EventoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["eventoId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("eventoId")]
+)
+data class TemaEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val eventoId: Int,
+    val titulo: String,
+    val estudiado: Boolean = false
+)
+
+// Versión 6: pasos de una tarea. Si se borra la tarea (o su materia), el
+// CASCADE borra también sus subtareas.
+@Entity(
+    tableName = "subtareas",
+    foreignKeys = [
+        ForeignKey(
+            entity = TareaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["tareaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("tareaId")]
+)
+data class SubtareaEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val tareaId: Int,
+    val titulo: String,
     val completada: Boolean = false
 )
 

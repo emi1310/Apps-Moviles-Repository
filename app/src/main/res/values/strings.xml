@@ -249,6 +249,19 @@
         <item>¿Hay atajos para completar o eliminar?</item>
         <item>¿Dónde cargo mis notas y veo mi promedio?</item>
         <item>¿Para qué sirve el botón del medio de la barra?</item>
+        <item>¿Cómo le pongo prioridad o pasos a una tarea?</item>
+        <item>¿Dónde veo mi horario de clases?</item>
+        <item>¿Cómo cambio mi foto o saco una foto del pizarrón?</item>
+        <item>¿Qué son los logros?</item>
+        <item>¿Puedo silenciar el teléfono mientras estudio?</item>
+        <item>¿Puedo recibir un aviso antes de que venza una tarea?</item>
+        <item>¿Cómo preparo un examen con su temario?</item>
+        <item>¿Cómo hago una copia de seguridad?</item>
+        <item>¿Cómo funcionan las tarjetas de estudio?</item>
+        <item>¿Puedo ver mis clases en el calendario del teléfono?</item>
+        <item>¿Puedo ver mis tareas sin abrir la app?</item>
+        <item>¿Puedo dictar una nota en vez de escribirla?</item>
+        <item>¿Puedo pasar a texto una foto del pizarrón?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -263,6 +276,19 @@
         <item>Sí: en las listas, deslizá una tarea hacia la derecha para completarla, o cualquier tarea, nota o evento hacia la izquierda para eliminarlo (con \"Deshacer\").</item>
         <item>En Materias, expandí la materia y tocá \"Agregar nota de examen\" (de 1 a 10, se aprueba con 4). El promedio aparece en la tarjeta de la materia, y en Perfil → \"Estadísticas de estudio\" ves el promedio general, tu racha de días seguidos estudiando y las horas de cada semana.</item>
         <item>Cambia según la pantalla: en Materias crea una materia, en Calendario un evento y en Notas una nota. En Inicio muestra un reloj y abre el temporizador. A tu perfil y los ajustes llegás tocando el círculo con tu inicial, arriba a la derecha en Inicio.</item>
+        <item>Al crear o editar una tarea elegí la prioridad (baja, media o alta) y, si querés, agregá pasos. Los pasos se marcan de a uno desde la materia, y en Inicio podés ordenar las pendientes por fecha o por prioridad.</item>
+        <item>En el Calendario, tocá el botón de arriba a la derecha que muestra la semana: ahí ves tus clases de cada día y cuántas horas de cursada tenés por semana.</item>
+        <item>Tocá tu foto en el Perfil para sacarte una con la cámara o elegirla de la galería. Para el pizarrón, usá \"Sacar foto\" en el menú de una nota o en los archivos de una materia. La cámara pide permiso la primera vez.</item>
+        <item>Medallas que ganás estudiando: completar tareas, mantener la racha, sumar horas, cumplir tu meta o aprobar exámenes. Las ves en tu Perfil, en \"Tus logros\".</item>
+        <item>Sí: en el temporizador activá \"Silenciar el teléfono\". La primera vez te lleva a Ajustes para darle a Estudia+ acceso a No molestar. Se activa solo mientras corre la sesión y al terminar el teléfono vuelve a como estaba.</item>
+        <item>Sí: al crear o editar la tarea, con fecha límite, elegí en \"Recordarme\" el mismo día, 1, 2 o 7 días antes. El aviso llega a las 9:00 si tenés activados los Recordatorios. Además, a las 20:00 te avisamos si todavía no estudiaste y podés perder tu racha.</item>
+        <item>En el Calendario, tocá un examen: se abre su temario. Cargá los temas que entran y marcalos a medida que los estudiás; ves cuántos días faltan y cuánto llevás.</item>
+        <item>En tu Perfil tocá \"Guardar copia\" y elegí dónde guardar el archivo (por ejemplo en Drive). Para recuperar todo, tocá \"Restaurar copia\" y elegí ese archivo: se reemplazan tus datos actuales.</item>
+        <item>En Materias, expandí una materia y en \"Tarjetas de estudio\" agregá preguntas con su respuesta. Con \"Repasar\" (o desde Inicio) las vas respondiendo: si la sabías vuelve en unos días, cada vez más espaciado; si no, vuelve mañana. Así repasás más lo que te cuesta.</item>
+        <item>Sí: en el Calendario tocá el botón de arriba que dice \"Pasar al calendario del teléfono\". La primera vez pide permiso de calendario. Se crea un calendario propio llamado \"Estudia+\" con tus clases, exámenes y entregas; tocalo de nuevo cuando cambies algo para actualizarlo.</item>
+        <item>Sí: agregá el widget de Estudia+ en la pantalla de inicio del teléfono (mantené apretado un lugar vacío y elegí Widgets). Muestra tu racha y tus 3 tareas más urgentes, y se actualiza solo.</item>
+        <item>Sí: al crear o editar una nota, tocá el micrófono del campo Contenido y hablá. Lo dictado se suma al final del texto.</item>
+        <item>Sí: en los archivos de una nota, tocá \"Pasar a texto\" en la foto. El texto que encuentre se agrega al final de la nota (con \"Deshacer\"). Funciona sin internet.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -288,6 +314,7 @@
         <item quantity="other">Racha de %d días de estudio</item>
     </plurals>
     <string name="inicio_ir_perfil">Ir a tu perfil</string>
+    <string name="inicio_ver_racha">Ver tu racha</string>
     <string name="notas_subtitulo">Tus apuntes de todas las materias</string>
     <string name="calendario_subtitulo">Clases, exámenes y bloques de estudio</string>
     <string name="sin_resultados_sugerencia">Probá con otra palabra</string>
@@ -396,4 +423,199 @@
     <!-- Aviso antes de cada clase -->
     <string name="notificacion_clase_titulo">Clase de %1$s en %2$d min</string>
     <string name="notificacion_clase_texto">%1$s · de %2$s a %3$s</string>
+
+    <!-- Prioridad y subtareas de las tareas (versión 6) -->
+    <string name="prioridad">Prioridad</string>
+    <string name="prioridad_baja">Baja</string>
+    <string name="prioridad_media">Media</string>
+    <string name="prioridad_alta">Alta</string>
+    <string name="prioridad_descripcion">Prioridad %1$s</string>
+    <string name="subtareas">Pasos (opcional)</string>
+    <string name="agregar_subtarea">Agregar paso</string>
+    <string name="subtarea_numero">Paso %1$d</string>
+    <string name="quitar_subtarea">Quitar paso</string>
+    <string name="subtareas_progreso">%1$d de %2$d pasos</string>
+    <string name="inicio_orden_fecha">Por fecha</string>
+    <string name="inicio_orden_prioridad">Por prioridad</string>
+
+    <!-- Horario semanal -->
+    <string name="horario_titulo">Horario semanal</string>
+    <string name="horario_subtitulo">Tus clases de cada día de la semana</string>
+    <string name="horario_abrir">Ver horario semanal</string>
+    <string name="horario_sin_clases_dia">Sin clases</string>
+    <string name="horario_vacio">Todavía no cargaste clases</string>
+    <string name="horario_vacio_sugerencia">En el Calendario, creá un evento de tipo Clase y activá \"Repetir cada semana\".</string>
+    <string name="horario_por_semana">%1$s de cursada por semana</string>
+    <plurals name="horario_clases">
+        <item quantity="one">%1$d clase</item>
+        <item quantity="other">%1$d clases</item>
+    </plurals>
+
+    <!-- Cámara y foto de perfil -->
+    <string name="foto_perfil">Foto de perfil</string>
+    <string name="foto_cambiar">Cambiar foto de perfil</string>
+    <string name="foto_sacar">Sacar foto</string>
+    <string name="foto_galeria">Elegir de la galería</string>
+    <string name="foto_quitar">Quitar foto</string>
+    <string name="foto_perfil_texto">Sacá una foto con la cámara o elegí una de tu galería.</string>
+    <string name="permiso_camara_titulo">Permiso de cámara</string>
+    <string name="explicacion_permiso_camara">Estudia+ usa la cámara solo cuando tocás \"Sacar foto\": para tu foto de perfil o para guardar una foto del pizarrón o de un apunte. Las fotos quedan guardadas dentro de la app.</string>
+    <string name="sin_permiso_camara_titulo">Cámara bloqueada</string>
+    <string name="sin_permiso_camara">Sin el permiso de cámara no se pueden sacar fotos. Podés activarlo en Ajustes, en Permisos, Cámara.</string>
+    <string name="sin_app_camara">No se encontró una app de cámara en este teléfono</string>
+    <string name="aviso_foto_perfil_guardada">Foto de perfil actualizada</string>
+    <string name="aviso_foto_perfil_quitada">Foto de perfil quitada</string>
+
+    <!-- Logros -->
+    <string name="logros_titulo">Logros</string>
+    <string name="logros_subtitulo">Medallas que vas ganando mientras estudiás</string>
+    <string name="logros_tus_logros">Tus logros</string>
+    <string name="logros_resumen">%1$d de %2$d conseguidos</string>
+    <string name="logros_ver_todos">Ver todos tus logros</string>
+    <string name="logro_conseguido">¡Conseguido!</string>
+    <string name="logro_progreso">%1$d de %2$d</string>
+    <string name="logro_bloqueado">Todavía no conseguido</string>
+    <string name="logro_primera_tarea">Primer paso</string>
+    <string name="logro_primera_tarea_desc">Completá tu primera tarea</string>
+    <string name="logro_diez_tareas">Manos a la obra</string>
+    <string name="logro_diez_tareas_desc">Completá 10 tareas</string>
+    <string name="logro_veinticinco_tareas">Imparable</string>
+    <string name="logro_veinticinco_tareas_desc">Completá 25 tareas</string>
+    <string name="logro_racha_3">En llamas</string>
+    <string name="logro_racha_3_desc">Estudiá 3 días seguidos</string>
+    <string name="logro_racha_7">Semana perfecta</string>
+    <string name="logro_racha_7_desc">Estudiá 7 días seguidos</string>
+    <string name="logro_horas_10">Diez horas</string>
+    <string name="logro_horas_10_desc">Sumá 10 horas de estudio</string>
+    <string name="logro_horas_50">Maratonista</string>
+    <string name="logro_horas_50_desc">Sumá 50 horas de estudio</string>
+    <string name="logro_meta">Objetivo cumplido</string>
+    <string name="logro_meta_desc">Cumplí tu meta semanal de estudio</string>
+    <string name="logro_aprobado">Aprobado</string>
+    <string name="logro_aprobado_desc">Aprobá un examen (4 o más)</string>
+    <string name="logro_promedio">Cuadro de honor</string>
+    <string name="logro_promedio_desc">Llegá a un promedio general de 8</string>
+    <string name="logro_notas">Buen apuntador</string>
+    <string name="logro_notas_desc">Guardá 5 notas</string>
+
+    <!-- No molestar durante el temporizador -->
+    <string name="no_molestar_titulo">Silenciar el teléfono</string>
+    <string name="no_molestar_descripcion">Activa No molestar mientras corre el temporizador y lo apaga al terminar o pausar.</string>
+    <string name="no_molestar_sin_acceso">Falta darle a Estudia+ acceso a No molestar.</string>
+    <string name="permiso_no_molestar_titulo">Acceso a No molestar</string>
+    <string name="explicacion_permiso_no_molestar">Para silenciar el teléfono mientras estudiás, Android pide que le des a Estudia+ acceso a \"No molestar\". Se activa solo mientras corre el temporizador y, al terminar, el teléfono vuelve a como estaba. En Ajustes buscá Estudia+ y activá el permiso.</string>
+
+    <!-- Aviso de cada tarea y racha en riesgo (versión 7) -->
+    <string name="aviso_tarea">Recordarme</string>
+    <string name="aviso_no">No</string>
+    <string name="aviso_mismo_dia">El día</string>
+    <plurals name="aviso_dias_antes">
+        <item quantity="one">%1$d día antes</item>
+        <item quantity="other">%1$d días antes</item>
+    </plurals>
+    <string name="aviso_sin_fecha">Elegí una fecha límite para poder recibir un aviso.</string>
+    <string name="aviso_con_recordatorio">Con aviso</string>
+    <string name="aviso_recordatorios_apagados">El aviso llega si tenés activados los Recordatorios en tu perfil.</string>
+    <string name="notificacion_tarea_titulo">Tarea de %1$s</string>
+    <string name="notificacion_tarea_hoy">vence hoy</string>
+    <string name="notificacion_tarea_manana">vence mañana</string>
+    <plurals name="notificacion_tarea_dias">
+        <item quantity="one">vence en %1$d día</item>
+        <item quantity="other">vence en %1$d días</item>
+    </plurals>
+    <string name="notificacion_racha_titulo">¡No pierdas tu racha! 🔥</string>
+    <plurals name="notificacion_racha_texto">
+        <item quantity="one">Llevás %1$d día seguido estudiando y hoy todavía no estudiaste.</item>
+        <item quantity="other">Llevás %1$d días seguidos estudiando y hoy todavía no estudiaste.</item>
+    </plurals>
+
+    <!-- Temario de los exámenes -->
+    <string name="temario">Temario</string>
+    <string name="cerrar">Cerrar</string>
+
+    <!-- Widget -->
+    <string name="widget_descripcion">Tu racha y tus próximas tareas</string>
+    <string name="widget_racha">🔥 %1$d</string>
+    <plurals name="widget_pendientes">
+        <item quantity="one">%1$d tarea pendiente</item>
+        <item quantity="other">%1$d tareas pendientes</item>
+    </plurals>
+    <string name="widget_al_dia">¡Estás al día! No tenés tareas pendientes</string>
+    <string name="widget_sin_sesion">Abrí Estudia+ para iniciar sesión</string>
+    <!-- Dictado y OCR -->
+    <string name="dictar">Dictar</string>
+    <string name="dictar_indicacion">Dictá el contenido de la nota</string>
+    <string name="error_sin_dictado">Este teléfono no tiene reconocimiento de voz</string>
+    <string name="pasar_a_texto">Pasar a texto</string>
+    <string name="aviso_ocr_agregado">Se agregó el texto de la foto a la nota</string>
+    <string name="aviso_ocr_sin_texto">No se encontró texto en la foto</string>
+    <string name="aviso_ocr_error">No se pudo leer la foto</string>
+    <string name="temario_ver">Ver temario</string>
+    <string name="temario_progreso">%1$d de %2$d temas</string>
+    <string name="temario_agregar">Agregar tema</string>
+    <string name="temario_nuevo_tema">Nuevo tema</string>
+    <string name="temario_vacio">Cargá los temas que entran y marcalos a medida que los estudiás.</string>
+    <string name="temario_quitar">Quitar tema</string>
+    <string name="examen_hoy">Es hoy</string>
+    <string name="examen_paso">Ya pasó</string>
+    <plurals name="examen_faltan">
+        <item quantity="one">Falta %1$d día</item>
+        <item quantity="other">Faltan %1$d días</item>
+    </plurals>
+    <string name="aviso_tema_eliminado">Tema eliminado</string>
+
+    <!-- Copia de seguridad -->
+    <string name="copia_titulo">Copia de seguridad</string>
+    <string name="copia_guardar">Guardar copia</string>
+    <string name="copia_restaurar">Restaurar copia</string>
+    <string name="copia_explicacion">Guardá un archivo con todas tus materias, tareas, eventos, notas, archivos y foto. Si cambiás de teléfono, lo restaurás desde acá.</string>
+    <string name="confirmar_restaurar_copia">¿Restaurar la copia? Se reemplazan tus materias, tareas, eventos y notas actuales por las de la copia. No se puede deshacer.</string>
+    <string name="restaurar">Restaurar</string>
+    <string name="aviso_copia_guardada">Copia de seguridad guardada</string>
+    <string name="aviso_copia_restaurada">Copia restaurada</string>
+    <string name="aviso_copia_error">No se pudo guardar o leer la copia</string>
+
+    <!-- Tarjetas de estudio (versión 8) -->
+    <string name="tarjetas_titulo">Tarjetas de estudio</string>
+    <string name="tarjetas_vacio">Creá tarjetas con una pregunta y su respuesta para repasar.</string>
+    <string name="tarjeta_agregar">Agregar tarjeta</string>
+    <string name="tarjeta_nueva">Nueva tarjeta</string>
+    <string name="tarjeta_editar">Editar tarjeta</string>
+    <string name="tarjeta_pregunta">Pregunta</string>
+    <string name="tarjeta_respuesta">Respuesta</string>
+    <string name="error_tarjeta">Escribí la pregunta y la respuesta</string>
+    <string name="tarjetas_repasar">Repasar</string>
+    <plurals name="tarjetas_para_hoy">
+        <item quantity="one">%1$d para repasar hoy</item>
+        <item quantity="other">%1$d para repasar hoy</item>
+    </plurals>
+    <string name="tarjeta_caja">Caja %1$d de 5</string>
+    <string name="repaso_titulo">Repaso</string>
+    <string name="repaso_todas">Todas las materias</string>
+    <plurals name="repaso_quedan">
+        <item quantity="one">Queda %1$d tarjeta</item>
+        <item quantity="other">Quedan %1$d tarjetas</item>
+    </plurals>
+    <string name="repaso_ver_respuesta">Ver respuesta</string>
+    <string name="repaso_la_sabia">La sabía</string>
+    <string name="repaso_no_la_sabia">No la sabía</string>
+    <string name="repaso_listo">¡No hay más tarjetas para hoy!</string>
+    <plurals name="repaso_listo_detalle">
+        <item quantity="one">Repasaste %1$d tarjeta. Las que te costaron vuelven mañana.</item>
+        <item quantity="other">Repasaste %1$d tarjetas. Las que te costaron vuelven mañana.</item>
+    </plurals>
+    <string name="repaso_nada_hoy">Volvé mañana: las tarjetas aparecen cuando toca repasarlas.</string>
+    <string name="repaso_explicacion">Si la sabías, la tarjeta vuelve en unos días (cada vez más). Si no, vuelve mañana.</string>
+    <string name="aviso_tarjeta_eliminada">Tarjeta eliminada</string>
+    <string name="inicio_tarjetas_titulo">Tarjetas para repasar</string>
+
+    <!-- Calendario del teléfono -->
+    <string name="calendario_telefono">Pasar al calendario del teléfono</string>
+    <string name="calendario_estudia">Estudia+</string>
+    <string name="permiso_calendario_titulo">Permiso de calendario</string>
+    <string name="explicacion_permiso_calendario">Para que tus clases, exámenes y entregas aparezcan en la app de calendario del teléfono, Estudia+ necesita permiso para usar el calendario. Crea un calendario propio llamado \"Estudia+\" y solo toca ese.</string>
+    <string name="sin_permiso_calendario_titulo">Calendario bloqueado</string>
+    <string name="sin_permiso_calendario">Sin el permiso de calendario no se pueden pasar tus eventos. Podés activarlo en Ajustes, en Permisos, Calendario.</string>
+    <string name="aviso_calendario_sincronizado">Calendario del teléfono actualizado: %1$d eventos de Estudia+</string>
+    <string name="aviso_calendario_error">No se pudo usar el calendario del teléfono</string>
 </resources>

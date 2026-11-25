@@ -2,4 +2,10 @@
 <resources>
     <!-- Fondo de la ventana en modo oscuro: FondoOscuro de Color.kt -->
     <color name="fondo_ventana">#FF121118</color>
+    <!-- Widget en modo oscuro -->
+    <color name="widget_fondo">#FF19181F</color>
+    <color name="widget_texto">#FFECEAF4</color>
+    <color name="widget_texto_secundario">#FFA5A1B5</color>
+    <color name="widget_acento">#FFA99CFF</color>
+    <color name="widget_fuego">#FFFFB347</color>
 </resources>

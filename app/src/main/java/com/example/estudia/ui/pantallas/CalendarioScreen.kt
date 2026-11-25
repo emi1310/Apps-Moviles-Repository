@@ -1,5 +1,22 @@
 package com.example.estudia.ui.pantallas
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.EventRepeat
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.example.estudia.ui.componentes.DialogoApp
+import com.example.estudia.ui.componentes.TextoDialogo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,6 +46,10 @@ import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.CasillaDia
 import com.example.estudia.ui.componentes.DialogoEvento
+import com.example.estudia.ui.componentes.DialogoTemario
+import com.example.estudia.modelo.TipoEvento
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.RecolectarAvisos
@@ -43,7 +65,8 @@ fun CalendarioScreen(
     viewModel: CalendarioViewModel,
     // true cuando se eligió crear desde el botón "+" del dock.
     crearAlAbrir: Boolean = false,
-    onCreacionAbierta: () -> Unit = {}
+    onCreacionAbierta: () -> Unit = {},
+    onAbrirHorario: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     RecolectarAvisos(viewModel.avisos)
@@ -51,9 +74,66 @@ fun CalendarioScreen(
     // Diálogo de evento: eventoParaEditar == null significa "nuevo evento".
     var mostrarDialogo by remember { mutableStateOf(false) }
     var eventoParaEditar by remember { mutableStateOf<EventoConMateria?>(null) }
+    // Examen cuyo temario está abierto (se busca en la lista del día, así el
+    // diálogo se actualiza solo cuando cambian los temas).
+    var temarioDeEventoId by rememberSaveable { mutableStateOf<Int?>(null) }
 
     val meses = stringArrayResource(R.array.meses)
     val diasSemana = stringArrayResource(R.array.dias_semana_corto)
+
+    // ---------- Calendario del teléfono (permiso de calendario) ----------
+    // Como con los demás permisos: primero se explica, después se pide, y si
+    // lo bloqueó se ofrece ir a Ajustes. Sin permiso no se toca el calendario.
+    val context = LocalContext.current
+    val nombreCalendario = stringResource(R.string.calendario_estudia)
+    var explicarCalendario by remember { mutableStateOf(false) }
+    var calendarioBloqueado by remember { mutableStateOf(false) }
+    val pedirCalendario = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { resultado ->
+        when {
+            resultado.values.all { it } -> viewModel.sincronizarConTelefono(nombreCalendario)
+            context.buscarActividad()?.let {
+                !ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.WRITE_CALENDAR)
+            } == true -> calendarioBloqueado = true
+        }
+    }
+    val pasarAlTelefono: () -> Unit = {
+        if (PERMISOS_CALENDARIO.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
+            viewModel.sincronizarConTelefono(nombreCalendario)
+        } else {
+            explicarCalendario = true
+        }
+    }
+    if (explicarCalendario) {
+        DialogoApp(
+            titulo = stringResource(R.string.permiso_calendario_titulo),
+            icono = Icons.Filled.EventRepeat,
+            textoConfirmar = stringResource(R.string.continuar),
+            onConfirmar = {
+                explicarCalendario = false
+                pedirCalendario.launch(PERMISOS_CALENDARIO)
+            },
+            textoCancelar = stringResource(R.string.ahora_no),
+            onCancelar = { explicarCalendario = false }
+        ) {
+            TextoDialogo(stringResource(R.string.explicacion_permiso_calendario))
+        }
+    }
+    if (calendarioBloqueado) {
+        DialogoApp(
+            titulo = stringResource(R.string.sin_permiso_calendario_titulo),
+            icono = Icons.Filled.EventBusy,
+            textoConfirmar = stringResource(R.string.ir_a_ajustes),
+            onConfirmar = {
+                calendarioBloqueado = false
+                context.startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                )
+            },
+            onCancelar = { calendarioBloqueado = false }
+        ) {
+            TextoDialogo(stringResource(R.string.sin_permiso_calendario))
+        }
+    }
 
     LaunchedEffect(crearAlAbrir) {
         if (crearAlAbrir) {
@@ -73,8 +153,16 @@ fun CalendarioScreen(
                     titulo = stringResource(R.string.mi_calendario),
                     subtitulo = stringResource(R.string.calendario_subtitulo)
                 ) {
-                    FilledTonalIconButton(onClick = viewModel::irAHoy) {
-                        Icon(Icons.Filled.Today, contentDescription = stringResource(R.string.ir_a_hoy))
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FilledTonalIconButton(onClick = pasarAlTelefono) {
+                            Icon(Icons.Filled.EventRepeat, contentDescription = stringResource(R.string.calendario_telefono))
+                        }
+                        FilledTonalIconButton(onClick = onAbrirHorario) {
+                            Icon(Icons.Filled.ViewWeek, contentDescription = stringResource(R.string.horario_abrir))
+                        }
+                        FilledTonalIconButton(onClick = viewModel::irAHoy) {
+                            Icon(Icons.Filled.Today, contentDescription = stringResource(R.string.ir_a_hoy))
+                        }
                     }
                 }
 
@@ -179,15 +267,32 @@ fun CalendarioScreen(
                 ) {
                     TarjetaEventoCalendario(
                         item = item,
+                        hoy = estado.hoy,
                         onEditar = {
                             eventoParaEditar = item
                             mostrarDialogo = true
                         },
-                        onEliminar = { viewModel.eliminarEvento(item) }
+                        onEliminar = { viewModel.eliminarEvento(item) },
+                        // Solo los exámenes tienen temario.
+                        onAbrirTemario = if (item.evento.tipo == TipoEvento.EXAMEN) {
+                            { temarioDeEventoId = item.evento.id }
+                        } else null
                     )
                 }
             }
         }
+    }
+
+    estado.eventosDelDia.firstOrNull { it.evento.id == temarioDeEventoId }?.let { item ->
+        DialogoTemario(
+            evento = item.evento,
+            color = Color(item.colorMateria),
+            hoy = estado.hoy,
+            onAgregar = { viewModel.agregarTema(item.evento.id, it) },
+            onAlternar = { viewModel.alternarTema(item.evento.id, it) },
+            onEliminar = { viewModel.eliminarTema(item.evento.id, it) },
+            onCerrar = { temarioDeEventoId = null }
+        )
     }
 
     if (mostrarDialogo) {
@@ -208,4 +313,16 @@ fun CalendarioScreen(
             onCancelar = { mostrarDialogo = false }
         )
     }
+}
+
+private val PERMISOS_CALENDARIO = arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+
+// La Activity detrás del Context (para saber si el permiso quedó bloqueado).
+private fun Context.buscarActividad(): Activity? {
+    var actual: Context? = this
+    while (actual is ContextWrapper) {
+        if (actual is Activity) return actual
+        actual = actual.baseContext
+    }
+    return null
 }

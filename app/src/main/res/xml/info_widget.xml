@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configuración del widget de Estudia+: tamaño mínimo (4x2 celdas),
+     se puede agrandar y se actualiza cada 30 minutos (además, la app lo
+     actualiza cada vez que cambian las tareas o la racha). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_estudia"
+    android:previewLayout="@layout/widget_estudia"
+    android:description="@string/widget_descripcion"
+    android:widgetCategory="home_screen" />

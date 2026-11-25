@@ -1,13 +1,16 @@
 package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -29,18 +34,29 @@ import java.time.LocalDate
 // Filas que se usan en Inicio y en el Calendario.
 
 // Tarea pendiente en Inicio: checkbox, título, materia (como etiqueta de
-// color) y fecha límite (en rojo si está vencida).
+// color), prioridad, pasos hechos y fecha límite (en rojo si está vencida).
 @Composable
 fun TarjetaTareaPendiente(item: TareaConMateria, hoy: LocalDate, onAlternar: () -> Unit) {
+    val tarea = item.tarea
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(checked = item.tarea.completada, onCheckedChange = { onAlternar() })
+        Checkbox(checked = tarea.completada, onCheckedChange = { onAlternar() })
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.tarea.titulo,
+                text = tarea.titulo,
                 style = MaterialTheme.typography.bodyLarge,
-                textDecoration = if (item.tarea.completada) TextDecoration.LineThrough else null
+                textDecoration = if (tarea.completada) TextDecoration.LineThrough else null
             )
-            ChipMateria(item.nombreMateria, item.colorMateria)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ChipMateria(item.nombreMateria, item.colorMateria)
+                EtiquetaPrioridad(tarea.prioridad)
+                if (tarea.subtareas.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.subtareas_progreso, tarea.subtareasHechas, tarea.subtareas.size),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         val fecha = item.tarea.fechaLimite
         if (fecha != null) {
@@ -85,8 +101,11 @@ fun TarjetaEventoResumen(item: EventoConMateria, hoy: LocalDate) {
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(text = textoFecha(item.evento.fecha, hoy), style = MaterialTheme.typography.labelLarge)
+            // Con temario: cuántos temas van estudiados; si no, la hora.
             Text(
-                text = item.evento.horaInicio.aTexto(),
+                text = if (item.evento.temas.isNotEmpty())
+                    stringResource(R.string.temario_progreso, item.evento.temasEstudiados, item.evento.temas.size)
+                else item.evento.horaInicio.aTexto(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -94,35 +113,46 @@ fun TarjetaEventoResumen(item: EventoConMateria, hoy: LocalDate) {
     }
 }
 
-// Evento del día elegido en el Calendario: un bloque del color de la
-// materia con la hora en un bloquecito translúcido a la izquierda, el título,
-// el tipo y la materia, el ícono del tipo y el menú para editar o eliminar.
+// Evento del día elegido en el Calendario: tarjeta con la hora en una
+// pastilla del color de la materia a la izquierda, el título, el tipo y la
+// materia, el ícono del tipo y el menú para editar o eliminar. Los exámenes
+// muestran además cuánto falta y el avance del temario, y al tocarlos se
+// abre el temario (onAbrirTemario).
 @Composable
 fun TarjetaEventoCalendario(
     item: EventoConMateria,
+    hoy: LocalDate,
     onEditar: () -> Unit,
     onEliminar: () -> Unit,
+    onAbrirTemario: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    BloqueColor(color = Color(item.colorMateria), modifier = modifier.padding(vertical = 4.dp)) {
+    val color = Color(item.colorMateria)
+    val acento = colorAcentoTexto(color)
+    val evento = item.evento
+    val tocable = if (onAbrirTemario != null)
+        Modifier.clickable(onClickLabel = stringResource(R.string.temario_ver), role = Role.Button, onClick = onAbrirTemario)
+    else Modifier
+    BloqueColor(color = color, modifier = modifier.padding(vertical = 4.dp)) {
+      Column(modifier = tocable) {
         Row(
             modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Horario: inicio en grande y fin debajo.
+            // Horario: inicio en grande y fin debajo, en una pastilla del color.
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .width(64.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(BlancoTranslucido)
+                    .background(fondoSuave(color))
                     .padding(vertical = 10.dp)
             ) {
-                Text(text = item.evento.horaInicio.aTexto(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(text = item.evento.horaInicio.aTexto(), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = acento)
                 Text(
                     text = item.evento.horaFin.aTexto(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.85f)
+                    color = acento.copy(alpha = 0.8f)
                 )
             }
             Spacer(modifier = Modifier.width(14.dp))
@@ -137,7 +167,7 @@ fun TarjetaEventoCalendario(
                 Text(
                     text = "${stringResource(nombreTipo(item.evento.tipo))} · ${item.nombreMateria}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -146,7 +176,7 @@ fun TarjetaEventoCalendario(
                     Text(
                         text = stringResource(R.string.cada_dia_semana, nombreDiaSemana(item.evento.fecha)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.85f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -154,12 +184,55 @@ fun TarjetaEventoCalendario(
                 Icon(iconoTipo(item.evento.tipo), contentDescription = null, modifier = Modifier.size(22.dp))
             }
             MenuOpciones(
-                listOf(
+                listOfNotNull(
+                    onAbrirTemario?.let { OpcionMenu(stringResource(R.string.temario_ver), Icons.Filled.Checklist, alTocar = it) },
                     OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
                     OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
                 ),
                 descripcion = stringResource(R.string.opciones_de, item.evento.titulo)
             )
         }
+        // Examen: cuánto falta y cuántos temas del temario van estudiados.
+        if (onAbrirTemario != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 12.dp, end = 16.dp, bottom = 14.dp)
+            ) {
+                Text(
+                    text = textoCuentaRegresiva(evento.fecha, hoy),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = acento,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(fondoSuave(color))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                if (evento.temas.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.temario_agregar),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { evento.temasEstudiados.toFloat() / evento.temas.size },
+                        color = color,
+                        trackColor = color.copy(alpha = 0.16f),
+                        strokeCap = StrokeCap.Round,
+                        gapSize = 0.dp,
+                        drawStopIndicator = {},
+                        modifier = Modifier.weight(1f).height(6.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = stringResource(R.string.temario_progreso, evento.temasEstudiados, evento.temas.size),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+      }
     }
 }

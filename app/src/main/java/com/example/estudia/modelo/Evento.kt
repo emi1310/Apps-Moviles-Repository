@@ -22,9 +22,14 @@ data class Evento(
     val horaInicio: LocalTime,
     val horaFin: LocalTime,
     val semanal: Boolean = false,
-    val repetirHasta: LocalDate? = null
+    val repetirHasta: LocalDate? = null,
+    // Versión 7: temas que entran en un examen (el temario), para ir
+    // marcando los que ya se estudiaron.
+    val temas: List<Tema> = emptyList()
 ) {
     val inicio: LocalDateTime get() = fecha.atTime(horaInicio)
+
+    val temasEstudiados: Int get() = temas.count { it.estudiado }
 
     fun duracionMinutos(): Long {
         return Duration.between(horaInicio, horaFin).toMinutes().coerceAtLeast(0)
@@ -56,3 +61,10 @@ data class Evento(
             (hasta == null || !dia.isAfter(hasta))
     }
 }
+
+// Un tema del temario de un examen (ej: "Unidad 3: derivadas").
+data class Tema(
+    val id: Int,
+    val titulo: String,
+    val estudiado: Boolean = false
+)

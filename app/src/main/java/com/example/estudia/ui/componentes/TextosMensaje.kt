@@ -15,6 +15,8 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_ARCHIVO_GUARDADO_NOTA -> R.string.aviso_archivo_guardado_nota
     Mensaje.AVISO_CALIFICACION_ELIMINADA -> R.string.aviso_calificacion_eliminada
     Mensaje.AVISO_EVENTO_ELIMINADO -> R.string.aviso_evento_eliminado
+    Mensaje.AVISO_FOTO_PERFIL_GUARDADA -> R.string.aviso_foto_perfil_guardada
+    Mensaje.AVISO_FOTO_PERFIL_QUITADA -> R.string.aviso_foto_perfil_quitada
     Mensaje.AVISO_MATERIA_ARCHIVADA -> R.string.aviso_materia_archivada
     Mensaje.AVISO_MATERIA_DESARCHIVADA -> R.string.aviso_materia_desarchivada
     Mensaje.AVISO_MATERIA_ELIMINADA -> R.string.aviso_materia_eliminada
@@ -28,6 +30,16 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_SESION_MUY_CORTA -> R.string.aviso_sesion_muy_corta
     Mensaje.AVISO_SIN_PERMISO_NOTIFICACIONES -> R.string.aviso_sin_permiso_notificaciones
     Mensaje.AVISO_TAREA_ELIMINADA -> R.string.aviso_tarea_eliminada
+    Mensaje.AVISO_TEMA_ELIMINADO -> R.string.aviso_tema_eliminado
+    Mensaje.AVISO_TARJETA_ELIMINADA -> R.string.aviso_tarjeta_eliminada
+    Mensaje.AVISO_CALENDARIO_ERROR -> R.string.aviso_calendario_error
+    Mensaje.AVISO_CALENDARIO_SINCRONIZADO -> R.string.aviso_calendario_sincronizado
+    Mensaje.AVISO_OCR_AGREGADO -> R.string.aviso_ocr_agregado
+    Mensaje.AVISO_OCR_SIN_TEXTO -> R.string.aviso_ocr_sin_texto
+    Mensaje.AVISO_OCR_ERROR -> R.string.aviso_ocr_error
+    Mensaje.AVISO_COPIA_GUARDADA -> R.string.aviso_copia_guardada
+    Mensaje.AVISO_COPIA_RESTAURADA -> R.string.aviso_copia_restaurada
+    Mensaje.AVISO_COPIA_ERROR -> R.string.aviso_copia_error
     Mensaje.ERROR_COMPLETAR_CAMPOS -> R.string.error_completar_campos
     Mensaje.ERROR_CONTRASENA_CORTA -> R.string.error_contrasena_corta
     Mensaje.ERROR_CREDENCIALES -> R.string.error_credenciales

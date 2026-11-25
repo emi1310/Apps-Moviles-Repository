@@ -15,6 +15,13 @@ sealed class Screen(val ruta: String) {
     object Ayuda : Screen("ayuda")
     object Temporizador : Screen("temporizador")
     object Estadisticas : Screen("estadisticas")
+    object Horario : Screen("horario")
+    object Logros : Screen("logros")
+    // Repaso de tarjetas: lleva el id de la materia (-1 = todas).
+    object Repaso : Screen("repaso/{materiaId}") {
+        const val ARGUMENTO = "materiaId"
+        fun de(materiaId: Int) = "repaso/$materiaId"
+    }
 }
 
 // Pantallas que muestran la barra inferior.
