@@ -41,37 +41,57 @@ import java.time.LocalDate
 
 // Filas que se usan en Inicio y en el Calendario.
 
-// Tarea pendiente en Inicio: checkbox, título, materia (como etiqueta de
-// color), prioridad, pasos hechos y fecha límite (en rojo si está vencida).
+// Tarea pendiente en Inicio: checkbox; arriba el título (hasta 2 renglones)
+// con la fecha límite a la derecha (en rojo si está vencida); abajo las
+// etiquetas: materia, prioridad y pasos hechos. Las etiquetas van en un
+// FlowRow: si no entran en un renglón pasan al siguiente en lugar de
+// aplastarse (antes "Alta" y "1 de 3 pasos" quedaban letra por letra).
 @Composable
 fun TarjetaTareaPendiente(item: TareaConMateria, hoy: LocalDate, onAlternar: () -> Unit) {
     val tarea = item.tarea
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = tarea.completada, onCheckedChange = { onAlternar() })
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = tarea.titulo,
-                style = MaterialTheme.typography.bodyLarge,
-                textDecoration = if (tarea.completada) TextDecoration.LineThrough else null
-            )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Text(
+                    text = tarea.titulo,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textDecoration = if (tarea.completada) TextDecoration.LineThrough else null,
+                    modifier = Modifier.weight(1f)
+                )
+                val fecha = tarea.fechaLimite
+                if (fecha != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    EtiquetaFecha(textoFecha(fecha, hoy), vencida = tarea.estaVencida(hoy))
+                }
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ChipMateria(item.nombreMateria, item.colorMateria)
                 EtiquetaPrioridad(tarea.prioridad)
                 if (tarea.subtareas.isNotEmpty()) {
-                    Text(
-                        text = stringResource(R.string.subtareas_progreso, tarea.subtareasHechas, tarea.subtareas.size),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Pasos hechos, como pastilla gris con el ícono de lista.
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Icon(Icons.Outlined.Checklist, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(R.string.subtareas_progreso, tarea.subtareasHechas, tarea.subtareas.size),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
         }
-        val fecha = item.tarea.fechaLimite
-        if (fecha != null) {
-            EtiquetaFecha(textoFecha(fecha, hoy), vencida = item.tarea.estaVencida(hoy))
-        }
     }
-    Spacer(modifier = Modifier.height(4.dp))
 }
 
 // Fecha dentro de una pastilla; roja si la tarea está vencida.
@@ -82,6 +102,8 @@ fun EtiquetaFecha(texto: String, vencida: Boolean) {
         text = texto,
         style = MaterialTheme.typography.labelMedium,
         color = color,
+        maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(color.copy(alpha = 0.10f))

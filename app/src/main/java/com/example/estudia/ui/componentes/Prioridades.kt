@@ -54,7 +54,7 @@ fun EtiquetaPrioridad(prioridad: Prioridad, modifier: Modifier = Modifier) {
             .clearAndSetSemantics { contentDescription = descripcion }
             .clip(RoundedCornerShape(50))
             .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(Icons.Outlined.Flag, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
@@ -62,7 +62,8 @@ fun EtiquetaPrioridad(prioridad: Prioridad, modifier: Modifier = Modifier) {
         Text(
             text = nombrePrioridad(prioridad),
             style = MaterialTheme.typography.labelSmall,
-            color = color
+            color = color,
+            maxLines = 1
         )
     }
 }

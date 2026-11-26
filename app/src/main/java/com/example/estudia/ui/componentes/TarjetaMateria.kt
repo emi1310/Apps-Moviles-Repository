@@ -384,9 +384,11 @@ fun FilaTarea(
                 }
                 val conAviso = !tarea.completada && tarea.avisoDiasAntes != null && tarea.fechaLimite != null
                 if (!tarea.completada && tarea.prioridad != Prioridad.MEDIA || tarea.subtareas.isNotEmpty() || conAviso) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    // FlowRow: si no entran en un renglón, pasan al siguiente.
+                    FlowRow(
+                        itemVerticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier.padding(top = 2.dp)
                     ) {
                         if (!tarea.completada) EtiquetaPrioridad(tarea.prioridad)
@@ -402,7 +404,8 @@ fun FilaTarea(
                             Text(
                                 text = stringResource(R.string.subtareas_progreso, tarea.subtareasHechas, tarea.subtareas.size),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
                             )
                         }
                     }
