@@ -64,6 +64,10 @@ import com.example.estudia.ui.pantallas.AsistenciaScreen
 import com.example.estudia.ui.pantallas.BusquedaScreen
 import com.example.estudia.ui.pantallas.CarreraScreen
 import com.example.estudia.ui.pantallas.FinalesScreen
+import com.example.estudia.ui.pantallas.BibliografiaScreen
+import com.example.estudia.ui.pantallas.MapasScreen
+import com.example.estudia.ui.pantallas.AsistenteScreen
+import com.example.estudia.ui.pantallas.MapaEditorScreen
 import com.example.estudia.ui.pantallas.NotaNecesariaScreen
 import com.example.estudia.ui.pantallas.QuizScreen
 import com.example.estudia.ui.pantallas.ResumenSemanalScreen
@@ -262,6 +266,7 @@ fun AppNavegacion(
                         onNotaNecesaria = { navController.navigate(Screen.NotaNecesaria.de(it)) },
                         onAbrirCarrera = { navController.navigate(Screen.Carrera.ruta) },
                         onAbrirFinales = { navController.navigate(Screen.Finales.ruta) },
+                        onAbrirBibliografia = { navController.navigate(Screen.Bibliografia.ruta) },
                         onCreacionAbierta = { accionPendiente = null }
                     )
                 }
@@ -281,12 +286,17 @@ fun AppNavegacion(
                     )
                 }
 
+                composable(Screen.Asistente.ruta) {
+                    AsistenteScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory))
+                }
+
                 composable(Screen.Notas.ruta) {
                     NotasScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.NOTA,
                         busqueda = textoBusqueda,
-                        onCreacionAbierta = { accionPendiente = null }
+                        onCreacionAbierta = { accionPendiente = null },
+                        onAbrirMapas = { navController.navigate(Screen.Mapas.ruta) }
                     )
                 }
 
@@ -360,6 +370,22 @@ fun AppNavegacion(
                     FinalesScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
                 }
 
+                composable(Screen.Bibliografia.ruta) {
+                    BibliografiaScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(Screen.Mapas.ruta) {
+                    MapasScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() },
+                        onAbrir = { navController.navigate(Screen.Mapa.de(it)) }
+                    )
+                }
+
+                composable(Screen.Mapa.ruta, arguments = listOf(navArgument("mapaId") { type = NavType.IntType })) {
+                    MapaEditorScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
                 composable(Screen.ResumenSemanal.ruta) {
                     ResumenSemanalScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
                 }
@@ -376,6 +402,8 @@ fun AppNavegacion(
                                 TipoResultado.EVENTO -> irA(Screen.Calendario)
                                 TipoResultado.CARRERA -> navController.navigate(Screen.Carrera.ruta)
                                 TipoResultado.FINAL -> navController.navigate(Screen.Finales.ruta)
+                                TipoResultado.FUENTE -> navController.navigate(Screen.Bibliografia.ruta)
+                                TipoResultado.MAPA -> navController.navigate(Screen.Mapas.ruta)
                             }
                         }
                     )

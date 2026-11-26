@@ -12,6 +12,8 @@ import com.example.estudia.modelo.CategoriaArchivo
 import com.example.estudia.modelo.Feriado
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
+import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.MapaMental
 import java.time.format.DateTimeFormatter
 import com.example.estudia.datos.local.CalificacionDao
 import com.example.estudia.datos.local.EventoDao
@@ -553,12 +555,13 @@ class RepositorioEstudiaImpl(
             )
         ).toInt()
         insertarMaterias(usuarioId, usuario.materias)
-        insertarCarrera(usuarioId, usuario.planEstudio, usuario.finales)
+        insertarCarrera(usuarioId, usuario.planEstudio, usuario.finales, usuario.fuentes, usuario.mapas)
     }
 
-    // Inserta el plan de estudios y los finales como nuevos. Los ids de las
+    // Inserta el plan de estudios, los finales, la bibliografía y los mapas
+    // mentales como nuevos. Los ids de las
     // correlativas se traducen a los ids nuevos que genera SQLite.
-    private suspend fun insertarCarrera(usuarioId: Int, plan: List<MateriaPlan>, finales: List<MesaFinal>) {
+    private suspend fun insertarCarrera(usuarioId: Int, plan: List<MateriaPlan>, finales: List<MesaFinal>, fuentes: List<Fuente>, mapas: List<MapaMental>) {
         val idsNuevos = mutableMapOf<Int, Int>()
         plan.forEach { materia ->
             idsNuevos[materia.id] = carreraDao.insertarMateriaPlan(
@@ -572,6 +575,8 @@ class RepositorioEstudiaImpl(
             )
         }
         finales.forEach { carreraDao.insertarFinal(it.aEntidad(usuarioId).copy(id = 0)) }
+        fuentes.forEach { carreraDao.insertarFuente(it.aEntidad(usuarioId).copy(id = 0)) }
+        mapas.forEach { carreraDao.insertarMapa(it.aEntidad(usuarioId).copy(id = 0)) }
     }
 
     // Inserta materias con todo su contenido como nuevas (los ids del objeto
@@ -666,6 +671,44 @@ class RepositorioEstudiaImpl(
         carreraDao.insertarFinal(final.aEntidad(usuarioId))
     }
 
+    // ---------- Bibliografía ----------
+
+    override suspend fun agregarFuente(usuarioId: Int, fuente: Fuente): Fuente {
+        val id = carreraDao.insertarFuente(fuente.aEntidad(usuarioId).copy(id = 0))
+        return fuente.copy(id = id.toInt())
+    }
+
+    override suspend fun actualizarFuente(usuarioId: Int, fuente: Fuente) {
+        carreraDao.actualizarFuente(fuente.aEntidad(usuarioId))
+    }
+
+    override suspend fun eliminarFuente(usuarioId: Int, fuente: Fuente) {
+        carreraDao.eliminarFuente(fuente.aEntidad(usuarioId))
+    }
+
+    override suspend fun restaurarFuente(usuarioId: Int, fuente: Fuente) {
+        carreraDao.insertarFuente(fuente.aEntidad(usuarioId))
+    }
+
+    // ---------- Mapas mentales ----------
+
+    override suspend fun agregarMapa(usuarioId: Int, mapa: MapaMental): MapaMental {
+        val id = carreraDao.insertarMapa(mapa.aEntidad(usuarioId).copy(id = 0))
+        return mapa.copy(id = id.toInt())
+    }
+
+    override suspend fun actualizarMapa(usuarioId: Int, mapa: MapaMental) {
+        carreraDao.actualizarMapa(mapa.aEntidad(usuarioId))
+    }
+
+    override suspend fun eliminarMapa(usuarioId: Int, mapa: MapaMental) {
+        carreraDao.eliminarMapa(mapa.aEntidad(usuarioId))
+    }
+
+    override suspend fun restaurarMapa(usuarioId: Int, mapa: MapaMental) {
+        carreraDao.insertarMapa(mapa.aEntidad(usuarioId))
+    }
+
     // ---------- Exportar a PDF ----------
 
     override suspend fun exportarNotaPdf(nota: Nota, nombreMateria: String): String? =
@@ -716,11 +759,13 @@ class RepositorioEstudiaImpl(
         usuario.materias.forEach { materiaDao.eliminar(it.aEntidad(usuario.id)) }
         usuario.planEstudio.forEach { carreraDao.eliminarMateriaPlan(it.aEntidad(usuario.id)) }
         usuario.finales.forEach { carreraDao.eliminarFinal(it.aEntidad(usuario.id)) }
+        usuario.fuentes.forEach { carreraDao.eliminarFuente(it.aEntidad(usuario.id)) }
+        usuario.mapas.forEach { carreraDao.eliminarMapa(it.aEntidad(usuario.id)) }
         usuarioDao.actualizarPerfil(usuario.id, copia.nombre, copia.carrera, copia.anio, copia.email)
         usuarioDao.actualizarMetaSemanal(usuario.id, copia.metaHorasSemanales)
         usuarioDao.actualizarFotoPerfil(usuario.id, copia.fotoPerfil)
         insertarMaterias(usuario.id, copia.materias)
-        insertarCarrera(usuario.id, copia.planEstudio, copia.finales)
+        insertarCarrera(usuario.id, copia.planEstudio, copia.finales, copia.fuentes, copia.mapas)
         return true
     }
 }

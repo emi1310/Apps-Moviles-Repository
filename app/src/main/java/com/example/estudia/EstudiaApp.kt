@@ -3,6 +3,10 @@ package com.example.estudia
 import android.app.Application
 import android.app.UiModeManager
 import android.os.Build
+import com.example.estudia.datos.AsistenteIA
+import com.example.estudia.datos.ClavesIA
+import com.example.estudia.datos.ClavesIACifradas
+import com.example.estudia.datos.GeminiCliente
 import com.example.estudia.datos.AlmacenamientoArchivos
 import com.example.estudia.datos.CopiaDeSeguridad
 import com.example.estudia.datos.ExportadorPdf
@@ -40,6 +44,12 @@ class EstudiaApp : Application() {
     private val preferencias by lazy { PreferenciasDataStore(this) }
 
     // by lazy: se crean la primera vez que alguien los pide.
+    // Asistente IA (Gemini, plan gratis). Cada usuario conecta su propia clave
+    // (guardada cifrada en clavesIA); la de gemini.properties, si existe, es
+    // la de la app y se usa cuando el usuario no conectó la suya.
+    val asistente: AsistenteIA by lazy { GeminiCliente(BuildConfig.GEMINI_MODELO) }
+    val clavesIA: ClavesIA by lazy { ClavesIACifradas(this) }
+
     val repositorio: RepositorioEstudia by lazy {
         val db = AppDatabase.obtenerInstancia(this)
         RepositorioEstudiaImpl(

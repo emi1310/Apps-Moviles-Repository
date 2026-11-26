@@ -45,6 +45,13 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_EVALUACION_ELIMINADA -> R.string.aviso_evaluacion_eliminada
     Mensaje.AVISO_EVALUACIONES_IMPORTADAS -> R.string.aviso_evaluaciones_importadas
     Mensaje.AVISO_FINAL_ELIMINADO -> R.string.aviso_final_eliminado
+    Mensaje.AVISO_FUENTE_ELIMINADA -> R.string.aviso_fuente_eliminada
+    Mensaje.AVISO_MAPA_ELIMINADO -> R.string.aviso_mapa_eliminado
+    Mensaje.AVISO_IDEA_ELIMINADA -> R.string.aviso_idea_eliminada
+    Mensaje.AVISO_TARJETAS_IA_GUARDADAS -> R.string.aviso_tarjetas_ia_guardadas
+    Mensaje.AVISO_NOTA_IA_GUARDADA -> R.string.aviso_nota_ia_guardada
+    Mensaje.AVISO_IA_CONECTADA -> R.string.aviso_ia_conectada
+    Mensaje.AVISO_IA_DESCONECTADA -> R.string.aviso_ia_desconectada
     Mensaje.AVISO_FINAL_APROBADO_PLAN -> R.string.aviso_final_aprobado_plan
     Mensaje.AVISO_PDF_ERROR -> R.string.aviso_pdf_error
     Mensaje.AVISO_FERIADOS_CALENDARIO -> R.string.aviso_feriados_calendario

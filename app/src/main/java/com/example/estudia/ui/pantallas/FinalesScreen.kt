@@ -47,6 +47,7 @@ import com.example.estudia.ui.componentes.OpcionMenu
 import com.example.estudia.ui.componentes.PantallaDetalle
 import com.example.estudia.ui.componentes.PastillaEstado
 import com.example.estudia.ui.componentes.RecolectarAvisos
+import com.example.estudia.ui.componentes.SugerenciasMateria
 import com.example.estudia.ui.componentes.TextoError
 import com.example.estudia.ui.componentes.TituloLista
 import com.example.estudia.ui.componentes.texto
@@ -237,18 +238,7 @@ private fun DialogoFinal(
             modifier = Modifier.fillMaxWidth()
         )
         // Las materias de la app y las regulares del plan, para elegir con un toque.
-        if (sugerencias.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                sugerencias.forEach { nombre ->
-                    PastillaSugerencia(
-                        nombre = nombre,
-                        color = colores[nombre.lowercase()]?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
-                        elegida = materia.trim().equals(nombre, ignoreCase = true),
-                        alTocar = { materia = nombre; error = null }
-                    )
-                }
-            }
-        }
+        SugerenciasMateria(sugerencias, colores, elegida = materia) { materia = it; error = null }
         EtiquetaCampo(stringResource(R.string.finales_fecha_mesa))
         CampoFecha(fecha = mesa, onCambiar = { mesa = it; error = null }, modifier = Modifier.fillMaxWidth())
         EtiquetaCampo(stringResource(R.string.finales_cierre))
@@ -274,31 +264,6 @@ private fun DialogoFinal(
             Switch(checked = inscripto, onCheckedChange = { inscripto = it })
         }
         TextoError(error?.let { stringResource(it.texto()) })
-    }
-}
-
-// Pastilla para elegir una materia sugerida: con el punto de su color; la
-// elegida se pinta entera de ese color.
-@Composable
-private fun PastillaSugerencia(nombre: String, color: Color, elegida: Boolean, alTocar: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (elegida) color else color.copy(alpha = 0.14f))
-            .clickable(role = Role.RadioButton, onClick = alTocar)
-            .semantics { selected = elegida }
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (elegida) Color.White else color))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = nombre,
-            style = MaterialTheme.typography.labelLarge,
-            color = if (elegida) Color.White else MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 

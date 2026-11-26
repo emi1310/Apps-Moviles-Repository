@@ -130,7 +130,13 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         finales = listOf(
             MesaFinal(0, "Matemáticas I", hoy.plusDays(12), cierreInscripcion = hoy.plusDays(2), vencimientoRegularidad = hoy.plusMonths(8)),
             MesaFinal(0, "Programación I", hoy.minusDays(30), inscripto = true, nota = 8.0)
-        )
+        ),
+        fuentes = listOf(
+            Fuente(0, "Matemática II", TipoFuente.LIBRO, "Stewart, J.", 2018, "Cálculo de varias variables", origen = "Cengage Learning", comentario = "Capítulos 14 y 15 para el parcial"),
+            Fuente(0, "Física I", TipoFuente.APUNTE, "Cátedra de Física I", 2025, "Guía de trabajos prácticos", origen = "Facultad de Ingeniería"),
+            Fuente(0, "Diseño web", TipoFuente.WEB, "", null, "Guía de CSS", origen = "MDN Web Docs", enlace = "https://developer.mozilla.org/es/docs/Web/CSS")
+        ),
+        mapas = listOf(mapaDePrueba(hoy))
     )
 }
 
@@ -147,3 +153,16 @@ private fun planDePrueba(): List<MateriaPlan> = listOf(
     MateriaPlan(8, "Base de datos", 3, EstadoPlan.PENDIENTE, correlativas = listOf(7)),
     MateriaPlan(9, "Práctica profesional", 3, EstadoPlan.PENDIENTE, correlativas = listOf(4, 7))
 )
+
+// Mapa mental de ejemplo: la idea central con tres ramas (las posiciones
+// las calcula agregarIdea, como cuando se arma desde la app).
+private fun mapaDePrueba(hoy: LocalDate): MapaMental {
+    var mapa = MapaMental.nuevo(0, "Física I", "Leyes de Newton", hoy)
+    mapa = mapa.agregarIdea(1, "1ª: Inercia").first
+    mapa = mapa.agregarIdea(1, "2ª: F = m · a").first
+    mapa = mapa.agregarIdea(1, "3ª: Acción y reacción").first
+    mapa = mapa.agregarIdea(2, "Un cuerpo sigue como está si nada lo empuja").first
+    mapa = mapa.agregarIdea(3, "Más masa, más fuerza para acelerar").first
+    mapa = mapa.agregarIdea(4, "Ej: al remar, el agua empuja el bote").first
+    return mapa
+}

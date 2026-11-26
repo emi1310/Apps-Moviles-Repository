@@ -42,6 +42,8 @@ import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.StickyNote2
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -110,14 +112,18 @@ private val itemsDock = listOf(
     ItemDock(Screen.Inicio, Icons.Filled.Home, Icons.Outlined.Home, R.string.inicio),
     ItemDock(Screen.Materias, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook, R.string.materias),
     ItemDock(Screen.Calendario, Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth, R.string.calendario),
-    ItemDock(Screen.Notas, Icons.Filled.StickyNote2, Icons.Outlined.StickyNote2, R.string.notas)
+    ItemDock(Screen.Notas, Icons.Filled.StickyNote2, Icons.Outlined.StickyNote2, R.string.notas),
+    ItemDock(Screen.Asistente, Icons.Filled.AutoAwesome, Icons.Outlined.AutoAwesome, R.string.asistente)
 )
 
 private val AltoDock = 60.dp
-private val Separacion = 10.dp
+// El + y la lupa son más chicos que la pastilla: así le queda más lugar a
+// las cinco secciones.
+private val TamanoCirculo = 48.dp
+private val Separacion = 8.dp
 
 // Dock de navegación de vidrio esmerilado:
-// - una pastilla con las 4 secciones (la elegida con un círculo suave detrás),
+// - una pastilla con las 5 secciones (la última, el Asistente IA) (la elegida con un círculo suave detrás),
 // - un círculo violeta con el "+" (su ícono cambia según la pantalla),
 // - un círculo de vidrio con la lupa.
 // Al tocar la lupa en Materias, Calendario o Notas, el dock se convierte en
@@ -184,7 +190,7 @@ fun DockFlotante(
     }
 }
 
-// Pastilla de vidrio con las cuatro secciones.
+// Pastilla de vidrio con las cinco secciones.
 @Composable
 private fun PastillaSecciones(rutaActual: String?, onSeleccionar: (Screen) -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -223,8 +229,12 @@ private fun RowScope.BotonDock(item: ItemDock, rutaActual: String?, onSelecciona
     val fondoElegido = if (oscuro) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
         Box(
+            // Con cinco secciones en un teléfono angosto no siempre entran 46 dp:
+            // el círculo usa el ancho que haya (hasta 46 dp) y queda redondo.
             modifier = Modifier
-                .size(46.dp)
+                .widthIn(max = 46.dp)
+                .fillMaxWidth()
+                .aspectRatio(1f)
                 .drawBehind {
                     drawCircle(fondoElegido, radius = size.minDimension / 2 * escalaFondo)
                 }
@@ -258,7 +268,7 @@ private fun CirculoVidrio(icono: ImageVector, descripcion: String, tinte: Color,
     Box(
         modifier = Modifier
             .graphicsLayer { scaleX = escala; scaleY = escala }
-            .size(AltoDock)
+            .size(TamanoCirculo)
             .vidrio(CircleShape)
             .clickable(interactionSource = interaccion, indication = LocalIndication.current, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -347,7 +357,7 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
     Box(
         modifier = Modifier
             .graphicsLayer { scaleX = escala; scaleY = escala }
-            .size(AltoDock)
+            .size(TamanoCirculo)
             .drawBehind {
                 // Resplandor violeta.
                 val centro = Offset(size.width / 2, size.height / 2 + 6.dp.toPx())
@@ -392,7 +402,7 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
                 imageVector = iconoAccion(actual),
                 contentDescription = descripcion,
                 tint = Color.White,
-                modifier = Modifier.size(26.dp).graphicsLayer { rotationZ = giro.value }
+                modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = giro.value }
             )
         }
     }

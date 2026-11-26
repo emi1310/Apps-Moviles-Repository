@@ -30,6 +30,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Asistente IA (Gemini). Cada usuario conecta su clave desde la app; la
+        // de gemini.properties (opcional, no se sube al repositorio; ver
+        // gemini.properties.ejemplo) es un respaldo para toda la app.
+        val propiedadesGemini = Properties().apply {
+            rootProject.file("gemini.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        fun textoBuildConfig(valor: String) = "\"" + valor.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+        buildConfigField("String", "GEMINI_API_KEY", textoBuildConfig(propiedadesGemini.getProperty("GEMINI_API_KEY", "").trim()))
+        buildConfigField("String", "GEMINI_MODELO", textoBuildConfig(propiedadesGemini.getProperty("GEMINI_MODELO", "gemini-3.5-flash-lite").trim()))
     }
 
     // Firma del APK de release. Los datos de la clave están en
@@ -66,6 +76,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

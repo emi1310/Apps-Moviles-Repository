@@ -8,6 +8,8 @@ import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.LocalLibrary
+import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material.icons.outlined.WorkspacePremium
@@ -107,6 +109,8 @@ private fun tituloTipo(tipo: TipoResultado): Int = when (tipo) {
     TipoResultado.TARJETA -> R.string.busqueda_tarjetas
     TipoResultado.CARRERA -> R.string.busqueda_carrera
     TipoResultado.FINAL -> R.string.busqueda_finales
+    TipoResultado.FUENTE -> R.string.busqueda_bibliografia
+    TipoResultado.MAPA -> R.string.busqueda_mapas
 }
 
 private fun iconoTipo(tipo: TipoResultado): ImageVector = when (tipo) {
@@ -117,4 +121,6 @@ private fun iconoTipo(tipo: TipoResultado): ImageVector = when (tipo) {
     TipoResultado.TARJETA -> Icons.Outlined.Style
     TipoResultado.CARRERA -> Icons.Outlined.School
     TipoResultado.FINAL -> Icons.Outlined.WorkspacePremium
+    TipoResultado.FUENTE -> Icons.Outlined.LocalLibrary
+    TipoResultado.MAPA -> Icons.Outlined.AccountTree
 }

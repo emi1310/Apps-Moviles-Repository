@@ -48,8 +48,10 @@ import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.TarjetaAcceso
 import com.example.estudia.ui.theme.BloqueNaranja
+import com.example.estudia.ui.theme.BloqueAzul
 import com.example.estudia.ui.theme.BloqueVioleta
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.MateriasViewModel
@@ -71,9 +73,10 @@ fun MateriasScreen(
     // Quiz con las tarjetas y "¿Qué nota necesito?" de esa materia.
     onQuiz: (Int) -> Unit = {},
     onNotaNecesaria: (Int) -> Unit = {},
-    // Accesos de arriba: el plan de estudios y las mesas de finales.
+    // Accesos de arriba: el plan de estudios, las mesas de finales y la bibliografía.
     onAbrirCarrera: () -> Unit = {},
-    onAbrirFinales: () -> Unit = {}
+    onAbrirFinales: () -> Unit = {},
+    onAbrirBibliografia: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
@@ -137,6 +140,11 @@ fun MateriasScreen(
                     TarjetaAcceso(stringResource(R.string.carrera_titulo), stringResource(R.string.acceso_carrera), Icons.Outlined.School, BloqueVioleta, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirCarrera)
                     TarjetaAcceso(stringResource(R.string.finales_titulo), stringResource(R.string.acceso_finales), Icons.Outlined.WorkspacePremium, BloqueNaranja, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirFinales)
                 }
+                // La bibliografía, a lo ancho abajo (tres juntas no entran).
+                TarjetaAcceso(
+                    stringResource(R.string.biblio_titulo), stringResource(R.string.acceso_biblio), Icons.Outlined.LocalLibrary, BloqueAzul,
+                    Modifier.fillMaxWidth().padding(bottom = 12.dp), apilada = false, alTocar = onAbrirBibliografia
+                )
             }
 
             if (estado.buscando) {

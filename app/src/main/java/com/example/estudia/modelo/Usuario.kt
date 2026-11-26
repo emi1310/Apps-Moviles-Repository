@@ -25,7 +25,11 @@ data class Usuario(
     val materias: List<Materia> = emptyList(),
     // Versión 9: plan de estudios ("Mi carrera") y mesas de finales.
     val planEstudio: List<MateriaPlan> = emptyList(),
-    val finales: List<MesaFinal> = emptyList()
+    val finales: List<MesaFinal> = emptyList(),
+    // Versión 11: bibliografía (libros, artículos, webs y apuntes).
+    val fuentes: List<Fuente> = emptyList(),
+    // Versión 12: mapas mentales.
+    val mapas: List<MapaMental> = emptyList()
 ) {
 
     // Cuenta el total de notas sumando las notas de todas las materias.

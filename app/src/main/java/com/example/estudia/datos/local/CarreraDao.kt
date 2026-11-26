@@ -57,4 +57,26 @@ interface CarreraDao {
 
     @Delete
     suspend fun eliminarFinal(final: FinalEntity)
+
+    // ---------- Bibliografía (versión 11) ----------
+
+    @Insert
+    suspend fun insertarFuente(fuente: FuenteEntity): Long
+
+    @Update
+    suspend fun actualizarFuente(fuente: FuenteEntity)
+
+    @Delete
+    suspend fun eliminarFuente(fuente: FuenteEntity)
+
+    // ---------- Mapas mentales (versión 12) ----------
+
+    @Insert
+    suspend fun insertarMapa(mapa: MapaEntity): Long
+
+    @Update
+    suspend fun actualizarMapa(mapa: MapaEntity)
+
+    @Delete
+    suspend fun eliminarMapa(mapa: MapaEntity)
 }

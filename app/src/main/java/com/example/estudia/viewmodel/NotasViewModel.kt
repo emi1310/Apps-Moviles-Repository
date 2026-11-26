@@ -5,6 +5,7 @@ import com.example.estudia.datos.NotaEncontrada
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.Fuente
 import com.example.estudia.modelo.Nota
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,9 @@ data class NotasUiState(
     val notas: List<NotaConMateria> = emptyList(),
     val filtro: FiltroNotas = FiltroNotas.TODAS,
     val busqueda: String = "",
-    val materiasActivas: List<Materia> = emptyList()
+    val materiasActivas: List<Materia> = emptyList(),
+    // La bibliografía, para "Citar" desde una nota.
+    val fuentes: List<Fuente> = emptyList()
 )
 
 // ViewModel de "Mis Notas": filtros, buscador y adjuntos de cada nota.
@@ -66,7 +69,8 @@ class NotasViewModel(
                 notas = filtradas,
                 filtro = filtroActual,
                 busqueda = texto,
-                materiasActivas = u?.materias.orEmpty().filter { !it.archivada }
+                materiasActivas = u?.materias.orEmpty().filter { !it.archivada },
+                fuentes = u?.fuentes.orEmpty()
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NotasUiState())
 

@@ -1,0 +1,13 @@
+# Clave del asistente IA para TODA la app (opcional).
+#
+# Cada usuario puede conectar su propia clave gratis desde la app (Asistente
+# -> la llave de arriba) y esa es la que se usa. Esta clave solo sirve como
+# respaldo para los usuarios que no conectaron la suya: queda dentro del APK,
+# así que solo conviene para probar o si el APK no se reparte.
+#
+# Para usarla, copiá este archivo como "gemini.properties" (en la misma
+# carpeta) y pegá la clave. gemini.properties no se sube a git. La clave se
+# saca gratis en https://aistudio.google.com/apikey ("Create API key").
+GEMINI_API_KEY=
+# Modelo (opcional). gemini-3.5-flash-lite es gratis y el más rápido.
+GEMINI_MODELO=gemini-3.5-flash-lite

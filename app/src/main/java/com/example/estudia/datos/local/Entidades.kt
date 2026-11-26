@@ -374,6 +374,60 @@ data class FinalEntity(
     val nota: Double? = null
 )
 
+// Versión 11: bibliografía. Como los finales, es del usuario y guarda el
+// nombre de la materia (vacío = general). tipo: LIBRO, ARTICULO, WEB o APUNTE.
+@Entity(
+    tableName = "fuentes",
+    foreignKeys = [
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["usuarioId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("usuarioId")]
+)
+data class FuenteEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val usuarioId: Int,
+    val materia: String,
+    val tipo: String,
+    val autores: String,
+    val anio: Int? = null,
+    val titulo: String,
+    val origen: String = "",
+    val enlace: String = "",
+    val paginas: String = "",
+    val comentario: String = ""
+)
+
+// Versión 12: mapas mentales. Como la bibliografía, son del usuario y
+// guardan el nombre de la materia. Las ideas van en una sola columna de
+// texto (ver codificarNodos): se leen y se guardan siempre todas juntas.
+@Entity(
+    tableName = "mapas",
+    foreignKeys = [
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["usuarioId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("usuarioId")]
+)
+data class MapaEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val usuarioId: Int,
+    val materia: String,
+    val titulo: String,
+    val nodos: String,
+    val modificado: LocalDate
+)
+
 // Versión 10: feriados (traídos del calendario de Google del teléfono o de
 // internet). Son de todos los usuarios del teléfono: no dependen de la cuenta.
 @Entity(tableName = "feriados")

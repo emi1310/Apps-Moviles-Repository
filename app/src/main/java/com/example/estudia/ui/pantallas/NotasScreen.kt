@@ -17,6 +17,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.TarjetaAcceso
+import com.example.estudia.ui.theme.BloqueVioleta
+import androidx.compose.material.icons.outlined.AccountTree
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.camaraDeFotos
@@ -42,7 +45,9 @@ fun NotasScreen(
     crearAlAbrir: Boolean = false,
     onCreacionAbierta: () -> Unit = {},
     // Lo que se escribe en la lupa del dock: busca entre las notas.
-    busqueda: String = ""
+    busqueda: String = "",
+    // Acceso de arriba: los mapas mentales.
+    onAbrirMapas: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
@@ -102,6 +107,11 @@ fun NotasScreen(
         ) {
             item {
                 EncabezadoPantalla(titulo = stringResource(R.string.mis_notas), subtitulo = stringResource(R.string.notas_subtitulo))
+                // Síntesis visual: los mapas mentales (a lo ancho, como Tu semana).
+                TarjetaAcceso(
+                    stringResource(R.string.mapas_titulo), stringResource(R.string.acceso_mapas), Icons.Outlined.AccountTree, BloqueVioleta,
+                    Modifier.fillMaxWidth().padding(bottom = 12.dp), apilada = false, alTocar = onAbrirMapas
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 4.dp)) {
                     listOf(
                         FiltroNotas.TODAS to R.string.todas,
@@ -163,6 +173,7 @@ fun NotasScreen(
         DialogoNota(
             nota = null,
             materias = estado.materiasActivas,
+            fuentes = estado.fuentes,
             onConfirmar = { materiaId, titulo, contenido ->
                 if (materiaId != null) viewModel.agregarNota(materiaId, titulo, contenido)
                 crearNota = false
@@ -175,6 +186,8 @@ fun NotasScreen(
         DialogoNota(
             nota = item.nota,
             materias = estado.materiasActivas,
+            fuentes = estado.fuentes,
+            materiaDeLaNota = item.nombreMateria,
             onConfirmar = { _, titulo, contenido ->
                 viewModel.editarNota(item, titulo, contenido)
                 notaParaEditar = null

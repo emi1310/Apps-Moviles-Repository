@@ -11,6 +11,11 @@ import com.example.estudia.modelo.EstadoPlan
 import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
+import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.TipoFuente
+import com.example.estudia.modelo.MapaMental
+import com.example.estudia.modelo.codificarNodos
+import com.example.estudia.modelo.decodificarNodos
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -39,7 +44,8 @@ import java.util.zip.ZipOutputStream
 // este u otro teléfono. Adentro tiene:
 //  - datos.json: el perfil y todas las materias, con sus tareas (y pasos),
 //    eventos (y temarios y asistencias), notas, notas de exámenes,
-//    evaluaciones, la lista de archivos, el plan de estudios y los finales.
+//    evaluaciones, la lista de archivos, el plan de estudios, los finales,
+//    la bibliografía y los mapas mentales.
 //  - archivos/...: el contenido de los adjuntos y de la foto de perfil.
 // La contraseña no se guarda nunca. Es una fuente de datos más del Repository.
 class CopiaDeSeguridad(context: Context) {
@@ -128,6 +134,17 @@ private fun usuarioAJson(u: Usuario) = JSONObject()
             .put("cierreInscripcion", f.cierreInscripcion?.toString() ?: JSONObject.NULL)
             .put("vencimientoRegularidad", f.vencimientoRegularidad?.toString() ?: JSONObject.NULL)
             .put("inscripto", f.inscripto).put("nota", f.nota ?: JSONObject.NULL)
+    }))
+    // Versión 11: bibliografía.
+    .put("fuentes", JSONArray(u.fuentes.map { f ->
+        JSONObject().put("materia", f.materia).put("tipo", f.tipo.name).put("autores", f.autores)
+            .put("anio", f.anio ?: JSONObject.NULL).put("titulo", f.titulo).put("origen", f.origen)
+            .put("enlace", f.enlace).put("paginas", f.paginas).put("comentario", f.comentario)
+    }))
+    // Versión 12: mapas mentales (las ideas, como texto: ver codificarNodos).
+    .put("mapas", JSONArray(u.mapas.map { m ->
+        JSONObject().put("materia", m.materia).put("titulo", m.titulo)
+            .put("nodos", codificarNodos(m.nodos)).put("modificado", m.modificado.toString())
     }))
 
 private fun materiaAJson(m: Materia) = JSONObject()
@@ -231,7 +248,32 @@ private fun jsonAUsuario(j: JSONObject): Usuario = Usuario(
             inscripto = f.getBoolean("inscripto"),
             nota = f.doubleONull("nota")
         )
-    } ?: emptyList()
+    } ?: emptyList(),
+    // Las copias anteriores a la versión 11 no tienen bibliografía.
+    fuentes = j.optJSONArray("fuentes")?.mapear { f ->
+        Fuente(
+            id = 0,
+            materia = f.optString("materia"),
+            tipo = TipoFuente.desdeTexto(f.textoONull("tipo")),
+            autores = f.optString("autores"),
+            anio = f.enteroONull("anio"),
+            titulo = f.getString("titulo"),
+            origen = f.optString("origen"),
+            enlace = f.optString("enlace"),
+            paginas = f.optString("paginas"),
+            comentario = f.optString("comentario")
+        )
+    } ?: emptyList(),
+    // Las copias anteriores a la versión 12 no tienen mapas.
+    mapas = j.optJSONArray("mapas")?.mapear { m ->
+        MapaMental(
+            id = 0,
+            materia = m.optString("materia"),
+            titulo = m.getString("titulo"),
+            nodos = decodificarNodos(m.getString("nodos")),
+            modificado = m.textoONull("modificado")?.let { LocalDate.parse(it) } ?: LocalDate.now()
+        )
+    }?.filter { mapa -> mapa.nodos.any { it.padreId == null } } ?: emptyList()
 )
 
 private fun jsonAMateria(j: JSONObject): Materia {

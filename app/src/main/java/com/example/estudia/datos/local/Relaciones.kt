@@ -58,7 +58,13 @@ data class UsuarioConMaterias(
     @Relation(parentColumn = "id", entityColumn = "usuarioId")
     val planEstudio: List<MateriaPlanEntity>,
     @Relation(parentColumn = "id", entityColumn = "usuarioId")
-    val finales: List<FinalEntity>
+    val finales: List<FinalEntity>,
+    // Versión 11: bibliografía.
+    @Relation(parentColumn = "id", entityColumn = "usuarioId")
+    val fuentes: List<FuenteEntity>,
+    // Versión 12: mapas mentales.
+    @Relation(parentColumn = "id", entityColumn = "usuarioId")
+    val mapas: List<MapaEntity>
 )
 
 // Resultado de un JOIN: una fila de otra tabla + datos de su materia.

@@ -12,6 +12,8 @@ import com.example.estudia.datos.local.MIGRACION_6_7
 import com.example.estudia.datos.local.MIGRACION_7_8
 import com.example.estudia.datos.local.MIGRACION_8_9
 import com.example.estudia.datos.local.MIGRACION_9_10
+import com.example.estudia.datos.local.MIGRACION_10_11
+import com.example.estudia.datos.local.MIGRACION_11_12
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -290,6 +292,58 @@ class MigracionesTest {
             c.moveToFirst()
             assertEquals(1, c.getInt(0))
             assertEquals("Otro nombre", c.getString(1))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrar10a11CreaLaTablaDeBibliografia() {
+        ayudante.createDatabase(nombreBase, 10).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 11, true, MIGRACION_10_11)
+
+        // Lo que ya estaba sigue igual.
+        db.query("SELECT nombre FROM materias WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("Física", c.getString(0))
+        }
+        db.execSQL(
+            "INSERT INTO fuentes (usuarioId, materia, tipo, autores, anio, titulo, origen, enlace, paginas, comentario) " +
+                "VALUES (1, 'Física', 'LIBRO', 'Resnick, R.', 2002, 'Física', 'Patria', '', '', '')"
+        )
+        // Al borrar el usuario se borra su bibliografía (CASCADE).
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("DELETE FROM usuarios WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM fuentes").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrar11a12CreaLaTablaDeMapas() {
+        ayudante.createDatabase(nombreBase, 11).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO fuentes (usuarioId, materia, tipo, autores, anio, titulo, origen, enlace, paginas, comentario) VALUES (1, '', 'LIBRO', '', NULL, 'Física', '', '', '', '')")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 12, true, MIGRACION_11_12)
+
+        // La bibliografía sigue igual.
+        db.query("SELECT titulo FROM fuentes").use { c ->
+            c.moveToFirst()
+            assertEquals("Física", c.getString(0))
+        }
+        db.execSQL("INSERT INTO mapas (usuarioId, materia, titulo, nodos, modificado) VALUES (1, '', 'Newton', '1||0.0|0.0||Newton', 0)")
+        db.query("SELECT titulo FROM mapas").use { c ->
+            c.moveToFirst()
+            assertEquals("Newton", c.getString(0))
         }
         db.close()
     }

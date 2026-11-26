@@ -303,3 +303,44 @@ val MIGRACION_9_10 = object : Migration(9, 10) {
         )
     }
 }
+
+// Versión 10 -> 11: bibliografía (tabla "fuentes"). Es una tabla nueva: lo
+// que ya estaba no cambia.
+val MIGRACION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `fuentes` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`usuarioId` INTEGER NOT NULL, " +
+                "`materia` TEXT NOT NULL, " +
+                "`tipo` TEXT NOT NULL, " +
+                "`autores` TEXT NOT NULL, " +
+                "`anio` INTEGER, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`origen` TEXT NOT NULL, " +
+                "`enlace` TEXT NOT NULL, " +
+                "`paginas` TEXT NOT NULL, " +
+                "`comentario` TEXT NOT NULL, " +
+                "FOREIGN KEY(`usuarioId`) REFERENCES `usuarios`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_fuentes_usuarioId` ON `fuentes` (`usuarioId`)")
+    }
+}
+
+// Versión 11 -> 12: mapas mentales (tabla "mapas"). Tabla nueva: lo que ya
+// estaba no cambia.
+val MIGRACION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `mapas` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`usuarioId` INTEGER NOT NULL, " +
+                "`materia` TEXT NOT NULL, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`nodos` TEXT NOT NULL, " +
+                "`modificado` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`usuarioId`) REFERENCES `usuarios`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_mapas_usuarioId` ON `mapas` (`usuarioId`)")
+    }
+}

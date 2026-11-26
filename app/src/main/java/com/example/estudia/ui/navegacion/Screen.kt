@@ -11,6 +11,7 @@ sealed class Screen(val ruta: String) {
     object Materias : Screen("materias")
     object Calendario : Screen("calendario")
     object Notas : Screen("notas")
+    object Asistente : Screen("asistente")
     object Perfil : Screen("perfil")
     object Ayuda : Screen("ayuda")
     object Temporizador : Screen("temporizador")
@@ -20,6 +21,12 @@ sealed class Screen(val ruta: String) {
     object Carrera : Screen("carrera")
     object Asistencia : Screen("asistencia")
     object Finales : Screen("finales")
+    object Bibliografia : Screen("bibliografia")
+    object Mapas : Screen("mapas")
+    // Editor de un mapa mental.
+    object Mapa : Screen("mapa/{mapaId}") {
+        fun de(mapaId: Int) = "mapa/$mapaId"
+    }
     object ResumenSemanal : Screen("resumen_semanal")
     object Busqueda : Screen("busqueda")
     // ¿Qué nota necesito?: el id de la materia (-1 = la primera).
@@ -43,6 +50,7 @@ val pantallasConBarra = listOf(
     Screen.Materias,
     Screen.Calendario,
     Screen.Notas,
+    Screen.Asistente,
     Screen.Perfil
 )
 

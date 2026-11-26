@@ -184,7 +184,9 @@ fun CampoTexto(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = false,
     minLines: Int = 1,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    // Para ocultar lo escrito (ej: la clave de la IA).
+    visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None
 ) {
     TextField(
         value = value,
@@ -192,6 +194,7 @@ fun CampoTexto(
         label = label,
         placeholder = placeholder,
         trailingIcon = trailingIcon,
+        visualTransformation = visualTransformation,
         isError = isError,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,

@@ -228,12 +228,13 @@
       <li><a href="#materias">4. Materias</a></li>
       <li><a href="#calendario">5. Calendario</a></li>
       <li><a href="#notas">6. Notas</a></li>
-      <li><a href="#temporizador">7. Temporizador de estudio</a></li>
-      <li><a href="#estadisticas">8. Estadísticas</a></li>
-      <li><a href="#perfil">9. Perfil</a></li>
-      <li><a href="#cursada">10. Tu cursada</a></li>
-      <li><a href="#permisos">11. Permisos</a></li>
-      <li><a href="#faq">12. Preguntas frecuentes</a></li>
+      <li><a href="#asistente">7. Asistente IA</a></li>
+      <li><a href="#temporizador">8. Temporizador de estudio</a></li>
+      <li><a href="#estadisticas">9. Estadísticas</a></li>
+      <li><a href="#perfil">10. Perfil</a></li>
+      <li><a href="#cursada">11. Tu cursada</a></li>
+      <li><a href="#permisos">12. Permisos</a></li>
+      <li><a href="#faq">13. Preguntas frecuentes</a></li>
     </ol>
   </nav>
 
@@ -266,19 +267,20 @@
 
     <section id="navegacion">
       <h2>2. Cómo moverte por la app</h2>
-      <p class="kicker">Abajo flota un dock de vidrio esmerilado (deja ver, desenfocado, lo que pasa por detrás): una pastilla con las 4 secciones principales y, a la derecha, dos círculos: el botón violeta ＋ y la lupa. La sección en la que estás se marca con un círculo suave detrás del ícono.</p>
+      <p class="kicker">Abajo flota un dock de vidrio esmerilado (deja ver, desenfocado, lo que pasa por detrás): una pastilla con las 5 secciones principales (Inicio, Materias, Calendario, Notas y el Asistente IA) y, a la derecha, dos círculos: el botón violeta ＋ y la lupa. La sección en la que estás se marca con un círculo suave detrás del ícono.</p>
       <p>
         <span class="pill purple">🏠 Inicio</span>
         <span class="pill purple">📚 Materias</span>
         <span class="pill purple">📅 Calendario</span>
         <span class="pill purple">📝 Notas</span>
+        <span class="pill purple">✨ Asistente</span>
         <span class="pill purple">＋ Crear</span>
         <span class="pill purple">🔍 Buscar</span>
       </p>
       <div class="grid2">
         <div class="card">
           <h3>El botón violeta ＋</h3>
-          <p>Cambia según la pantalla en la que estés, y cada una tiene su ícono: en Materias (libro con +) crea una <strong>materia</strong>, en Calendario (calendario con lápiz) un <strong>evento</strong> y en Notas (hoja con +) una <strong>nota</strong>. En Inicio y en Perfil muestra un reloj y abre el <a href="#temporizador">Temporizador de estudio</a>.</p>
+          <p>Cambia según la pantalla en la que estés, y cada una tiene su ícono: en Materias (libro con +) crea una <strong>materia</strong>, en Calendario (calendario con lápiz) un <strong>evento</strong> y en Notas (hoja con +) una <strong>nota</strong>. En Inicio, Perfil y el Asistente muestra un reloj y abre el <a href="#temporizador">Temporizador de estudio</a>.</p>
         </div>
         <div class="card">
           <h3>Tu perfil</h3>
@@ -341,7 +343,7 @@
 
       <div class="card" id="busqueda">
         <h3>Buscar en toda la app</h3>
-        <p>Tocá la 🔍 lupa del dock (en Inicio o Perfil) y escribí al menos 2 letras. Busca a la vez en materias, tareas (y sus pasos), notas (título y contenido), eventos (y sus temarios), tarjetas, tu plan de estudios y tus finales, sin importar tildes ni mayúsculas: "matematica" encuentra "Matemática". Los resultados aparecen agrupados, y al tocar uno vas a la sección donde está.</p>
+        <p>Tocá la 🔍 lupa del dock (en Inicio o Perfil) y escribí al menos 2 letras. Busca a la vez en materias, tareas (y sus pasos), notas (título y contenido), eventos (y sus temarios), tarjetas, tu plan de estudios, tus finales, tu bibliografía (título, autores, editorial) y tus mapas mentales (cualquier idea), sin importar tildes ni mayúsculas: "matematica" encuentra "Matemática". Los resultados aparecen agrupados, y al tocar uno vas a la sección donde está.</p>
       </div>
     </section>
 
@@ -355,8 +357,8 @@
       </div>
 
       <div class="card">
-        <h3>Mi carrera y Mesas de finales</h3>
-        <p>Arriba de tus materias hay dos accesos: <strong>Mi carrera</strong> (el plan de estudios completo, con sus correlativas y el % aprobado) y <strong>Mesas de finales</strong> (las fechas de mesa, inscripción y regularidad). Están explicados en <a href="#cursada">Tu cursada</a>.</p>
+        <h3>Mi carrera, Mesas de finales y Bibliografía</h3>
+        <p>Arriba de tus materias hay tres accesos: <strong>Mi carrera</strong> (el plan de estudios completo, con sus correlativas y el % aprobado), <strong>Mesas de finales</strong> (las fechas de mesa, inscripción y regularidad) y <strong>Bibliografía</strong> (tus libros, artículos, webs y apuntes con la cita en normas APA). Están explicados en <a href="#cursada">Tu cursada</a>.</p>
       </div>
 
       <div class="card">
@@ -470,8 +472,12 @@
 
     <section id="notas">
       <h2>6. Notas</h2>
-      <p class="kicker">Para guardar apuntes de cualquier materia.</p>
+      <p class="kicker">Para guardar apuntes de cualquier materia, con plantillas para resumir y mapas mentales para ver el tema de un vistazo.</p>
 
+      <div class="card">
+        <h3>Mapas mentales</h3>
+        <p>Arriba en Notas, tocá <strong>Mapas mentales</strong> y después <strong>Nuevo mapa</strong>: escribí el tema central (y, si querés, elegí la materia). Se abre el mapa con el tema en el medio. Tocá una idea para elegirla y abajo aparecen sus acciones: <strong>Nueva idea</strong> (una rama que sale de ella; se ubica sola para no taparse), <strong>Editar</strong> (también con doble toque), <strong>Color</strong> y <strong>Eliminar</strong> (con todo lo que sale de ella; el aviso ofrece Deshacer). Arrastrá una idea para moverla junto con sus ramas; con un dedo movés todo el mapa y con dos lo acercás o alejás. Cada rama principal toma un color y sus ideas lo heredan. El botón de enfocar muestra el mapa entero y <strong>Compartir como imagen</strong> lo manda por WhatsApp, Drive o donde quieras. Los cambios se guardan solos.</p>
+      </div>
       <div class="card">
         <h3>Buscar y filtrar</h3>
         <p>Tocá la 🔍 lupa del dock y escribí en la barra de abajo para encontrar una nota por título o contenido. Arriba de la lista tenés tres filtros: <strong>Todas</strong>, <strong>Recientes</strong> y <strong>Favoritas</strong>.</p>
@@ -480,7 +486,7 @@
       <div class="grid2">
         <div class="card">
           <h3>Crear una nota</h3>
-          <p>Tocá el botón <strong>+</strong> del medio de la barra, elegí la materia, escribí un título y el contenido, y tocá <strong>Crear</strong>. La nota se pinta con el color de su materia.</p>
+          <p>Tocá el botón <strong>+</strong> del medio de la barra, elegí la materia, escribí un título y el contenido, y tocá <strong>Crear</strong>. La nota se pinta con el color de su materia. Si querés estructura, elegí una <strong>Plantilla</strong>: <em>Resumen Cornell</em> (ideas clave, desarrollo, preguntas y síntesis), <em>Esquema</em> (temas y subtemas numerados), <em>Cuadro comparativo</em> o <em>Línea de tiempo</em>; se llena el contenido con la estructura para que la completes (si ya escribiste algo, la plantilla se agrega al final y no borra nada). Con <strong>Citar una fuente de la bibliografía</strong> se suma al texto la cita, por ejemplo “(Cormen et al., 2009)”.</p>
         </div>
         <div class="card">
           <h3>Favorita, editar, adjuntar o eliminar</h3>
@@ -501,8 +507,36 @@
       </div>
     </section>
 
+    <section id="asistente">
+      <h2>7. Asistente IA</h2>
+      <p class="kicker">La última sección del dock (el ícono de destellos ✨). Te ayuda a entender y a repasar con tu propio material; el estudio lo hacés vos.</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Acciones rápidas</h3>
+          <p><strong>Resumir</strong> una nota en sus ideas clave; <strong>Explicar paso a paso</strong> un tema que no entendés, con un ejemplo; <strong>Preguntas</strong> para autoevaluarte sobre una nota (contestalas en el chat y te corrige); y <strong>Crear tarjetas</strong> de repaso desde una nota: las revisás, marcás las que querés y se guardan en la materia de la nota, listas para el repaso.</p>
+        </div>
+        <div class="card">
+          <h3>Preguntar en el chat</h3>
+          <p>Escribí tu duda abajo y tocá enviar. Recuerda lo que vienen hablando, así podés repreguntar. En cada respuesta tenés <strong>Copiar</strong> y <strong>Guardar como nota</strong> (elegís la materia y el título). Arriba, el botón de reinicio empieza una conversación nueva; la charla no se guarda al salir.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Sin hacerte la tarea</h3>
+        <p>El asistente está pensado para que aprendas: explica con pasos y ejemplos y, si le pedís resolver un TP o un examen entero, te guía para que lo hagas vos en vez de darte la solución completa. Puede equivocarse: revisá lo importante con tu bibliografía.</p>
+      </div>
+      <div class="card">
+        <h3>Conectar tu IA</h3>
+        <p>Cada usuario usa su propia IA, gratis y sin pagar nada: tocá la <strong>llave</strong> arriba en el Asistente (o <strong>Conectar mi IA</strong> la primera vez). Tocá <strong>Abrir Google AI Studio</strong>, entrá con tu cuenta de Google, tocá <strong>Create API key</strong>, copiá la clave, pegala y tocá <strong>Probar y conectar</strong>: la app hace una prueba cortita y, si la clave anda, queda conectada (si no, te dice que la revises). La clave se guarda cifrada en el teléfono y solo para tu cuenta de Estudia+: otros usuarios del mismo teléfono no la ven ni la usan, y no va en la copia de seguridad (si restaurás en otro teléfono, la volvés a conectar). Desde la misma llave podés cambiarla o desconectarla.</p>
+      </div>
+      <div class="card">
+        <h3>Privacidad y conexión</h3>
+        <p>Usa Gemini, de Google, en su plan gratis: necesita internet. Lo que mandás lo procesa Google y, en el plan gratis, puede usarlo para mejorar sus productos, así que no mandes datos personales. El plan gratis tiene un límite de usos por día, que cuenta en tu cuenta de Google: si se alcanza, la app te avisa y podés reintentar más tarde.</p>
+      </div>
+    </section>
+
     <section id="temporizador">
-      <h2>7. Temporizador de estudio</h2>
+      <h2>8. Temporizador de estudio</h2>
       <p class="kicker">Para concentrarte un rato en una sola materia (método Pomodoro). Se abre desde Inicio, con el botón del reloj en el medio de la barra.</p>
 
       <div class="card">
@@ -535,7 +569,7 @@
     </section>
 
     <section id="estadisticas">
-      <h2>8. Estadísticas</h2>
+      <h2>9. Estadísticas</h2>
       <p class="kicker">Se abren desde Perfil, en <strong>Estadísticas de estudio</strong>. Arriba, <strong>Tu semana</strong> abre el <a href="#cursada">resumen de la semana</a>.</p>
       <div class="grid2">
         <div class="card">
@@ -558,7 +592,7 @@
     </section>
 
     <section id="perfil">
-      <h2>9. Perfil</h2>
+      <h2>10. Perfil</h2>
       <p class="kicker">Tus datos, tus números y las opciones de la app. Se abre tocando tu foto (o el círculo con tu inicial) en Inicio.</p>
 
       <div class="grid2">
@@ -597,12 +631,12 @@
       </div>
       <div class="card">
         <h3>Copia de seguridad</h3>
-        <p><strong>Guardar copia</strong> crea un archivo <code>.zip</code> con todas tus materias, tareas, eventos, notas, archivos y tu foto, además de tu plan de estudios, asistencias, evaluaciones y finales; elegís dónde guardarlo (Descargas, Drive…). <strong>Restaurar copia</strong> lee ese archivo y reemplaza tus datos actuales (te pide confirmación). No necesita permisos: solo accede al archivo que elegís.</p>
+        <p><strong>Guardar copia</strong> crea un archivo <code>.zip</code> con todas tus materias, tareas, eventos, notas, archivos y tu foto, además de tu plan de estudios, asistencias, evaluaciones, finales, bibliografía y mapas mentales; elegís dónde guardarlo (Descargas, Drive…). <strong>Restaurar copia</strong> lee ese archivo y reemplaza tus datos actuales (te pide confirmación). No necesita permisos: solo accede al archivo que elegís.</p>
       </div>
     </section>
 
     <section id="cursada">
-      <h2>10. Tu cursada</h2>
+      <h2>11. Tu cursada</h2>
       <p class="kicker">Herramientas para lo que no es estudiar pero hay que seguir: el plan de la carrera, la asistencia, las notas que necesitás y los finales. Cada una está en la pantalla donde más se usa: <strong>Mi carrera</strong> y <strong>Mesas de finales</strong>, arriba en Materias; <strong>Asistencia</strong>, arriba en el Calendario; <strong>¿Qué nota necesito?</strong>, en el menú ⋮ de cada materia; y <strong>Tu semana</strong>, arriba en Estadísticas.</p>
 
       <div class="card">
@@ -629,6 +663,10 @@
           <p>En Materias, tocá <strong>Mesas de finales</strong> (arriba). Tocá <strong>Nueva mesa</strong> y elegí la materia (te muestra tus materias y las que tenés regulares en Mi carrera; también podés escribirla), la fecha de la mesa, el cierre de la inscripción y el vencimiento de la regularidad. Cada final muestra si estás inscripto, hasta cuándo te podés anotar y si la regularidad vence antes de la mesa. Con los Recordatorios activados te avisamos 2 días antes de que cierre la inscripción y el día anterior a la mesa. Al <strong>Cargar nota</strong>, si aprobaste, la materia queda aprobada en Mi carrera.</p>
         </div>
         <div class="card">
+          <h3>Bibliografía</h3>
+          <p>En Materias, tocá <strong>Bibliografía</strong> (arriba). Con <strong>Nueva fuente</strong> elegí si es un libro, un artículo, una página web o un apunte de cátedra y cargá el título, los autores (“Apellido, Inicial.”, separados con punto y coma), el año, la editorial, revista, sitio o cátedra, y si querés el enlace, la materia y un comentario. Mientras escribís ves cómo queda la cita en normas APA 7. Cada fuente muestra la cita lista: <strong>Copiar cita</strong> la lleva al portapapeles para pegarla en tu trabajo, y en el menú ⋮ está <strong>Copiar cita para el texto</strong>, la versión corta “(Apellido, año)”. Si tiene enlace, <strong>Abrir enlace</strong> la abre en el navegador. Con fuentes de varias materias, arriba podés filtrar por materia.</p>
+        </div>
+        <div class="card">
           <h3>Tu semana</h3>
           <p>En Estadísticas, tocá <strong>Tu semana</strong> (arriba). Las horas que estudiaste esta semana (de lunes a hoy) comparadas con la semana anterior, tu avance hacia la meta, los días y sesiones de estudio, la racha, las tareas que vencían esta semana, las materias que más estudiaste y los exámenes y entregas de los próximos 7 días. Los domingos a las 20:00 te llega este resumen como notificación.</p>
         </div>
@@ -636,7 +674,7 @@
     </section>
 
     <section id="permisos">
-      <h2>11. Permisos</h2>
+      <h2>12. Permisos</h2>
       <p class="kicker">Estudia+ pide sus permisos nunca al abrir la app: siempre cuando vas a usar la función, y antes te explica para qué es.</p>
       <div class="grid2">
         <div class="card">
@@ -663,7 +701,7 @@
     </section>
 
     <section id="faq">
-      <h2>12. Preguntas frecuentes</h2>
+      <h2>13. Preguntas frecuentes</h2>
       <dl class="faq">
         <dt>¿Dónde se guardan mis datos?</dt>
         <dd>En tu teléfono, en una base de datos privada de la app. Estudia+ no necesita internet (solo, si querés, para bajar los feriados). Las contraseñas no se guardan: solo un hash que no se puede revertir.</dd>

@@ -25,6 +25,8 @@ import androidx.room.TypeConverters
 //  9 - plan de estudios, asistencias, evaluaciones y mesas de finales.
 // 10 - asistencia mínima, promoción y final de cada materia, clases
 //      virtuales, categoría de los archivos y feriados.
+// 11 - bibliografía (tabla "fuentes").
+// 12 - mapas mentales (tabla "mapas").
 // Cada vez que cambia el esquema se sube "version" y se agrega una
 // migración (Migraciones.kt), para no perder los datos ya guardados.
 @Database(
@@ -43,9 +45,11 @@ import androidx.room.TypeConverters
         AsistenciaEntity::class,
         EvaluacionEntity::class,
         FinalEntity::class,
-        FeriadoEntity::class
+        FeriadoEntity::class,
+        FuenteEntity::class,
+        MapaEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(Conversores::class)
@@ -74,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "estudia_db"
                 )
-                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3, MIGRACION_3_4, MIGRACION_4_5, MIGRACION_5_6, MIGRACION_6_7, MIGRACION_7_8, MIGRACION_8_9, MIGRACION_9_10)
+                    .addMigrations(MIGRACION_1_2, MIGRACION_2_3, MIGRACION_3_4, MIGRACION_4_5, MIGRACION_5_6, MIGRACION_6_7, MIGRACION_7_8, MIGRACION_8_9, MIGRACION_9_10, MIGRACION_10_11, MIGRACION_11_12)
                     .build()
                     .also {
                         INSTANCE = it

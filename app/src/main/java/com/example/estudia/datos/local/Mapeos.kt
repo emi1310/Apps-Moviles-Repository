@@ -8,6 +8,11 @@ import com.example.estudia.modelo.EstadoPlan
 import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
+import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.MapaMental
+import com.example.estudia.modelo.codificarNodos
+import com.example.estudia.modelo.decodificarNodos
+import com.example.estudia.modelo.TipoFuente
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -40,7 +45,11 @@ fun UsuarioConMaterias.aModelo(): Usuario = Usuario(
     fotoPerfil = usuario.fotoPerfil,
     materias = materias.map { it.aModelo() }.sortedBy { it.nombre.lowercase() },
     planEstudio = planEstudio.map { it.aModelo() }.sortedWith(compareBy<MateriaPlan> { it.anio }.thenBy { it.id }),
-    finales = finales.map { it.aModelo() }.sortedBy { it.fechaMesa }
+    finales = finales.map { it.aModelo() }.sortedBy { it.fechaMesa },
+    fuentes = fuentes.map { it.aModelo() }
+        .sortedWith(compareBy<Fuente> { (it.listaAutores.firstOrNull() ?: it.titulo).lowercase() }.thenBy { it.anio ?: 0 }),
+    // El que se tocó último, primero.
+    mapas = mapas.map { it.aModelo() }.sortedWith(compareByDescending<MapaMental> { it.modificado }.thenByDescending { it.id })
 )
 
 // Los archivos llegan todos juntos: los que tienen notaId van a su nota,
@@ -292,3 +301,19 @@ fun MesaFinal.aEntidad(usuarioId: Int): FinalEntity =
 fun FeriadoEntity.aModelo(): Feriado = Feriado(fecha, nombre)
 
 fun Feriado.aEntidad(): FeriadoEntity = FeriadoEntity(fecha, nombre)
+
+fun FuenteEntity.aModelo(): Fuente =
+    Fuente(id, materia, TipoFuente.desdeTexto(tipo), autores, anio, titulo, origen, enlace, paginas, comentario)
+
+fun Fuente.aEntidad(usuarioId: Int): FuenteEntity =
+    FuenteEntity(id, usuarioId, materia, tipo.name, autores, anio, titulo, origen, enlace, paginas, comentario)
+
+// Un mapa sin ideas (no debería pasar) recupera al menos la central.
+fun MapaEntity.aModelo(): MapaMental {
+    val ideas = decodificarNodos(nodos)
+    return if (ideas.any { it.padreId == null }) MapaMental(id, materia, titulo, ideas, modificado)
+    else MapaMental.nuevo(id, materia, titulo, modificado)
+}
+
+fun MapaMental.aEntidad(usuarioId: Int): MapaEntity =
+    MapaEntity(id, usuarioId, materia, titulo, codificarNodos(nodos), modificado)

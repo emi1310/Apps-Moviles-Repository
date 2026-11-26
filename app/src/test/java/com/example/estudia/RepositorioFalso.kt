@@ -16,6 +16,8 @@ import com.example.estudia.modelo.Asistencia
 import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
+import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.MapaMental
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -340,6 +342,40 @@ class RepositorioFalso(
 
     override suspend fun restaurarFinal(usuarioId: Int, final: MesaFinal) =
         cambiarUsuario { it.copy(finales = it.finales + final) }
+
+    // ---------- Bibliografía ----------
+
+    override suspend fun agregarFuente(usuarioId: Int, fuente: Fuente): Fuente {
+        val guardada = fuente.copy(id = siguienteId++)
+        cambiarUsuario { it.copy(fuentes = it.fuentes + guardada) }
+        return guardada
+    }
+
+    override suspend fun actualizarFuente(usuarioId: Int, fuente: Fuente) =
+        cambiarUsuario { u -> u.copy(fuentes = u.fuentes.map { if (it.id == fuente.id) fuente else it }) }
+
+    override suspend fun eliminarFuente(usuarioId: Int, fuente: Fuente) =
+        cambiarUsuario { u -> u.copy(fuentes = u.fuentes.filter { it.id != fuente.id }) }
+
+    override suspend fun restaurarFuente(usuarioId: Int, fuente: Fuente) =
+        cambiarUsuario { it.copy(fuentes = it.fuentes + fuente) }
+
+    // ---------- Mapas mentales ----------
+
+    override suspend fun agregarMapa(usuarioId: Int, mapa: MapaMental): MapaMental {
+        val guardado = mapa.copy(id = siguienteId++)
+        cambiarUsuario { it.copy(mapas = it.mapas + guardado) }
+        return guardado
+    }
+
+    override suspend fun actualizarMapa(usuarioId: Int, mapa: MapaMental) =
+        cambiarUsuario { u -> u.copy(mapas = u.mapas.map { if (it.id == mapa.id) mapa else it }) }
+
+    override suspend fun eliminarMapa(usuarioId: Int, mapa: MapaMental) =
+        cambiarUsuario { u -> u.copy(mapas = u.mapas.filter { it.id != mapa.id }) }
+
+    override suspend fun restaurarMapa(usuarioId: Int, mapa: MapaMental) =
+        cambiarUsuario { it.copy(mapas = it.mapas + mapa) }
 
     // ---------- PDF ----------
 

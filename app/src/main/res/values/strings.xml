@@ -275,6 +275,10 @@
         <item>¿Cómo cargo cuánta asistencia pide una materia o si tiene final?</item>
         <item>¿Puedo marcar una clase como virtual?</item>
         <item>¿Cómo veo los feriados en el calendario?</item>
+        <item>¿Cómo armo la bibliografía y las citas APA?</item>
+        <item>¿Hay plantillas para resúmenes o esquemas?</item>
+        <item>¿Cómo hago un mapa mental?</item>
+        <item>¿Qué hace el Asistente IA?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -308,13 +312,17 @@
         <item>Sí: en Materias, arriba, tocá \"Mesas de finales\" y agregá la fecha de la mesa, el cierre de la inscripción y el vencimiento de la regularidad. Con los Recordatorios activados te avisamos 2 días antes de que cierre la inscripción y el día anterior a la mesa. Al cargar la nota, si aprobaste, la materia queda aprobada en Mi carrera.</item>
         <item>Sí: en el menú de la materia elegí \"Hacer un quiz\". Son hasta 10 preguntas de opción múltiple armadas con tus tarjetas, con cronómetro y puntaje al final. Hacen falta al menos 4 tarjetas con respuestas distintas.</item>
         <item>En Estadísticas (desde el Perfil), arriba, tocá \"Tu semana\": horas estudiadas comparadas con la semana anterior, días y sesiones, tareas, racha, las materias que más estudiaste y los exámenes que vienen. Los domingos a las 20:00 te llega el resumen como notificación (con los Recordatorios activados).</item>
-        <item>Tocá la lupa del dock (abajo a la derecha) en Inicio o Perfil; en Materias, Calendario y Notas la lupa filtra esa pantalla. Buscá a la vez en materias, tareas, notas, eventos, tarjetas, tu plan y tus finales (sin importar tildes ni mayúsculas). Tocá un resultado para ir a su sección.</item>
+        <item>Tocá la lupa del dock (abajo a la derecha) en Inicio o Perfil; en Materias, Calendario y Notas la lupa filtra esa pantalla. Buscá a la vez en materias, tareas, notas, eventos, tarjetas, tu plan, tus finales, tu bibliografía y tus mapas mentales (sin importar tildes ni mayúsculas). Tocá un resultado para ir a su sección.</item>
         <item>Sí: en el temporizador elegí lluvia, olas o ruido blanco en \"Sonido de concentración\". Suena mientras corre la sesión y se apaga al pausar, terminar o salir de la pantalla. No usa internet.</item>
         <item>Sí: en el menú de la nota elegí \"Exportar a PDF\". Se arma un PDF con el texto y las fotos de la nota y podés mandarlo por WhatsApp, mail o guardarlo en Drive.</item>
         <item>Sí: en Materias, abrí la materia y en \"Archivos\" vas a ver pastillas para filtrar por Teoría, TPs, Información de la materia, Exámenes u Otros. Lo que adjuntes con un filtro elegido va a esa categoría (con \"Todos\" te pregunta a cuál). Para cambiarle la categoría a un archivo tocá el ícono que tiene a la derecha.</item>
         <item>Al crear o editar la materia (menú → Editar) cargá el porcentaje de asistencia que pide, si es promocional y con qué nota, y si tiene final. Asistencia usa ese porcentaje para decirte cuánto podés faltar, \"¿Qué nota necesito?\" calcula con tu nota de promoción y las materias sin final no aparecen como sugerencia en Mesas de finales.</item>
         <item>Sí: al crear o editar un evento elegí Presencial (y escribí el aula o lugar, si querés) o Virtual (y pegá el link de Meet, Zoom o el que usen). En el calendario aparece un botón \"Unirse\" que abre el link.</item>
         <item>En el Calendario tocá el botón de los feriados, arriba. Si nos dejás leer el calendario del teléfono, los traemos de tu Google Calendar (\"Feriados en Argentina\"); si no, los bajamos de internet. Los feriados aparecen en rojo, ese día las clases dicen \"Feriado: no hay clase\" y no cuentan en la asistencia.</item>
+        <item>En Materias, arriba, tocá \"Bibliografía\" y después \"Nueva fuente\". Elegí si es libro, artículo, web o apunte y cargá título, autores (Apellido, Inicial.; separados con punto y coma), año y editorial: mientras escribís ves la cita en normas APA 7. \"Copiar cita\" la deja lista para pegar en tu trabajo, y en el menú ⋮ está la versión corta para el texto, como (Cormen et al., 2009).</item>
+        <item>Sí: al crear una nota elegí una plantilla: Resumen Cornell, Esquema, Cuadro comparativo o Línea de tiempo. El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
+        <item>En Notas, arriba, tocá \"Mapas mentales\" y \"Nuevo mapa\", y escribí el tema central. Tocá una idea y elegí \"Nueva idea\" para sumarle una rama (se ubica sola). Arrastrá las ideas para acomodarlas, mové el mapa con un dedo y acercalo con dos. Cada rama tiene su color. Con \"Compartir como imagen\" lo mandás por WhatsApp o lo guardás en Drive.</item>
+        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat y guardar una respuesta como nota. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -781,6 +789,139 @@
     <string name="finales_nota_ayuda">De 1 a 10. Si aprobaste, queda aprobada en Mi carrera.</string>
     <string name="error_cierre_inscripcion">La inscripción tiene que cerrar antes de la mesa</string>
     <string name="aviso_final_eliminado">Final eliminado</string>
+
+    <!-- Bibliografía (versión 11) -->
+    <string name="biblio_titulo">Bibliografía</string>
+    <string name="biblio_subtitulo">Libros, apuntes y citas en normas APA</string>
+    <string name="acceso_biblio">Libros, artículos, webs y apuntes, con la cita APA lista para copiar</string>
+    <string name="biblio_agregar">Nueva fuente</string>
+    <string name="biblio_vacio">Todavía no cargaste bibliografía</string>
+    <string name="biblio_vacio_sugerencia">Cargá los libros, artículos, páginas web y apuntes de cada materia: la app te arma la cita en normas APA.</string>
+    <string name="biblio_todas">Todas</string>
+    <string name="biblio_nueva">Nueva fuente</string>
+    <string name="biblio_editar">Editar fuente</string>
+    <string name="biblio_tipo_libro">Libro</string>
+    <string name="biblio_tipo_articulo">Artículo</string>
+    <string name="biblio_tipo_web">Página web</string>
+    <string name="biblio_tipo_apunte">Apunte</string>
+    <string name="biblio_campo_titulo">Título</string>
+    <string name="biblio_autores">Autores</string>
+    <string name="biblio_autores_ayuda">Apellido, Inicial. Separá varios con punto y coma: Cormen, T.; Leiserson, C.</string>
+    <string name="biblio_anio">Año</string>
+    <string name="biblio_sin_anio">s.f.</string>
+    <string name="biblio_editorial">Editorial</string>
+    <string name="biblio_revista">Revista</string>
+    <string name="biblio_sitio">Sitio web</string>
+    <string name="biblio_catedra">Cátedra o facultad</string>
+    <string name="biblio_paginas">Páginas (ej: 12-30)</string>
+    <string name="biblio_enlace">Enlace (opcional)</string>
+    <string name="biblio_materia">Materia (tocá la elegida para sacarla)</string>
+    <string name="biblio_comentario">Comentario (opcional)</string>
+    <string name="biblio_comentario_ayuda">Capítulos a leer, para qué te sirve…</string>
+    <string name="biblio_vista_previa">Así queda la cita</string>
+    <string name="biblio_copiar">Copiar cita</string>
+    <string name="biblio_copiar_en_texto">Copiar cita para el texto</string>
+    <string name="biblio_copiada">Cita copiada</string>
+    <string name="biblio_abrir">Abrir enlace</string>
+    <string name="aviso_fuente_eliminada">Fuente eliminada</string>
+
+    <!-- Asistente IA (Gemini) -->
+    <string name="asistente">Asistente</string>
+    <string name="ia_titulo">Asistente IA</string>
+    <string name="ia_subtitulo">Te ayuda a entender; el estudio lo hacés vos</string>
+    <string name="ia_nueva_charla">Nueva conversación</string>
+    <string name="ia_resumir">Resumir</string>
+    <string name="ia_explicar">Explicar paso a paso</string>
+    <string name="ia_preguntas">Preguntas</string>
+    <string name="ia_tarjetas">Crear tarjetas</string>
+    <string name="ia_resumir_detalle">Las ideas clave de una nota</string>
+    <string name="ia_explicar_detalle">Un tema que no entendés, con un ejemplo</string>
+    <string name="ia_preguntas_detalle">Para autoevaluarte sobre una nota</string>
+    <string name="ia_tarjetas_detalle">Tarjetas de repaso desde una nota</string>
+    <string name="ia_privacidad">Las respuestas las genera Gemini, de Google, y pueden tener errores: revisalas con tu bibliografía. Lo que mandás lo procesa Google y, en el plan gratis, puede usarlo para mejorar sus productos: no mandes datos personales.</string>
+    <string name="ia_sin_clave">Conectá tu IA</string>
+    <string name="ia_sin_clave_detalle">El asistente usa Gemini, de Google, con tu propia clave: es gratis, se saca en un minuto con tu cuenta de Google y queda guardada solo en este teléfono.</string>
+    <string name="ia_conectar">Conectar mi IA</string>
+    <string name="ia_conectar_titulo">Tu IA</string>
+    <string name="ia_ya_conectada">Ya tenés tu IA conectada. Podés pegar otra clave para cambiarla.</string>
+    <string name="ia_pasos_clave">1. Abrí Google AI Studio y entrá con tu cuenta de Google.
+2. Tocá \"Create API key\" (crear clave) y copiala.
+3. Pegala acá abajo y tocá \"Probar y conectar\".</string>
+    <string name="ia_abrir_ai_studio">Abrir Google AI Studio</string>
+    <string name="ia_pegar_clave">Tu clave de Gemini</string>
+    <string name="ia_ver">Ver</string>
+    <string name="ia_ocultar">Ocultar</string>
+    <string name="ia_probar_conectar">Probar y conectar</string>
+    <string name="ia_probando">Probando…</string>
+    <string name="ia_clave_no_anda">Esa clave no funciona. Revisá que la hayas copiado completa.</string>
+    <string name="ia_clave_privacidad">La clave se guarda cifrada en este teléfono y solo para tu cuenta de Estudia+: no va en la copia de seguridad ni la ven otros usuarios. Los usos gratis cuentan en tu cuenta de Google.</string>
+    <string name="ia_desconectar">Desconectar mi clave</string>
+    <string name="aviso_ia_conectada">IA conectada</string>
+    <string name="aviso_ia_desconectada">Clave desconectada</string>
+    <string name="ia_firma">Asistente IA</string>
+    <string name="ia_copiar">Copiar</string>
+    <string name="ia_copiada">Respuesta copiada</string>
+    <string name="ia_guardar_nota">Guardar como nota</string>
+    <string name="ia_pensando">Pensando…</string>
+    <string name="ia_reintentar">Reintentar</string>
+    <string name="ia_escribir">Preguntá tu duda…</string>
+    <string name="ia_enviar">Enviar</string>
+    <string name="ia_elegir_nota">Elegí una nota</string>
+    <string name="ia_sin_notas">Todavía no tenés notas. Creá una en Notas y volvé.</string>
+    <string name="ia_que_entender">¿Qué querés entender?</string>
+    <string name="ia_que_entender_ejemplo">Ej: qué es una derivada parcial</string>
+    <string name="ia_tarjetas_titulo">Tarjetas sugeridas</string>
+    <string name="ia_tarjetas_detalle_dialogo">Revisalas: se guardan las marcadas en %1$s y entran a tu repaso.</string>
+    <string name="ia_tarjetas_guardar">Guardar (%1$d)</string>
+    <string name="ia_error_sin_clave">Primero conectá tu IA con el botón de la llave, arriba.</string>
+    <string name="ia_error_clave">Tu clave de Gemini no funciona. Tocá la llave de arriba para conectar otra.</string>
+    <string name="ia_error_internet">No hay conexión. Revisá internet y probá de nuevo.</string>
+    <string name="ia_error_limite">Se llegó al límite gratis por ahora. Probá de nuevo en un rato.</string>
+    <string name="ia_error_bloqueado">La IA no quiso responder eso. Probá preguntarlo de otra forma.</string>
+    <string name="ia_error_otro">No se pudo responder. Probá de nuevo.</string>
+    <string name="aviso_tarjetas_ia_guardadas">Tarjetas guardadas en %2$s: %1$d</string>
+    <string name="aviso_nota_ia_guardada">Respuesta guardada como nota</string>
+
+    <!-- Mapas mentales (versión 12) -->
+    <string name="mapas_titulo">Mapas mentales</string>
+    <string name="mapas_subtitulo">Una idea central y sus ramas</string>
+    <string name="acceso_mapas">Una idea central con sus ramas, para ver el tema de un vistazo</string>
+    <string name="mapas_agregar">Nuevo mapa</string>
+    <string name="mapas_nuevo">Nuevo mapa mental</string>
+    <string name="mapas_renombrar">Cambiar nombre</string>
+    <string name="mapas_tema_central">Tema central</string>
+    <string name="mapas_tema_ejemplo">Ej: Leyes de Newton</string>
+    <string name="mapas_vacio">Todavía no tenés mapas mentales</string>
+    <string name="mapas_vacio_sugerencia">Poné el tema en el centro y agregale ramas con las ideas principales: sirve para repasar y ver cómo se relaciona todo.</string>
+    <plurals name="mapas_ideas">
+        <item quantity="one">%d idea</item>
+        <item quantity="other">%d ideas</item>
+    </plurals>
+    <string name="mapas_no_existe">Este mapa ya no existe</string>
+    <string name="mapas_ajustar">Ver todo el mapa</string>
+    <string name="mapas_compartir">Compartir como imagen</string>
+    <string name="mapas_ayuda_tocar">Tocá una idea para agregarle ramas. Arrastrala para moverla.</string>
+    <string name="mapas_nueva_idea">Nueva idea</string>
+    <string name="mapas_editar_idea">Editar idea</string>
+    <string name="mapas_texto_idea">Idea</string>
+    <string name="mapas_color">Color</string>
+    <string name="mapas_color_numero">Color %1$d</string>
+    <string name="mapas_color_automatico">Automático (el de su rama)</string>
+    <string name="aviso_mapa_eliminado">Mapa eliminado</string>
+    <string name="aviso_idea_eliminada">Idea eliminada</string>
+
+    <!-- Plantillas de notas (síntesis visual) -->
+    <string name="plantilla_elegir">Plantilla</string>
+    <string name="plantilla_libre">Libre</string>
+    <string name="plantilla_cornell">Resumen Cornell</string>
+    <string name="plantilla_esquema">Esquema</string>
+    <string name="plantilla_comparativo">Cuadro comparativo</string>
+    <string name="plantilla_linea_tiempo">Línea de tiempo</string>
+    <string name="plantilla_citar">Citar una fuente de la bibliografía</string>
+    <string name="plantilla_texto_cornell">"▸ IDEAS CLAVE\n• \n• \n• \n\n▸ DESARROLLO\n\n\n▸ PREGUNTAS PARA REPASAR\n• \n• \n\n▸ SÍNTESIS (en 2 o 3 líneas)\n"</string>
+    <string name="plantilla_texto_esquema">"1. Tema principal\n    1.1 \n    1.2 \n2. \n    2.1 \n    2.2 \n3. \n    3.1 \n"</string>
+    <string name="plantilla_texto_comparativo">"Comparación: ____ vs ____\n\n▸ Qué es\n    A: \n    B: \n\n▸ Características\n    A: \n    B: \n\n▸ Ventajas y desventajas\n    A: \n    B: \n\n▸ En qué se parecen\n• \n\n▸ Conclusión\n"</string>
+    <string name="plantilla_texto_linea_tiempo">"▸ Fecha — Hecho\n    Por qué importa: \n\n▸ Fecha — Hecho\n    Por qué importa: \n\n▸ Fecha — Hecho\n    Por qué importa: \n"</string>
     <string name="aviso_final_aprobado_plan">¡Felicitaciones! %1$s quedó aprobada en Mi carrera</string>
     <string name="notificacion_finales_titulo">Finales</string>
     <string name="notificacion_final_hoy">Hoy rendís %1$s. ¡Éxitos!</string>
@@ -831,7 +972,7 @@
     <string name="busqueda_subtitulo">En toda la app</string>
     <string name="busqueda_sugerencia">Materias, tareas, notas, tarjetas…</string>
     <string name="busqueda_vacio">¿Qué estás buscando?</string>
-    <string name="busqueda_vacio_sugerencia">Escribí al menos 2 letras. Se busca en materias, tareas, notas, eventos, tarjetas, tu plan y tus finales.</string>
+    <string name="busqueda_vacio_sugerencia">Escribí al menos 2 letras. Se busca en materias, tareas, notas, eventos, tarjetas, tu plan, tus finales, tu bibliografía y tus mapas mentales.</string>
     <string name="busqueda_sin_resultados">Sin resultados</string>
     <string name="busqueda_sin_resultados_sugerencia">No encontramos nada con «%1$s».</string>
     <string name="busqueda_materias">Materias</string>
@@ -841,6 +982,8 @@
     <string name="busqueda_tarjetas">Tarjetas</string>
     <string name="busqueda_carrera">Mi carrera</string>
     <string name="busqueda_finales">Finales</string>
+    <string name="busqueda_bibliografia">Bibliografía</string>
+    <string name="busqueda_mapas">Mapas mentales</string>
 
     <!-- Sonidos de concentración -->
     <string name="sonido_titulo">Sonido de concentración</string>

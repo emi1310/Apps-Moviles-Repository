@@ -8,6 +8,8 @@ import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
+import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.MapaMental
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
@@ -181,6 +183,20 @@ interface RepositorioEstudia {
     suspend fun actualizarFinal(usuarioId: Int, final: MesaFinal)
     suspend fun eliminarFinal(usuarioId: Int, final: MesaFinal)
     suspend fun restaurarFinal(usuarioId: Int, final: MesaFinal)
+
+    // ---------- Bibliografía ----------
+
+    suspend fun agregarFuente(usuarioId: Int, fuente: Fuente): Fuente
+    suspend fun actualizarFuente(usuarioId: Int, fuente: Fuente)
+    suspend fun eliminarFuente(usuarioId: Int, fuente: Fuente)
+    suspend fun restaurarFuente(usuarioId: Int, fuente: Fuente)
+
+    // ---------- Mapas mentales ----------
+
+    suspend fun agregarMapa(usuarioId: Int, mapa: MapaMental): MapaMental
+    suspend fun actualizarMapa(usuarioId: Int, mapa: MapaMental)
+    suspend fun eliminarMapa(usuarioId: Int, mapa: MapaMental)
+    suspend fun restaurarMapa(usuarioId: Int, mapa: MapaMental)
 
     // ---------- Exportar a PDF ----------
 

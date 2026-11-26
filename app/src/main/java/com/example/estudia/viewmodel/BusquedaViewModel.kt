@@ -14,7 +14,7 @@ import java.text.Normalizer
 import java.time.LocalDate
 
 // Qué se encontró (define el ícono y a qué sección lleva al tocarlo).
-enum class TipoResultado { MATERIA, TAREA, NOTA, EVENTO, TARJETA, CARRERA, FINAL }
+enum class TipoResultado { MATERIA, TAREA, NOTA, EVENTO, TARJETA, CARRERA, FINAL, FUENTE, MAPA }
 
 data class ResultadoBusqueda(
     val tipo: TipoResultado,
@@ -36,7 +36,7 @@ const val LARGO_MINIMO_BUSQUEDA = 2
 const val MAXIMO_RESULTADOS = 60
 
 // ViewModel de la búsqueda global: busca a la vez en materias, tareas,
-// notas, eventos, tarjetas, el plan de estudios y los finales.
+// notas, eventos, tarjetas, el plan de estudios, los finales, la bibliografía y los mapas mentales.
 class BusquedaViewModel(repositorio: RepositorioEstudia) : ViewModel() {
 
     private val texto = MutableStateFlow("")
@@ -84,6 +84,14 @@ fun buscarEnTodo(usuario: Usuario, texto: String): List<ResultadoBusqueda> {
         .forEach { resultados += ResultadoBusqueda(TipoResultado.CARRERA, it.nombre, null, null, null) }
     usuario.finales.filter { coincide(it.materia) }
         .forEach { resultados += ResultadoBusqueda(TipoResultado.FINAL, it.materia, null, null, null, it.fechaMesa) }
+    usuario.fuentes.filter { coincide(it.titulo, it.autores, it.origen, it.comentario) }
+        .forEach { f -> resultados += ResultadoBusqueda(TipoResultado.FUENTE, f.titulo, f.listaAutores.joinToString(", ").ifEmpty { null }, f.materia.ifEmpty { null }, colorDeMateria(usuario, f.materia)) }
+    usuario.mapas.forEach { m ->
+        val idea = m.nodos.firstOrNull { it.padreId != null && coincide(it.texto) }
+        if (coincide(m.titulo) || idea != null) {
+            resultados += ResultadoBusqueda(TipoResultado.MAPA, m.titulo, idea?.texto, m.materia.ifEmpty { null }, colorDeMateria(usuario, m.materia), m.modificado)
+        }
+    }
     return resultados.take(MAXIMO_RESULTADOS)
 }
 
@@ -96,3 +104,8 @@ fun extracto(contenido: String, buscadoNormalizado: String, largo: Int = 80): St
     val hasta = (desde + largo).coerceAtMost(plano.length)
     return (if (desde > 0) "…" else "") + plano.substring(desde, hasta).trim() + (if (hasta < plano.length) "…" else "")
 }
+
+// Color de una materia de la app por su nombre (la bibliografía y los
+// finales guardan el nombre, no el id).
+private fun colorDeMateria(usuario: Usuario, nombre: String): Long? =
+    usuario.materias.firstOrNull { it.nombre.trim().equals(nombre.trim(), ignoreCase = true) }?.color
