@@ -128,7 +128,7 @@ fun DesenfocarDetras(radio: Int = 48) {
 // diálogos, bloques de la materia): un velo apenas visible del color del
 // texto, así se sigue viendo el vidrio por detrás.
 @Composable
-fun rellenoVidrio(): Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+fun rellenoVidrio(): Color = MaterialTheme.colorScheme.surfaceVariant
 
 // ¿El teléfono puede desenfocar lo que hay detrás de una ventana? (Android
 // 12 o más nuevo y que no esté apagado, por ejemplo con ahorro de batería).

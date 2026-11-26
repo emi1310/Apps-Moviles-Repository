@@ -1,6 +1,10 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -16,6 +20,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -107,6 +115,7 @@ fun FinalesScreen(viewModel: FinalesViewModel, onVolver: () -> Unit) {
         DialogoFinal(
             final = final,
             sugerencias = estado.sugerencias,
+            colores = estado.colores,
             onConfirmar = { materia, mesa, cierre, vencimiento, inscripto ->
                 viewModel.guardar(final.takeIf { it.id != 0 }, materia, mesa, cierre, vencimiento, inscripto)
                     .also { if (it == null) editando = null }
@@ -202,6 +211,7 @@ private fun TarjetaFinal(
 private fun DialogoFinal(
     final: MesaFinal,
     sugerencias: List<String>,
+    colores: Map<String, Long>,
     onConfirmar: (String, LocalDate?, LocalDate?, LocalDate?, Boolean) -> Mensaje?,
     onCancelar: () -> Unit
 ) {
@@ -226,10 +236,16 @@ private fun DialogoFinal(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        if (sugerencias.isNotEmpty() && final.id == 0) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Las materias de la app y las regulares del plan, para elegir con un toque.
+        if (sugerencias.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 sugerencias.forEach { nombre ->
-                    SuggestionChip(onClick = { materia = nombre; error = null }, label = { Text(nombre) })
+                    PastillaSugerencia(
+                        nombre = nombre,
+                        color = colores[nombre.lowercase()]?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
+                        elegida = materia.trim().equals(nombre, ignoreCase = true),
+                        alTocar = { materia = nombre; error = null }
+                    )
                 }
             }
         }
@@ -258,6 +274,31 @@ private fun DialogoFinal(
             Switch(checked = inscripto, onCheckedChange = { inscripto = it })
         }
         TextoError(error?.let { stringResource(it.texto()) })
+    }
+}
+
+// Pastilla para elegir una materia sugerida: con el punto de su color; la
+// elegida se pinta entera de ese color.
+@Composable
+private fun PastillaSugerencia(nombre: String, color: Color, elegida: Boolean, alTocar: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (elegida) color else color.copy(alpha = 0.14f))
+            .clickable(role = Role.RadioButton, onClick = alTocar)
+            .semantics { selected = elegida }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (elegida) Color.White else color))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = nombre,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (elegida) Color.White else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

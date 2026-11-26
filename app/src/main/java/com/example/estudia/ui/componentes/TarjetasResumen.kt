@@ -49,25 +49,23 @@ import java.time.LocalDate
 @Composable
 fun TarjetaTareaPendiente(item: TareaConMateria, hoy: LocalDate, onAlternar: () -> Unit) {
     val tarea = item.tarea
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    // El título usa todo el ancho; la fecha va con las demás etiquetas abajo.
+    Row(modifier = Modifier.fillMaxWidth().padding(start = 2.dp, end = 12.dp, top = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = tarea.completada, onCheckedChange = { onAlternar() })
-        Column(modifier = Modifier.weight(1f).padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Text(
-                    text = tarea.titulo,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textDecoration = if (tarea.completada) TextDecoration.LineThrough else null,
-                    modifier = Modifier.weight(1f)
-                )
-                val fecha = tarea.fechaLimite
-                if (fecha != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    EtiquetaFecha(textoFecha(fecha, hoy), vencida = tarea.estaVencida(hoy))
-                }
-            }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = tarea.titulo,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = if (tarea.completada) TextDecoration.LineThrough else null
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                itemVerticalAlignment = Alignment.CenterVertically
+            ) {
+                tarea.fechaLimite?.let { fecha -> EtiquetaFecha(textoFecha(fecha, hoy), vencida = tarea.estaVencida(hoy)) }
                 ChipMateria(item.nombreMateria, item.colorMateria)
                 EtiquetaPrioridad(tarea.prioridad)
                 if (tarea.subtareas.isNotEmpty()) {

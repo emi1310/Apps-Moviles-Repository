@@ -2,6 +2,7 @@ package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,13 +50,19 @@ fun BienvenidaScreen(onComenzar: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // El logo de la app (el mismo dibujo del ícono) sobre una tarjeta blanca.
+            // El logo de la app: el mismo dibujo y el mismo degradado del ícono.
             // El dibujo trae margen para el ícono adaptativo: se agranda y se recorta.
             Box(
                 modifier = Modifier
                     .size(104.dp)
                     .clip(RoundedCornerShape(28.dp))
-                    .background(Color.White),
+                    .background(
+                        Brush.linearGradient(
+                            0f to Color(0xFF2F2385), 0.5f to Color(0xFF5B42D6), 1f to Color(0xFF9E74FF),
+                            start = Offset(0f, Float.POSITIVE_INFINITY), end = Offset(Float.POSITIVE_INFINITY, 0f)
+                        )
+                    )
+                    .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(28.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(

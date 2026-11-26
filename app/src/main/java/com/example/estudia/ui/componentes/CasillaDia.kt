@@ -42,7 +42,7 @@ fun CasillaDia(
         fecha == null -> Modifier
         seleccionado -> Modifier.background(LocalDegradado.current, forma)
         esHoy -> Modifier.background(MaterialTheme.colorScheme.secondaryContainer, forma)
-        else -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f), forma)
+        else -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant, forma)   // velo de vidrio del tema
     }
     val colorTexto = when {
         seleccionado -> Color.White

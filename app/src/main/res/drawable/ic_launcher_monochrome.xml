@@ -1,17 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Versión de un solo color del logo, para los íconos temáticos de Android 13+.
-     El sistema solo usa la forma: las hojas quedan como un hueco en la "E". -->
+<!-- Versión de un solo color del logo ("E+"), para los íconos temáticos de
+     Android 13+. El sistema solo usa la forma. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:translateX="-2"
-        android:translateY="-3">
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:fillType="evenOdd"
-            android:pathData="M40,30H75A5,5 0,0 1,75 40H42V49H67A4.5,4.5 0,0 1,67 58H42V66H74A6,6 0,0 1,74 78H42A10,10 0,0 1,32 68V38A8,8 0,0 1,40 30ZM46,69.5H75A2.5,2.5 0,0 1,75 74.5H46A2.5,2.5 0,0 1,46 69.5Z" />
-    </group>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M37,34H37A4,4 0,0 1 41,38V70A4,4 0,0 1 37,74H37A4,4 0,0 1 33,70V38A4,4 0,0 1 37,34ZM37,34H63A4,4 0,0 1 67,38V38A4,4 0,0 1 63,42H37A4,4 0,0 1 33,38V38A4,4 0,0 1 37,34ZM37,50H55A4,4 0,0 1 59,54V54A4,4 0,0 1 55,58H37A4,4 0,0 1 33,54V54A4,4 0,0 1 37,50ZM37,66H63A4,4 0,0 1 67,70V70A4,4 0,0 1 63,74H37A4,4 0,0 1 33,70V70A4,4 0,0 1 37,66ZM66,51H74A3,3 0,0 1 77,54V54A3,3 0,0 1 74,57H66A3,3 0,0 1 63,54V54A3,3 0,0 1 66,51ZM70,47H70A3,3 0,0 1 73,50V58A3,3 0,0 1 70,61H70A3,3 0,0 1 67,58V50A3,3 0,0 1 70,47Z" />
 </vector>

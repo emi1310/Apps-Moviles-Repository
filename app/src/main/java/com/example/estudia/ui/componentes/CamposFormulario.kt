@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,8 +73,12 @@ fun CampoFecha(
     }
     if (abierto) {
         val estado = rememberDatePickerState(initialSelectedDateMillis = (fecha ?: LocalDate.now()).aMilisUtc())
+        // Ventana de vidrio, como los demás diálogos.
+        val fondo = colorVentanaVidrio()
         DatePickerDialog(
             onDismissRequest = { abierto = false },
+            colors = DatePickerDefaults.colors(containerColor = fondo),
+            tonalElevation = 0.dp,
             confirmButton = {
                 TextButton(onClick = {
                     estado.selectedDateMillis?.let { onCambiar(fechaDesdeMilisUtc(it)) }
@@ -84,7 +89,8 @@ fun CampoFecha(
                 TextButton(onClick = { abierto = false }) { Text(stringResource(R.string.cancelar)) }
             }
         ) {
-            DatePicker(state = estado)
+            DesenfocarDetras()
+            DatePicker(state = estado, colors = DatePickerDefaults.colors(containerColor = Color.Transparent))
         }
     }
 }
@@ -109,6 +115,8 @@ fun CampoHora(
         val estado = rememberTimePickerState(initialHour = hora.hour, initialMinute = hora.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { abierto = false },
+            containerColor = colorVentanaVidrio(),
+            tonalElevation = 0.dp,
             confirmButton = {
                 TextButton(onClick = {
                     onCambiar(LocalTime.of(estado.hour, estado.minute))
@@ -118,7 +126,10 @@ fun CampoHora(
             dismissButton = {
                 TextButton(onClick = { abierto = false }) { Text(stringResource(R.string.cancelar)) }
             },
-            text = { TimePicker(state = estado) }
+            text = {
+                DesenfocarDetras()
+                TimePicker(state = estado)
+            }
         )
     }
 }

@@ -20,8 +20,11 @@ data class FinalesUiState(
     val hoy: LocalDate = LocalDate.now(),
     val proximos: List<MesaFinal> = emptyList(),    // sin rendir, la mesa más cercana primero
     val rendidos: List<MesaFinal> = emptyList(),    // el más reciente primero
-    // Materias regulares del plan (las que se pueden rendir), para elegirlas rápido.
-    val sugerencias: List<String> = emptyList()
+    // Materias para elegir rápido: las de la app (las que tienen final) y las
+    // regulares del plan, sin repetir y sin las que ya tienen mesa anotada.
+    val sugerencias: List<String> = emptyList(),
+    // Color de cada sugerencia que es una materia de la app (nombre en minúscula).
+    val colores: Map<String, Long> = emptyMap()
 )
 
 // ViewModel de las mesas de finales. Los avisos (cierre de inscripción y
@@ -104,8 +107,12 @@ fun armarFinales(usuario: Usuario, hoy: LocalDate): FinalesUiState {
         hoy = hoy,
         proximos = proximos.sortedBy { it.fechaMesa },
         rendidos = rendidos.sortedByDescending { it.fechaMesa },
-        sugerencias = usuario.planEstudio
-            .filter { it.estado == EstadoPlan.REGULAR && it.nombre.trim().lowercase().let { n -> n !in yaAnotadas && n !in sinFinal } }
-            .map { it.nombre }
+        sugerencias = (
+            usuario.materias.filter { !it.archivada && it.tieneFinal }.map { it.nombre.trim() } +
+                usuario.planEstudio.filter { it.estado == EstadoPlan.REGULAR }.map { it.nombre.trim() }
+            )
+            .filter { it.isNotEmpty() && it.lowercase().let { n -> n !in yaAnotadas && n !in sinFinal } }
+            .distinctBy { it.lowercase() },
+        colores = usuario.materias.associate { it.nombre.trim().lowercase() to it.color }
     )
 }

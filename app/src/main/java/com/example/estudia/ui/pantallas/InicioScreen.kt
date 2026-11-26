@@ -52,6 +52,7 @@ import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.componentes.TarjetaEventoResumen
 import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.ui.componentes.TarjetaTareaPendiente
+import com.example.estudia.ui.componentes.rellenoVidrio
 import com.example.estudia.ui.theme.AmarilloFavorita
 import com.example.estudia.ui.theme.DegradadoFin
 import com.example.estudia.ui.theme.DegradadoInicio
@@ -264,15 +265,18 @@ private fun TarjetaTareas(
                     }
                 }
             }
-            estado.tareasPendientes.take(5).forEach { item ->
-                // Deslizar hacia la derecha la completa (y sale de la lista).
-                key(item.tarea.id) {
-                    Deslizable(
-                        onCompletar = { onAlternar(item) },
-                        forma = RoundedCornerShape(12.dp),
-                        fondoContenido = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ) {
-                        TarjetaTareaPendiente(item, estado.hoy, onAlternar = { onAlternar(item) })
+            // Cada tarea es un bloque de vidrio apenas marcado, separado del
+            // siguiente. Deslizar hacia la derecha la completa (y sale de la lista).
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+                estado.tareasPendientes.take(5).forEach { item ->
+                    key(item.tarea.id) {
+                        Deslizable(
+                            onCompletar = { onAlternar(item) },
+                            forma = RoundedCornerShape(18.dp),
+                            fondoContenido = rellenoVidrio()
+                        ) {
+                            TarjetaTareaPendiente(item, estado.hoy, onAlternar = { onAlternar(item) })
+                        }
                     }
                 }
             }

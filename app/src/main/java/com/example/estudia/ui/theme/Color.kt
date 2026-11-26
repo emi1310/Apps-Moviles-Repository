@@ -19,7 +19,6 @@ val NaranjaSobreContenedor = Color(0xFF3F2100)
 
 val FondoClaro = Color(0xFFF2F1F7)
 val TarjetaClara = Color(0xFFFFFFFF)
-val TarjetaClaraAlta = Color(0xFFEFEDF7)
 val TextoClaro = Color(0xFF1B1A23)
 val TextoSecundarioClaro = Color(0xFF5E5C6E)
 val BordeClaro = Color(0xFFDCD9E8)
@@ -37,7 +36,6 @@ val NaranjaSobreContenedorOscuro = Color(0xFFFFE1C2)
 
 val FondoOscuro = Color(0xFF0C0B10)
 val TarjetaOscura = Color(0xFF19181F)
-val TarjetaOscuraAlta = Color(0xFF24232C)
 val TextoOscuro = Color(0xFFE6E4EF)
 val TextoSecundarioOscuro = Color(0xFFADAABD)
 val BordeOscuro = Color(0xFF2E2D37)
@@ -68,3 +66,8 @@ val PrioridadBaja = Color(0xFF00B894)
 // Tarjetas de vidrio: semitransparentes sobre el fondo con manchas de color.
 val VidrioClaro = Color(0xB3FFFFFF)
 val VidrioOscuro = Color(0x14FFFFFF)
+// Relleno de lo que va adentro de una pieza de vidrio (filas de tareas y
+// exámenes, campos, bloques): un velo apenas visible del color del texto.
+// Es el surfaceVariant del tema, así todo lo que lo usa ya es vidrio.
+val RellenoClaro = Color(0x0F1B1A23)
+val RellenoOscuro = Color(0x0FE6E4EF)
