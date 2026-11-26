@@ -5,6 +5,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.estudia.EstudiaApp
 import com.example.estudia.R
+import com.example.estudia.viewmodel.armarResumenSemanal
+import kotlinx.coroutines.flow.first
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -49,7 +52,10 @@ class RachaWorker(
 ) : CoroutineWorker(context, parametros) {
 
     override suspend fun doWork(): Result {
-        val dias = (applicationContext as EstudiaApp).repositorio.rachaEnRiesgo() ?: return Result.success()
+        val repositorio = (applicationContext as EstudiaApp).repositorio
+        // Los domingos, además, el resumen de la semana.
+        if (LocalDate.now().dayOfWeek == DayOfWeek.SUNDAY) avisarSemana(repositorio)
+        val dias = repositorio.rachaEnRiesgo() ?: return Result.success()
         val contexto = applicationContext
         Notificaciones.mostrar(
             contexto,
@@ -59,4 +65,26 @@ class RachaWorker(
         )
         return Result.success()
     }
+}
+
+// Resumen de la semana (domingos a las 20:00): horas estudiadas y la
+// comparación con la semana anterior. Solo con los recordatorios activados.
+private suspend fun CoroutineWorker.avisarSemana(repositorio: com.example.estudia.datos.RepositorioEstudia) {
+    if (!repositorio.recordatoriosActivos.first()) return
+    val usuario = repositorio.usuarioActual.first() ?: return
+    val resumen = armarResumenSemanal(usuario, LocalDate.now())
+    val contexto = applicationContext
+    val horas = String.format(java.util.Locale.getDefault(), "%.1f", resumen.minutos / 60.0)
+    val variacion = resumen.variacion
+    val texto = buildString {
+        append(contexto.getString(R.string.notificacion_semana_texto, horas, resumen.diasEstudiados))
+        if (variacion != null) {
+            append(" ")
+            append(
+                if (variacion >= 0) contexto.getString(R.string.notificacion_semana_mas, variacion)
+                else contexto.getString(R.string.notificacion_semana_menos, -variacion)
+            )
+        }
+    }
+    Notificaciones.mostrar(contexto, Notificaciones.ID_RESUMEN_SEMANAL, contexto.getString(R.string.notificacion_semana_titulo), texto)
 }

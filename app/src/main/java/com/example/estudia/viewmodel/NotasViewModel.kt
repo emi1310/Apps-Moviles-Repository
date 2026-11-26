@@ -10,6 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -141,6 +142,23 @@ class NotasViewModel(
     }
 
     fun uriParaAbrir(archivo: Archivo): String = repositorio.uriParaAbrir(archivo)
+
+    // ---------- Exportar a PDF ----------
+    // El ViewModel arma el archivo (con el Repository) y deja su uri acá; la
+    // pantalla abre "Compartir" con esa uri y después avisa con pdfCompartido().
+    private val _pdfParaCompartir = MutableStateFlow<String?>(null)
+    val pdfParaCompartir: StateFlow<String?> = _pdfParaCompartir.asStateFlow()
+
+    fun exportarPdf(item: NotaConMateria) {
+        viewModelScope.launch {
+            val uri = repositorio.exportarNotaPdf(item.nota, item.nombreMateria)
+            if (uri == null) avisar(Aviso(Mensaje.AVISO_PDF_ERROR)) else _pdfParaCompartir.value = uri
+        }
+    }
+
+    fun pdfCompartido() {
+        _pdfParaCompartir.value = null
+    }
 
     // OCR: lee el texto de una foto adjunta (ej: el pizarrón) y lo suma al
     // final del contenido de la nota. Se puede deshacer.

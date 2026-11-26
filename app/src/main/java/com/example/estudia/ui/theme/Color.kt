@@ -54,11 +54,6 @@ val AmarilloFavorita = Color(0xFFF5B400)
 // Fueguito de la racha de estudio en Inicio (encendido = hoy ya estudió).
 val NaranjaRacha = Color(0xFFFFB347)
 
-// Dock flotante de navegación en el tema oscuro (en el claro usa el color
-// de las tarjetas). El botón "+" va siempre en violeta.
-val FondoDockOscuro = Color(0xFF24232D)
-val IconoDock = Color(0xFF8C8A99)
-
 // Colores de los bloques del Perfil (los mismos de la paleta de materias).
 val BloqueVioleta = Color(0xFF6C5CE7)
 val BloqueVerde = Color(0xFF00B894)
@@ -69,3 +64,7 @@ val BloqueAzul = Color(0xFF0984E3)
 val PrioridadAlta = Color(0xFFE5484D)
 val PrioridadMedia = Color(0xFFF5A524)
 val PrioridadBaja = Color(0xFF00B894)
+
+// Tarjetas de vidrio: semitransparentes sobre el fondo con manchas de color.
+val VidrioClaro = Color(0xB3FFFFFF)
+val VidrioOscuro = Color(0x14FFFFFF)

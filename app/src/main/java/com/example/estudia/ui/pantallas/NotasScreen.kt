@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.filled.StickyNote2
+import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,7 +21,6 @@ import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.ui.componentes.Deslizable
-import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
@@ -41,13 +40,34 @@ fun NotasScreen(
     viewModel: NotasViewModel,
     // true cuando se eligió crear desde el botón "+" del dock.
     crearAlAbrir: Boolean = false,
-    onCreacionAbierta: () -> Unit = {}
+    onCreacionAbierta: () -> Unit = {},
+    // Lo que se escribe en la lupa del dock: busca entre las notas.
+    busqueda: String = ""
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
     RecolectarAvisos(viewModel.avisos)
     val context = LocalContext.current
     val avisos = LocalAvisos.current
     val textoSinApp = stringResource(R.string.sin_app_para_abrir)
+
+    // Cuando el PDF está listo se abre "Compartir" (WhatsApp, mail, Drive...).
+    val pdf by viewModel.pdfParaCompartir.collectAsStateWithLifecycle()
+    val tituloCompartir = stringResource(R.string.exportar_pdf_compartir)
+    LaunchedEffect(pdf) {
+        val uri = pdf ?: return@LaunchedEffect
+        val enviar = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(android.content.Intent.EXTRA_STREAM, Uri.parse(uri))
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            context.startActivity(android.content.Intent.createChooser(enviar, tituloCompartir))
+        } catch (e: android.content.ActivityNotFoundException) {
+            avisos.mostrarTexto(textoSinApp)
+        }
+        viewModel.pdfCompartido()
+    }
 
     var crearNota by rememberSaveable { mutableStateOf(false) }
     var notaParaEditar by remember { mutableStateOf<NotaConMateria?>(null) }
@@ -82,8 +102,6 @@ fun NotasScreen(
         ) {
             item {
                 EncabezadoPantalla(titulo = stringResource(R.string.mis_notas), subtitulo = stringResource(R.string.notas_subtitulo))
-                Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_notas))
-                Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 4.dp)) {
                     listOf(
                         FiltroNotas.TODAS to R.string.todas,
@@ -97,9 +115,9 @@ fun NotasScreen(
                 }
                 if (estado.notas.isEmpty() && !estado.cargando) {
                     if (estado.busqueda.isNotBlank()) {
-                        EstadoVacio(Icons.Filled.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.sin_resultados_sugerencia))
+                        EstadoVacio(Icons.Outlined.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.sin_resultados_sugerencia))
                     } else {
-                        EstadoVacio(Icons.Filled.StickyNote2, stringResource(R.string.sin_notas), stringResource(R.string.sin_notas_sugerencia))
+                        EstadoVacio(Icons.Outlined.StickyNote2, stringResource(R.string.sin_notas), stringResource(R.string.sin_notas_sugerencia))
                     }
                 }
             }
@@ -133,7 +151,8 @@ fun NotasScreen(
                             }
                         },
                         alEliminarArchivo = { viewModel.eliminarArchivo(item, it) },
-                        alPasarATexto = { viewModel.pasarATexto(item, it) }
+                        alPasarATexto = { viewModel.pasarATexto(item, it) },
+                        alExportarPdf = { viewModel.exportarPdf(item) }
                     )
                 }
             }

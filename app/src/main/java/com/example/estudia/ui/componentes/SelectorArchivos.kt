@@ -10,8 +10,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FolderOff
-import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.outlined.FolderOff
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,7 +69,7 @@ fun selectorDeArchivos(
     if (mostrarExplicacion) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_archivos_titulo),
-            icono = Icons.Filled.FolderOpen,
+            icono = Icons.Outlined.FolderOpen,
             textoConfirmar = stringResource(R.string.continuar),
             onConfirmar = {
                 mostrarExplicacion = false
@@ -91,7 +91,7 @@ fun selectorDeArchivos(
     if (mostrarSinPermiso) {
         DialogoApp(
             titulo = stringResource(R.string.sin_permiso_archivos_titulo),
-            icono = Icons.Filled.FolderOff,
+            icono = Icons.Outlined.FolderOff,
             textoConfirmar = stringResource(R.string.ir_a_ajustes),
             onConfirmar = {
                 mostrarSinPermiso = false

@@ -10,6 +10,8 @@ import com.example.estudia.datos.local.MIGRACION_4_5
 import com.example.estudia.datos.local.MIGRACION_5_6
 import com.example.estudia.datos.local.MIGRACION_6_7
 import com.example.estudia.datos.local.MIGRACION_7_8
+import com.example.estudia.datos.local.MIGRACION_8_9
+import com.example.estudia.datos.local.MIGRACION_9_10
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -211,6 +213,83 @@ class MigracionesTest {
         db.query("SELECT COUNT(*) FROM tarjetas").use { c ->
             c.moveToFirst()
             assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    // 8 -> 9: aparecen el plan, las asistencias, las evaluaciones y los
+    // finales; lo anterior queda igual y la asistencia es una por clase y día.
+    @Test
+    fun migrar8a9CreaLasTablasDeLaCursada() {
+        ayudante.createDatabase(nombreBase, 8).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO eventos (id, materiaId, titulo, tipo, fecha, horaInicio, horaFin, semanal) VALUES (1, 1, 'Clase', 'CLASE', 0, 600, 690, 1)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 9, true, MIGRACION_8_9)
+
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO plan_materias (usuarioId, nombre, anio, estado, correlativas) VALUES (1, 'Física', 1, 'CURSANDO', '')")
+        db.execSQL("INSERT INTO evaluaciones (materiaId, nombre, peso, nota) VALUES (1, 'Parcial', 50, NULL)")
+        db.execSQL("INSERT INTO finales (usuarioId, materia, fechaMesa, inscripto) VALUES (1, 'Física', 100, 0)")
+        db.execSQL("INSERT INTO asistencias (eventoId, fecha, presente) VALUES (1, 7, 1)")
+        // Marcar el mismo día otra vez reemplaza la fila (índice único).
+        db.execSQL("INSERT OR REPLACE INTO asistencias (eventoId, fecha, presente) VALUES (1, 7, 0)")
+        db.query("SELECT COUNT(*), MIN(presente) FROM asistencias").use { c ->
+            c.moveToFirst()
+            assertEquals(1, c.getInt(0))
+            assertEquals(0, c.getInt(1))
+        }
+        // Al borrar la materia se van su evaluación y la asistencia de su clase.
+        db.execSQL("DELETE FROM materias WHERE id = 1")
+        db.query("SELECT (SELECT COUNT(*) FROM evaluaciones) + (SELECT COUNT(*) FROM asistencias)").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    // 9 -> 10: las materias, eventos y archivos que ya estaban quedan con los
+    // valores de siempre (75 %, promocional con 7, con final, presencial y en
+    // "Otros") y aparece la tabla de feriados.
+    @Test
+    fun migrar9a10AgregaReglasModalidadCategoriasYFeriados() {
+        ayudante.createDatabase(nombreBase, 9).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO eventos (id, materiaId, titulo, tipo, fecha, horaInicio, horaFin, semanal) VALUES (1, 1, 'Clase', 'CLASE', 0, 600, 690, 1)")
+            execSQL("INSERT INTO archivos (id, materiaId, nombre, tipoMime, ruta, tamanoBytes, fechaAgregado) VALUES (1, 1, 'apunte.pdf', 'application/pdf', 'a.pdf', 10, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 10, true, MIGRACION_9_10)
+
+        db.query("SELECT asistenciaMinima, promocional, notaPromocion, tieneFinal FROM materias WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals(75, c.getInt(0))
+            assertEquals(1, c.getInt(1))
+            assertEquals(7.0, c.getDouble(2), 0.001)
+            assertEquals(1, c.getInt(3))
+        }
+        db.query("SELECT virtual, lugar, enlace FROM eventos WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
+            assertEquals(true, c.isNull(1))
+            assertEquals(true, c.isNull(2))
+        }
+        db.query("SELECT categoria FROM archivos WHERE id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals("OTROS", c.getString(0))
+        }
+        db.execSQL("INSERT INTO feriados (fecha, nombre) VALUES (100, 'Día de la Independencia')")
+        // Un feriado por día: la fecha es la clave.
+        db.execSQL("INSERT OR REPLACE INTO feriados (fecha, nombre) VALUES (100, 'Otro nombre')")
+        db.query("SELECT COUNT(*), MAX(nombre) FROM feriados").use { c ->
+            c.moveToFirst()
+            assertEquals(1, c.getInt(0))
+            assertEquals("Otro nombre", c.getString(1))
         }
         db.close()
     }

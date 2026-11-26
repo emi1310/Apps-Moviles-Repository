@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -43,7 +43,7 @@ fun AyudaScreen(onVolver: () -> Unit) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onVolver) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
                 }
                 Text(text = stringResource(R.string.ayuda_y_soporte), style = MaterialTheme.typography.headlineSmall)
             }
@@ -61,7 +61,7 @@ fun AyudaScreen(onVolver: () -> Unit) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = pregunta, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                        Icon(if (abierta == indice) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = null)
+                        Icon(if (abierta == indice) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null)
                     }
                     if (abierta == indice) {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -88,7 +88,7 @@ fun AyudaScreen(onVolver: () -> Unit) {
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Filled.Email, contentDescription = null)
+                Icon(Icons.Outlined.Email, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.escribir_a_soporte))
             }

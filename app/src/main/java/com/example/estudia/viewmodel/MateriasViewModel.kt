@@ -6,6 +6,9 @@ import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.ReglasCursada
+import com.example.estudia.modelo.conReglas
 import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
@@ -81,15 +84,22 @@ class MateriasViewModel(
         return uiState.value.todas.none { it.id != exceptoId && it.nombre.equals(nombre.trim(), ignoreCase = true) }
     }
 
-    fun agregarMateria(nombre: String) {
+    fun agregarMateria(nombre: String, reglas: ReglasCursada = ReglasCursada()) {
         val u = usuario.value ?: return
         val color = colorParaNuevaMateria(u)
         viewModelScope.launch {
-            repositorio.agregarMateria(u.id, nombre.trim(), color)
+            repositorio.agregarMateria(
+                u.id, nombre.trim(), color,
+                reglas.asistenciaMinima, reglas.promocional, reglas.notaPromocion, reglas.tieneFinal
+            )
         }
     }
 
     fun renombrarMateria(materia: Materia, nombre: String) = actualizar(materia.copy(nombre = nombre.trim()))
+
+    // Editar el nombre y las reglas de la cursada (asistencia, promoción, final).
+    fun editarMateria(materia: Materia, nombre: String, reglas: ReglasCursada) =
+        actualizar(materia.copy(nombre = nombre.trim()).conReglas(reglas))
 
     fun alternarArchivada(materia: Materia) {
         actualizar(materia.copy(archivada = !materia.archivada))
@@ -244,11 +254,16 @@ class MateriasViewModel(
         viewModelScope.launch { repositorio.marcarPermisoArchivosPedido() }
     }
 
-    fun adjuntarArchivo(materiaId: Int, uri: String) {
+    fun adjuntarArchivo(materiaId: Int, uri: String, categoria: CategoriaArchivo = CategoriaArchivo.OTROS) {
         viewModelScope.launch {
-            val ok = repositorio.adjuntarArchivo(materiaId, null, uri)
+            val ok = repositorio.adjuntarArchivo(materiaId, null, uri, categoria)
             avisar(Aviso(if (ok) Mensaje.AVISO_ARCHIVO_GUARDADO else Mensaje.AVISO_ARCHIVO_ERROR))
         }
+    }
+
+    fun cambiarCategoriaArchivo(materiaId: Int, archivo: Archivo, categoria: CategoriaArchivo) {
+        if (archivo.categoria == categoria) return
+        viewModelScope.launch { repositorio.cambiarCategoriaArchivo(materiaId, archivo, categoria) }
     }
 
     // La fila se borra ya; el archivo del disco recién cuando pasa el

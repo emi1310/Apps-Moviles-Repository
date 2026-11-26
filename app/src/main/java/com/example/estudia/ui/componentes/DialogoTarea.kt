@@ -8,9 +8,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -49,7 +49,7 @@ fun DialogoTarea(
 
     DialogoApp(
         titulo = stringResource(if (tarea == null) R.string.nueva_tarea else R.string.editar_tarea),
-        icono = Icons.Filled.TaskAlt,
+        icono = Icons.Outlined.TaskAlt,
         textoConfirmar = stringResource(if (tarea == null) R.string.crear else R.string.guardar),
         onConfirmar = {
             if (titulo.isBlank()) error = true
@@ -106,12 +106,12 @@ fun DialogoTarea(
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { pasos.removeAt(indice) }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.quitar_subtarea))
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.quitar_subtarea))
                 }
             }
         }
         CampoBloque(
-            icono = Icons.Filled.Add,
+            icono = Icons.Outlined.Add,
             texto = stringResource(R.string.agregar_subtarea),
             onClick = { pasos.add(Subtarea(id = 0, titulo = "")) },
             modifier = Modifier.fillMaxWidth()

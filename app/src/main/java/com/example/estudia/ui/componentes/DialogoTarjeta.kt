@@ -2,7 +2,7 @@ package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +29,7 @@ fun DialogoTarjeta(
 
     DialogoApp(
         titulo = stringResource(if (tarjeta == null) R.string.tarjeta_nueva else R.string.tarjeta_editar),
-        icono = Icons.Filled.Style,
+        icono = Icons.Outlined.Style,
         textoConfirmar = stringResource(if (tarjeta == null) R.string.crear else R.string.guardar),
         onConfirmar = { error = !onConfirmar(pregunta, respuesta) },
         onCancelar = onCancelar

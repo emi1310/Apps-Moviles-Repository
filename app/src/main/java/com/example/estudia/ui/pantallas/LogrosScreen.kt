@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +51,7 @@ fun LogrosScreen(viewModel: LogrosViewModel, onVolver: () -> Unit) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onVolver) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                    Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
                 }
                 Column {
                     Text(text = stringResource(R.string.logros_titulo), style = MaterialTheme.typography.headlineSmall)
@@ -70,7 +70,7 @@ fun LogrosScreen(viewModel: LogrosViewModel, onVolver: () -> Unit) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CirculoBloque(tamano = 48.dp) {
-                            Icon(Icons.Filled.EmojiEvents, contentDescription = null, modifier = Modifier.size(26.dp))
+                            Icon(Icons.Outlined.EmojiEvents, contentDescription = null, modifier = Modifier.size(26.dp))
                         }
                         Spacer(modifier = Modifier.width(14.dp))
                         Text(
@@ -106,7 +106,7 @@ private fun BloqueLogro(logro: Logro) {
     val titulo = stringResource(aspecto.titulo)
     val descripcion = stringResource(aspecto.descripcion)
     if (logro.conseguido) {
-        BloqueColor(color = aspecto.color, modifier = Modifier.height(170.dp).semantics(mergeDescendants = true) {}) {
+        BloqueColor(color = aspecto.color, modifier = Modifier.heightIn(min = 170.dp).semantics(mergeDescendants = true) {}) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Medalla(logro.tipo, conseguido = true, tamano = 44.dp)
                 Spacer(modifier = Modifier.weight(1f))
@@ -125,7 +125,7 @@ private fun BloqueLogro(logro: Logro) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(170.dp)
+                .heightIn(min = 170.dp)
                 .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .semantics(mergeDescendants = true) {}

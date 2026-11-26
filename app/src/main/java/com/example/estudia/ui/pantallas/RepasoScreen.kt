@@ -7,11 +7,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Style
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,7 +53,7 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onVolver) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
             }
             Column {
                 Text(text = stringResource(R.string.repaso_titulo), style = MaterialTheme.typography.headlineSmall)
@@ -72,12 +72,12 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
             // Terminado (o no había nada para hoy).
             if (estado.repasadas > 0) {
                 EstadoVacio(
-                    Icons.Filled.EmojiEvents,
+                    Icons.Outlined.EmojiEvents,
                     stringResource(R.string.repaso_listo),
                     pluralStringResource(R.plurals.repaso_listo_detalle, estado.repasadas, estado.repasadas)
                 )
             } else {
-                EstadoVacio(Icons.Filled.Style, stringResource(R.string.repaso_listo), stringResource(R.string.repaso_nada_hoy))
+                EstadoVacio(Icons.Outlined.Style, stringResource(R.string.repaso_listo), stringResource(R.string.repaso_nada_hoy))
             }
             Button(onClick = onVolver, modifier = Modifier.fillMaxWidth().height(52.dp)) {
                 Text(stringResource(R.string.volver))
@@ -97,7 +97,7 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
             Column(modifier = Modifier.padding(20.dp).heightIn(min = 260.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CirculoBloque(tamano = 40.dp) {
-                        Icon(Icons.Filled.Style, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Outlined.Style, contentDescription = null, modifier = Modifier.size(20.dp))
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -148,7 +148,7 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .heightIn(min = 56.dp)
                     .clip(RoundedCornerShape(50))
                     .background(LocalDegradado.current),
                 contentAlignment = Alignment.Center
@@ -161,17 +161,17 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FilledTonalButton(
                     onClick = { viewModel.responder(false) },
-                    modifier = Modifier.weight(1f).height(56.dp)
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                 ) {
-                    Icon(Icons.Filled.Close, contentDescription = null)
+                    Icon(Icons.Outlined.Close, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.repaso_no_la_sabia))
                 }
                 Button(
                     onClick = { viewModel.responder(true) },
-                    modifier = Modifier.weight(1f).height(56.dp)
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp)
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null)
+                    Icon(Icons.Outlined.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.repaso_la_sabia))
                 }

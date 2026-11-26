@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -81,16 +81,16 @@ fun DialogoFotoPerfil(
 ) {
     DialogoApp(
         titulo = stringResource(R.string.foto_perfil),
-        icono = Icons.Filled.AccountCircle,
+        icono = Icons.Outlined.AccountCircle,
         textoConfirmar = null,
         onConfirmar = {},
         onCancelar = onCerrar
     ) {
         TextoDialogo(stringResource(R.string.foto_perfil_texto))
-        CampoBloque(Icons.Filled.PhotoCamera, stringResource(R.string.foto_sacar), onSacarFoto, Modifier.fillMaxWidth())
-        CampoBloque(Icons.Filled.PhotoLibrary, stringResource(R.string.foto_galeria), onElegirDeGaleria, Modifier.fillMaxWidth())
+        CampoBloque(Icons.Outlined.PhotoCamera, stringResource(R.string.foto_sacar), onSacarFoto, Modifier.fillMaxWidth())
+        CampoBloque(Icons.Outlined.PhotoLibrary, stringResource(R.string.foto_galeria), onElegirDeGaleria, Modifier.fillMaxWidth())
         if (tieneFoto) {
-            CampoBloque(Icons.Filled.Delete, stringResource(R.string.foto_quitar), onQuitar, Modifier.fillMaxWidth())
+            CampoBloque(Icons.Outlined.Delete, stringResource(R.string.foto_quitar), onQuitar, Modifier.fillMaxWidth())
         }
     }
 }

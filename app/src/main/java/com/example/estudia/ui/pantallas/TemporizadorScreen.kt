@@ -8,7 +8,11 @@ import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.material.icons.filled.DoNotDisturbOn
+import androidx.compose.material.icons.outlined.DoNotDisturbOn
+import androidx.compose.material.icons.outlined.Headphones
+import com.example.estudia.ui.componentes.SelectorSonido
+import com.example.estudia.ui.componentes.TipoSonido
+import com.example.estudia.ui.theme.BloqueAzul
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.estudia.ui.componentes.IconoCircular
 import com.example.estudia.ui.theme.BloqueVioleta
@@ -23,11 +27,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -71,6 +75,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     val context = LocalContext.current
     val sesion = estado.sesion
     val color = estado.materiaElegida?.let { Color(it.color) } ?: MaterialTheme.colorScheme.primary
+    var sonidoElegido by rememberSaveable { mutableStateOf(TipoSonido.NINGUNO) }
 
     // Mientras corre el tiempo, la pantalla no se apaga sola.
     val vista = LocalView.current
@@ -113,7 +118,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     if (mostrarExplicacionNoMolestar) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_no_molestar_titulo),
-            icono = Icons.Filled.DoNotDisturbOn,
+            icono = Icons.Outlined.DoNotDisturbOn,
             textoConfirmar = stringResource(R.string.ir_a_ajustes),
             onConfirmar = {
                 mostrarExplicacionNoMolestar = false
@@ -130,7 +135,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     if (mostrarExplicacion) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_temporizador_titulo),
-            icono = Icons.Filled.Timer,
+            icono = Icons.Outlined.Timer,
             textoConfirmar = stringResource(R.string.continuar),
             onConfirmar = {
                 mostrarExplicacion = false
@@ -158,7 +163,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onVolver) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
             }
             Text(text = stringResource(R.string.temporizador_titulo), style = MaterialTheme.typography.headlineSmall)
         }
@@ -171,7 +176,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
 
         if (!estado.cargando && estado.materias.isEmpty() && sesion == null) {
-            EstadoVacio(Icons.Filled.Timer, stringResource(R.string.temporizador_sin_materias), stringResource(R.string.temporizador_sin_materias_sugerencia))
+            EstadoVacio(Icons.Outlined.Timer, stringResource(R.string.temporizador_sin_materias), stringResource(R.string.temporizador_sin_materias_sugerencia))
             return@Column
         }
 
@@ -198,9 +203,9 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             Button(
                 onClick = alEmpezar,
                 enabled = estado.materiaElegida != null,
-                modifier = Modifier.fillMaxWidth().height(54.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                Icon(Icons.Outlined.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.temporizador_empezar), style = MaterialTheme.typography.titleMedium)
             }
@@ -209,14 +214,14 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 FilledTonalButton(
                     onClick = { if (sesion.enPausa) viewModel.reanudar() else viewModel.pausar() },
-                    modifier = Modifier.weight(1f).height(54.dp)
+                    modifier = Modifier.weight(1f).heightIn(min = 54.dp)
                 ) {
-                    Icon(if (sesion.enPausa) Icons.Filled.PlayArrow else Icons.Filled.Pause, contentDescription = null)
+                    Icon(if (sesion.enPausa) Icons.Outlined.PlayArrow else Icons.Outlined.Pause, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(if (sesion.enPausa) R.string.temporizador_reanudar else R.string.temporizador_pausar))
                 }
-                Button(onClick = viewModel::terminar, modifier = Modifier.weight(1f).height(54.dp)) {
-                    Icon(Icons.Filled.Check, contentDescription = null)
+                Button(onClick = viewModel::terminar, modifier = Modifier.weight(1f).heightIn(min = 54.dp)) {
+                    Icon(Icons.Outlined.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(R.string.temporizador_terminar))
                 }
@@ -224,6 +229,32 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             TextButton(onClick = viewModel::descartar, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text(stringResource(R.string.temporizador_descartar))
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        // ---------- Sonido de concentración ----------
+        // Suena mientras la sesión corre y esta pantalla está abierta.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(22.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconoCircular(Icons.Outlined.Headphones, Color.White, fondo = BloqueAzul)
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.sonido_titulo), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = stringResource(R.string.sonido_descripcion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            SelectorSonido(sonidoElegido, corriendo = sesion != null && !sesion.enPausa) { sonidoElegido = it }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -236,7 +267,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
                 .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-            IconoCircular(Icons.Filled.DoNotDisturbOn, Color.White, fondo = BloqueVioleta)
+            IconoCircular(Icons.Outlined.DoNotDisturbOn, Color.White, fondo = BloqueVioleta)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(R.string.no_molestar_titulo), style = MaterialTheme.typography.titleSmall)
@@ -262,7 +293,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
         TarjetaSeccion(
             titulo = stringResource(R.string.temporizador_hoy),
-            icono = Icons.Filled.Timer,
+            icono = Icons.Outlined.Timer,
             color = MaterialTheme.colorScheme.secondary,
             detalle = stringResource(R.string.minutos_corto, estado.minutosHoy)
         ) {

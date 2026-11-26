@@ -23,14 +23,19 @@ data class MateriaConDetalle(
     @Relation(parentColumn = "id", entityColumn = "materiaId")
     val calificaciones: List<CalificacionEntity>,
     @Relation(parentColumn = "id", entityColumn = "materiaId")
-    val tarjetas: List<TarjetaEntity>
+    val tarjetas: List<TarjetaEntity>,
+    @Relation(parentColumn = "id", entityColumn = "materiaId")
+    val evaluaciones: List<EvaluacionEntity>
 )
 
 // Un evento con los temas de su temario (versión 7).
 data class EventoConTemas(
     @Embedded val evento: EventoEntity,
     @Relation(parentColumn = "id", entityColumn = "eventoId")
-    val temas: List<TemaEntity>
+    val temas: List<TemaEntity>,
+    // Versión 9: asistencia a cada clase.
+    @Relation(parentColumn = "id", entityColumn = "eventoId")
+    val asistencias: List<AsistenciaEntity>
 )
 
 // Una tarea con sus subtareas (versión 6).
@@ -48,7 +53,12 @@ data class UsuarioConMaterias(
         parentColumn = "id",
         entityColumn = "usuarioId"
     )
-    val materias: List<MateriaConDetalle>
+    val materias: List<MateriaConDetalle>,
+    // Versión 9: plan de estudios y mesas de finales.
+    @Relation(parentColumn = "id", entityColumn = "usuarioId")
+    val planEstudio: List<MateriaPlanEntity>,
+    @Relation(parentColumn = "id", entityColumn = "usuarioId")
+    val finales: List<FinalEntity>
 )
 
 // Resultado de un JOIN: una fila de otra tabla + datos de su materia.

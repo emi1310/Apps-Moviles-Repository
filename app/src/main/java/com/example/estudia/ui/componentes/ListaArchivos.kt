@@ -15,11 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.TextFields
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +46,9 @@ fun ListaArchivos(
     onAbrir: (Archivo) -> Unit,
     onEliminar: (Archivo) -> Unit,
     // OCR (solo en las notas): las imágenes muestran "Pasar a texto".
-    onPasarATexto: ((Archivo) -> Unit)? = null
+    onPasarATexto: ((Archivo) -> Unit)? = null,
+    // Solo en los archivos de la materia: cambiar la categoría.
+    onCambiarCategoria: ((Archivo) -> Unit)? = null
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         archivos.forEach { archivo ->
@@ -61,9 +63,9 @@ fun ListaArchivos(
             ) {
                 Icon(
                     imageVector = when {
-                        archivo.esImagen -> Icons.Filled.Image
-                        archivo.esPdf -> Icons.Filled.PictureAsPdf
-                        else -> Icons.AutoMirrored.Filled.InsertDriveFile
+                        archivo.esImagen -> Icons.Outlined.Image
+                        archivo.esPdf -> Icons.Outlined.PictureAsPdf
+                        else -> Icons.AutoMirrored.Outlined.InsertDriveFile
                     },
                     contentDescription = null,
                     tint = color
@@ -83,11 +85,20 @@ fun ListaArchivos(
                 }
                 if (onPasarATexto != null && archivo.esImagen) {
                     IconButton(onClick = { onPasarATexto(archivo) }) {
-                        Icon(Icons.Filled.TextFields, contentDescription = stringResource(R.string.pasar_a_texto), tint = color)
+                        Icon(Icons.Outlined.TextFields, contentDescription = stringResource(R.string.pasar_a_texto), tint = color)
+                    }
+                }
+                if (onCambiarCategoria != null) {
+                    IconButton(onClick = { onCambiarCategoria(archivo) }) {
+                        Icon(
+                            iconoCategoria(archivo.categoria),
+                            contentDescription = stringResource(R.string.categoria_de, archivo.nombre, stringResource(nombreCategoria(archivo.categoria))),
+                            tint = color
+                        )
                     }
                 }
                 IconButton(onClick = { onEliminar(archivo) }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.eliminar_archivo, archivo.nombre))
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.eliminar_archivo, archivo.nombre))
                 }
             }
         }

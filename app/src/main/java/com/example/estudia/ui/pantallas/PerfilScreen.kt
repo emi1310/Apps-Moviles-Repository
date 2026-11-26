@@ -2,7 +2,7 @@ package com.example.estudia.ui.pantallas
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -15,24 +15,26 @@ import com.example.estudia.ui.componentes.Medalla
 import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.viewmodel.Logro
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Backup
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.Restore
 import java.time.LocalDate
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.example.estudia.ui.componentes.IconoCircular
 import com.example.estudia.ui.componentes.TextoDialogo
-import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.outlined.NotificationsOff
 import com.example.estudia.ui.componentes.CirculoBloque
+import com.example.estudia.ui.componentes.EncabezadoPantalla
+import com.example.estudia.ui.componentes.TextoAjustable
+import androidx.compose.ui.text.style.TextAlign
 import com.example.estudia.ui.theme.BloqueAzul
 import com.example.estudia.ui.theme.BloqueNaranja
 import com.example.estudia.ui.theme.BloqueVerde
 import com.example.estudia.ui.theme.BloqueVioleta
 import androidx.compose.ui.semantics.Role
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.isSystemInDarkTheme
 import android.Manifest
@@ -55,16 +57,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.StickyNote2
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,6 +74,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -85,7 +88,6 @@ import com.example.estudia.ui.componentes.DialogoMeta
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.progresoAnimado
 import com.example.estudia.ui.theme.LocalDegradado
-import com.example.estudia.ui.theme.VioletaPrincipal
 import com.example.estudia.viewmodel.PerfilViewModel
 
 // Pantalla "Mi Perfil": datos del usuario, estadísticas, meta semanal de
@@ -172,82 +174,96 @@ fun PerfilScreen(
             .verticalScroll(rememberScrollState())
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = LocalEspacioDock.current + 16.dp)
     ) {
-        // ---------- Bloque del usuario: avatar, datos y botón de editar ----------
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .background(LocalDegradado.current)
-                .padding(start = 18.dp, top = 18.dp, end = 8.dp, bottom = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // ---------- Encabezado, como en las demás pantallas ----------
+        EncabezadoPantalla(
+            titulo = stringResource(R.string.perfil_titulo),
+            subtitulo = stringResource(R.string.perfil_subtitulo)
+        ) {
+            FilledTonalIconButton(onClick = { mostrarEditarPerfil = true }) {
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.editar_perfil))
+            }
+        }
+
+        // ---------- Tus datos: la foto grande al centro, el nombre, la carrera y el mail ----------
+        // Sin bloque de fondo: la foto lleva un aro con el degradado violeta.
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar: la foto de perfil o la inicial. Al tocarlo se elige la foto.
             // Con la cámara como insignia, para que se note que se puede tocar.
             Box {
-                Avatar(
-                    nombre = usuario.nombre,
-                    fotoUri = estado.fotoUri,
-                    tamano = 68.dp,
-                    fondo = SolidColor(Color.White),
-                    // El círculo es blanco también en modo oscuro: se usa el
-                    // violeta fuerte fijo (el primary oscuro es lila claro y no se lee).
-                    colorInicial = VioletaPrincipal,
-                    estiloInicial = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.clickable(
-                        onClickLabel = stringResource(R.string.foto_cambiar),
-                        role = Role.Button
-                    ) { mostrarFoto = true }
-                )
+                Box(
+                    modifier = Modifier
+                        .size(104.dp)
+                        .clip(CircleShape)
+                        .background(LocalDegradado.current)
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(4.dp)
+                ) {
+                    Avatar(
+                        nombre = usuario.nombre,
+                        fotoUri = estado.fotoUri,
+                        tamano = 88.dp,
+                        fondo = LocalDegradado.current,
+                        colorInicial = Color.White,
+                        estiloInicial = MaterialTheme.typography.displaySmall,
+                        modifier = Modifier.clickable(
+                            onClickLabel = stringResource(R.string.foto_cambiar),
+                            role = Role.Button
+                        ) { mostrarFoto = true }
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .size(24.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White),
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(3.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Filled.PhotoCamera, contentDescription = null, tint = VioletaPrincipal, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Outlined.PhotoCamera, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(15.dp))
                 }
             }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = usuario.nombre,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val carrera = usuario.carrera ?: stringResource(R.string.carrera_no_especificada)
-                val anio = usuario.anio
-                Text(
-                    text = if (anio != null) stringResource(R.string.anio_carrera, anio, carrera) else carrera,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
-                Text(
-                    text = usuario.email ?: stringResource(R.string.email_no_especificado),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.75f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            IconButton(onClick = { mostrarEditarPerfil = true }) {
-                CirculoBloque(tamano = 40.dp) {
-                    Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.editar_perfil), tint = Color.White, modifier = Modifier.size(20.dp))
-                }
-            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = usuario.nombre,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            val carrera = usuario.carrera ?: stringResource(R.string.carrera_no_especificada)
+            val anio = usuario.anio
+            Text(
+                text = if (anio != null) stringResource(R.string.anio_carrera, anio, carrera) else carrera,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = usuario.email ?: stringResource(R.string.email_no_especificado),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ---------- Estadísticas: tres bloques de color ----------
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            BloqueEstadistica(usuario.contarMaterias().toString(), stringResource(R.string.materias), Icons.AutoMirrored.Filled.MenuBook, BloqueVioleta, Modifier.weight(1f))
-            BloqueEstadistica(stringResource(R.string.horas_corto, usuario.calcularHorasEstudio()), stringResource(R.string.estudio), Icons.Filled.Timer, BloqueVerde, Modifier.weight(1f))
-            BloqueEstadistica(usuario.contarNotas().toString(), stringResource(R.string.notas), Icons.Filled.StickyNote2, BloqueNaranja, Modifier.weight(1f))
+            BloqueEstadistica(usuario.contarMaterias().toString(), stringResource(R.string.materias), Icons.AutoMirrored.Outlined.MenuBook, BloqueVioleta, Modifier.weight(1f))
+            BloqueEstadistica(stringResource(R.string.horas_corto, usuario.calcularHorasEstudio()), stringResource(R.string.estudio), Icons.Outlined.Timer, BloqueVerde, Modifier.weight(1f))
+            BloqueEstadistica(usuario.contarNotas().toString(), stringResource(R.string.notas), Icons.Outlined.StickyNote2, BloqueNaranja, Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -274,7 +290,7 @@ fun PerfilScreen(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     CirculoBloque(tamano = 44.dp) {
-                        Icon(Icons.Filled.Flag, contentDescription = null, modifier = Modifier.size(22.dp))
+                        Icon(Icons.Outlined.Flag, contentDescription = null, modifier = Modifier.size(22.dp))
                     }
                 }
                 if (meta != null && progreso != null) {
@@ -317,7 +333,7 @@ fun PerfilScreen(
         // ---------- Recordatorios ----------
         // Se muestran activos solo si el usuario los eligió Y hay permiso.
         val activos = estado.recordatoriosActivos && permitidas
-        BloqueAjuste(Icons.Filled.NotificationsActive, BloqueNaranja) {
+        BloqueAjuste(Icons.Outlined.NotificationsActive, BloqueNaranja) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.recordatorios), style = MaterialTheme.typography.titleSmall)
                 Text(
@@ -348,7 +364,7 @@ fun PerfilScreen(
             PreferenciaTema.OSCURO -> true
             PreferenciaTema.SISTEMA -> isSystemInDarkTheme()
         }
-        BloqueAjuste(Icons.Filled.Palette, BloqueVioleta) {
+        BloqueAjuste(Icons.Outlined.Palette, BloqueVioleta) {
             Text(text = stringResource(R.string.tema), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier
@@ -357,10 +373,10 @@ fun PerfilScreen(
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                BotonTema(Icons.Filled.LightMode, stringResource(R.string.tema_claro), elegido = !oscuroActivo) {
+                BotonTema(Icons.Outlined.LightMode, stringResource(R.string.tema_claro), elegido = !oscuroActivo) {
                     viewModel.cambiarTema(PreferenciaTema.CLARO)
                 }
-                BotonTema(Icons.Filled.DarkMode, stringResource(R.string.tema_oscuro), elegido = oscuroActivo) {
+                BotonTema(Icons.Outlined.DarkMode, stringResource(R.string.tema_oscuro), elegido = oscuroActivo) {
                     viewModel.cambiarTema(PreferenciaTema.OSCURO)
                 }
             }
@@ -373,17 +389,17 @@ fun PerfilScreen(
         // Editar perfil está en el lápiz del bloque del usuario y la meta se
         // edita tocando su bloque, así que acá no se repiten.
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            BloqueCuenta(stringResource(R.string.estadisticas_titulo), Icons.Filled.Insights, BloqueVerde, Modifier.weight(1f), onAbrirEstadisticas)
-            BloqueCuenta(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Filled.HelpOutline, BloqueNaranja, Modifier.weight(1f), onAbrirAyuda)
+            BloqueCuenta(stringResource(R.string.estadisticas_titulo), Icons.Outlined.Insights, BloqueVerde, Modifier.weight(1f), onAbrirEstadisticas)
+            BloqueCuenta(stringResource(R.string.ayuda_y_soporte), Icons.AutoMirrored.Outlined.HelpOutline, BloqueNaranja, Modifier.weight(1f), onAbrirAyuda)
         }
         Spacer(modifier = Modifier.height(10.dp))
         // Copia de seguridad: el archivo se elige con el selector del sistema
         // (Descargas, Drive...), sin pedir permisos.
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            BloqueCuenta(stringResource(R.string.copia_guardar), Icons.Filled.Backup, BloqueAzul, Modifier.weight(1f)) {
+            BloqueCuenta(stringResource(R.string.copia_guardar), Icons.Outlined.Backup, BloqueAzul, Modifier.weight(1f)) {
                 guardarCopia.launch(nombreCopia)
             }
-            BloqueCuenta(stringResource(R.string.copia_restaurar), Icons.Filled.Restore, BloqueVioleta, Modifier.weight(1f)) {
+            BloqueCuenta(stringResource(R.string.copia_restaurar), Icons.Outlined.Restore, BloqueVioleta, Modifier.weight(1f)) {
                 confirmarRestaurar = true
             }
         }
@@ -399,7 +415,7 @@ fun PerfilScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = rojo, modifier = Modifier.size(20.dp))
+            Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null, tint = rojo, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(text = stringResource(R.string.cerrar_sesion), style = MaterialTheme.typography.titleSmall, color = rojo)
         }
@@ -439,7 +455,7 @@ fun PerfilScreen(
     if (confirmarRestaurar) {
         DialogoApp(
             titulo = stringResource(R.string.copia_restaurar),
-            icono = Icons.Filled.Restore,
+            icono = Icons.Outlined.Restore,
             textoConfirmar = stringResource(R.string.restaurar),
             onConfirmar = {
                 confirmarRestaurar = false
@@ -474,7 +490,7 @@ fun PerfilScreen(
     if (mostrarExplicacion) {
         DialogoApp(
             titulo = stringResource(R.string.activar_recordatorios),
-            icono = Icons.Filled.NotificationsActive,
+            icono = Icons.Outlined.NotificationsActive,
             textoConfirmar = stringResource(R.string.continuar),
             onConfirmar = {
                 mostrarExplicacion = false
@@ -490,7 +506,7 @@ fun PerfilScreen(
     if (mostrarIrAAjustes) {
         DialogoApp(
             titulo = stringResource(R.string.notificaciones_desactivadas),
-            icono = Icons.Filled.NotificationsOff,
+            icono = Icons.Outlined.NotificationsOff,
             textoConfirmar = stringResource(R.string.ir_a_ajustes),
             onConfirmar = {
                 mostrarIrAAjustes = false
@@ -572,8 +588,8 @@ private fun BloqueEstadistica(valor: String, etiqueta: String, icono: ImageVecto
                 Icon(icono, contentDescription = null, modifier = Modifier.size(18.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = valor, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = colorAcentoTexto(color), maxLines = 1)
-            Text(text = etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            TextoAjustable(valor, MaterialTheme.typography.headlineSmall, color = colorAcentoTexto(color), fontWeight = FontWeight.ExtraBold, minimo = 14.sp)
+            TextoAjustable(etiqueta, MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
         }
     }
 }
@@ -602,23 +618,25 @@ private fun BloqueAjuste(icono: ImageVector, color: Color, contenido: @Composabl
 private fun BloqueCuenta(texto: String, icono: ImageVector, color: Color, modifier: Modifier, alTocar: () -> Unit) {
     Column(
         modifier = modifier
-            .height(116.dp)
+            .heightIn(min = 116.dp)
             .clip(RoundedCornerShape(22.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable(role = Role.Button, onClick = alTocar)
-            .padding(14.dp)
+            .padding(14.dp),
+        // El nombre va abajo; si ocupa dos renglones, el bloque crece.
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.Top) {
             IconoCircular(icono, Color.White, fondo = color)
             Spacer(modifier = Modifier.weight(1f))
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
-        Text(text = texto, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(modifier = Modifier.height(12.dp))
+        TextoAjustable(texto, MaterialTheme.typography.titleSmall, maxLines = 2)
     }
 }
 
@@ -636,7 +654,7 @@ private fun BloqueLogros(logros: List<Logro>, onAbrir: () -> Unit) {
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconoCircular(Icons.Filled.EmojiEvents, Color.White, fondo = BloqueNaranja)
+            IconoCircular(Icons.Outlined.EmojiEvents, Color.White, fondo = BloqueNaranja)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.logros_tus_logros), style = MaterialTheme.typography.titleSmall)
@@ -647,7 +665,7 @@ private fun BloqueLogros(logros: List<Logro>, onAbrir: () -> Unit) {
                 )
             }
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

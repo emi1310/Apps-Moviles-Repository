@@ -10,8 +10,9 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.EventRepeat
+import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.Celebration
+import androidx.compose.material.icons.outlined.EventRepeat
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -23,11 +24,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Today
-import androidx.compose.material.icons.filled.ViewWeek
-import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Today
+import androidx.compose.material.icons.outlined.ViewWeek
+import androidx.compose.material.icons.outlined.HowToReg
+import com.example.estudia.ui.componentes.TarjetaAcceso
+import com.example.estudia.ui.theme.BloqueAzul
+import com.example.estudia.ui.theme.BloqueVerde
+import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,6 +62,14 @@ import com.example.estudia.ui.componentes.TarjetaEventoCalendario
 import com.example.estudia.ui.componentes.textoFecha
 import com.example.estudia.viewmodel.CalendarioViewModel
 import com.example.estudia.viewmodel.EventoConMateria
+import com.example.estudia.viewmodel.EventoEncontrado
+import com.example.estudia.ui.componentes.ChipMateria
+import com.example.estudia.ui.componentes.FilaTarjeta
+import com.example.estudia.ui.componentes.iconoTipo
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material.icons.outlined.SearchOff
+import java.time.LocalDate
 
 // Pantalla "Mi Calendario": la grilla del mes y, debajo, los eventos del
 // día elegido (con opción de editarlos o eliminarlos).
@@ -66,9 +79,14 @@ fun CalendarioScreen(
     // true cuando se eligió crear desde el botón "+" del dock.
     crearAlAbrir: Boolean = false,
     onCreacionAbierta: () -> Unit = {},
-    onAbrirHorario: () -> Unit = {}
+    onAbrirHorario: () -> Unit = {},
+    onAbrirAsistencia: () -> Unit = {},
+    // Lo que se escribe en la lupa del dock: busca entre los eventos.
+    busqueda: String = "",
+    onCerrarBusqueda: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
     RecolectarAvisos(viewModel.avisos)
 
     // Diálogo de evento: eventoParaEditar == null significa "nuevo evento".
@@ -106,7 +124,7 @@ fun CalendarioScreen(
     if (explicarCalendario) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_calendario_titulo),
-            icono = Icons.Filled.EventRepeat,
+            icono = Icons.Outlined.EventRepeat,
             textoConfirmar = stringResource(R.string.continuar),
             onConfirmar = {
                 explicarCalendario = false
@@ -121,7 +139,7 @@ fun CalendarioScreen(
     if (calendarioBloqueado) {
         DialogoApp(
             titulo = stringResource(R.string.sin_permiso_calendario_titulo),
-            icono = Icons.Filled.EventBusy,
+            icono = Icons.Outlined.EventBusy,
             textoConfirmar = stringResource(R.string.ir_a_ajustes),
             onConfirmar = {
                 calendarioBloqueado = false
@@ -132,6 +150,42 @@ fun CalendarioScreen(
             onCancelar = { calendarioBloqueado = false }
         ) {
             TextoDialogo(stringResource(R.string.sin_permiso_calendario))
+        }
+    }
+
+    // ---------- Feriados ----------
+    // Si ya hay permiso de leer el calendario, se traen del calendario de
+    // Google del teléfono. Si no, se explica y se pide; si dice que no (o
+    // elige "Desde internet"), se bajan de internet.
+    var explicarFeriados by remember { mutableStateOf(false) }
+    val pedirLectura = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        viewModel.importarFeriados(usarCalendario = concedido)
+    }
+    val importarFeriados: () -> Unit = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) {
+            viewModel.importarFeriados(usarCalendario = true)
+        } else {
+            explicarFeriados = true
+        }
+    }
+    if (explicarFeriados) {
+        DialogoApp(
+            titulo = stringResource(R.string.feriados_titulo),
+            icono = Icons.Outlined.Celebration,
+            textoConfirmar = stringResource(R.string.continuar),
+            onConfirmar = {
+                explicarFeriados = false
+                pedirLectura.launch(Manifest.permission.READ_CALENDAR)
+            },
+            textoCancelar = stringResource(R.string.feriados_desde_internet),
+            onCancelar = {
+                explicarFeriados = false
+                viewModel.importarFeriados(usarCalendario = false)
+            },
+            // Tocar afuera solo cierra.
+            onDismissRequest = { explicarFeriados = false }
+        ) {
+            TextoDialogo(stringResource(R.string.feriados_explicacion))
         }
     }
 
@@ -154,16 +208,28 @@ fun CalendarioScreen(
                     subtitulo = stringResource(R.string.calendario_subtitulo)
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        FilledTonalIconButton(onClick = pasarAlTelefono) {
-                            Icon(Icons.Filled.EventRepeat, contentDescription = stringResource(R.string.calendario_telefono))
+                        FilledTonalIconButton(onClick = importarFeriados, enabled = !estado.actualizandoFeriados) {
+                            Icon(Icons.Outlined.Celebration, contentDescription = stringResource(R.string.feriados_importar))
                         }
-                        FilledTonalIconButton(onClick = onAbrirHorario) {
-                            Icon(Icons.Filled.ViewWeek, contentDescription = stringResource(R.string.horario_abrir))
+                        FilledTonalIconButton(onClick = pasarAlTelefono) {
+                            Icon(Icons.Outlined.EventRepeat, contentDescription = stringResource(R.string.calendario_telefono))
                         }
                         FilledTonalIconButton(onClick = viewModel::irAHoy) {
-                            Icon(Icons.Filled.Today, contentDescription = stringResource(R.string.ir_a_hoy))
+                            Icon(Icons.Outlined.Today, contentDescription = stringResource(R.string.ir_a_hoy))
                         }
                     }
+                }
+                if (estado.buscando) {
+                    // ---------- Resultados de la lupa del dock ----------
+                    EncabezadoResultados(estado.resultadosBusqueda.size)
+                    if (estado.resultadosBusqueda.isEmpty()) {
+                        EstadoVacio(Icons.Outlined.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.calendario_sin_resultados))
+                    }
+                } else {
+                // Accesos de las clases: la asistencia y el horario de la semana.
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 12.dp).height(IntrinsicSize.Min)) {
+                    TarjetaAcceso(stringResource(R.string.asistencia_titulo), stringResource(R.string.acceso_asistencia), Icons.Outlined.HowToReg, BloqueVerde, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirAsistencia)
+                    TarjetaAcceso(stringResource(R.string.acceso_horario_titulo), stringResource(R.string.acceso_horario), Icons.Outlined.ViewWeek, BloqueAzul, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirHorario)
                 }
 
                 // ---------- El mes, dentro de un bloque ----------
@@ -191,10 +257,10 @@ fun CalendarioScreen(
                                 )
                             }
                             FilledTonalIconButton(onClick = viewModel::mesAnterior) {
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
+                                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft, contentDescription = stringResource(R.string.mes_anterior))
                             }
                             FilledTonalIconButton(onClick = viewModel::mesSiguiente) {
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
+                                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = stringResource(R.string.mes_siguiente))
                             }
                         }
                         Row(modifier = Modifier.fillMaxWidth()) {
@@ -216,6 +282,7 @@ fun CalendarioScreen(
                                         esHoy = fecha == estado.hoy,
                                         seleccionado = fecha == estado.seleccionado,
                                         coloresEventos = estado.coloresPorDia[fecha].orEmpty(),
+                                        feriado = fecha != null && fecha in estado.feriadosDelMes,
                                         modifier = Modifier.weight(1f),
                                         onSeleccionar = { if (fecha != null) viewModel.seleccionar(fecha) }
                                     )
@@ -247,17 +314,32 @@ fun CalendarioScreen(
                         )
                     }
                 }
+                // Feriado: su nombre, en un cartel arriba de los eventos del día.
+                estado.feriadoDelDia?.let { nombre ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    CartelFeriado(nombre)
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 if (estado.eventosDelDia.isEmpty()) {
                     EstadoVacio(
-                        Icons.Filled.EventAvailable,
+                        Icons.Outlined.EventAvailable,
                         stringResource(R.string.sin_eventos_fecha),
                         stringResource(R.string.sin_eventos_fecha_sugerencia)
                     )
                 }
+                }
             }
 
-            items(estado.eventosDelDia, key = { it.evento.id }) { item ->
+            if (estado.buscando) {
+                // Al tocar un resultado se cierra la búsqueda y el calendario
+                // salta a ese día.
+                items(estado.resultadosBusqueda, key = { "b" + it.item.evento.id }) { encontrado ->
+                    FilaEventoEncontrado(encontrado, estado.hoy, Modifier.animateItem()) {
+                        viewModel.irA(encontrado.fecha)
+                        onCerrarBusqueda()
+                    }
+                }
+            } else items(estado.eventosDelDia, key = { it.evento.id }) { item ->
                 // Deslizar hacia la izquierda elimina el evento (con "Deshacer").
                 Deslizable(
                     modifier = Modifier.animateItem(),
@@ -276,7 +358,8 @@ fun CalendarioScreen(
                         // Solo los exámenes tienen temario.
                         onAbrirTemario = if (item.evento.tipo == TipoEvento.EXAMEN) {
                             { temarioDeEventoId = item.evento.id }
-                        } else null
+                        } else null,
+                        esFeriado = estado.feriadoDelDia != null
                     )
                 }
             }
@@ -303,9 +386,10 @@ fun CalendarioScreen(
             // Al editar se puede mover el evento a otra materia activa.
             materias = estado.materiasActivas,
             fechaInicial = estado.seleccionado,
-            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta ->
+            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace ->
                 val error = viewModel.guardarEvento(
-                    materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta
+                    materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta,
+                    virtual, lugar, enlace
                 )
                 if (error == null) mostrarDialogo = false
                 error?.texto()
@@ -325,4 +409,80 @@ private fun Context.buscarActividad(): Activity? {
         actual = actual.baseContext
     }
     return null
+}
+
+// Cartel del feriado del día elegido: el nombre y que no hay clases.
+@Composable
+private fun CartelFeriado(nombre: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Icon(Icons.Outlined.Celebration, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = stringResource(R.string.feriado_nombre, nombre),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Text(
+                text = stringResource(R.string.feriado_detalle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+    }
+}
+
+// Título de los resultados de la búsqueda, con cuántos hay.
+@Composable
+private fun EncabezadoResultados(cantidad: Int) {
+    Text(
+        text = pluralStringResource(R.plurals.calendario_resultados, cantidad, cantidad),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp)
+    )
+}
+
+// Un evento encontrado: a la izquierda la fecha (día y mes) en un bloque del
+// color de la materia; al lado el título, la materia, cuándo es y el horario.
+// Los pasados se ven un poco más apagados.
+@Composable
+private fun FilaEventoEncontrado(encontrado: EventoEncontrado, hoy: LocalDate, modifier: Modifier = Modifier, alTocar: () -> Unit) {
+    val (evento, _, nombreMateria, colorMateria) = encontrado.item
+    val color = Color(colorMateria)
+    val meses = stringArrayResource(R.array.meses)
+    val pasado = encontrado.fecha.isBefore(hoy)
+    FilaTarjeta(modifier = modifier.padding(vertical = 4.dp).alpha(if (pasado) 0.6f else 1f), onClick = alTocar) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(52.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(color.copy(alpha = 0.16f))
+                .padding(vertical = 6.dp)
+        ) {
+            Text(encontrado.fecha.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+            Text(meses[encontrado.fecha.monthValue - 1].take(3).lowercase(), style = MaterialTheme.typography.labelSmall, color = color)
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(evento.titulo, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(modifier = Modifier.height(4.dp))
+            ChipMateria(nombreMateria, colorMateria)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "${textoFecha(encontrado.fecha, hoy)} · %02d:%02d".format(evento.horaInicio.hour, evento.horaInicio.minute),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(iconoTipo(evento.tipo), contentDescription = null, tint = color, modifier = Modifier.padding(horizontal = 12.dp).size(22.dp))
+    }
 }

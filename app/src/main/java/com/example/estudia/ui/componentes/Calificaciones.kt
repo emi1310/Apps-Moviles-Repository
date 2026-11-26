@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Grade
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Grade
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -81,8 +81,8 @@ fun FilaCalificacion(calificacion: Calificacion, onEditar: () -> Unit, onElimina
         EtiquetaNota(calificacion.nota)
         MenuOpciones(
             listOf(
-                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
-                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
+                OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit, alTocar = onEditar),
+                OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true, alTocar = onEliminar)
             ),
             descripcion = stringResource(R.string.opciones_de, calificacion.titulo)
         )
@@ -105,7 +105,7 @@ fun DialogoCalificacion(
 
     DialogoApp(
         titulo = stringResource(if (calificacion == null) R.string.nueva_calificacion else R.string.editar_calificacion),
-        icono = Icons.Filled.Grade,
+        icono = Icons.Outlined.Grade,
         textoConfirmar = stringResource(if (calificacion == null) R.string.agregar else R.string.guardar),
         onConfirmar = { error = onConfirmar(titulo, nota, fecha) },
         onCancelar = onCancelar

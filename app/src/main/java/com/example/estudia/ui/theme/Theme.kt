@@ -13,8 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // Esquema de colores de Material 3 armado con la paleta de Color.kt.
-// Las tarjetas (Card) usan surfaceContainerHighest: en modo claro son
-// blancas sobre un fondo lavanda muy suave, así se despegan del fondo.
+// Las tarjetas (Card) usan surfaceContainerHighest y los bloques
+// surfaceContainer: son "vidrio" (blanco u oscuro semitransparente) y dejan
+// ver las manchas de color del fondo. Low, Lowest y High quedan opacos
+// porque los usan menús, hojas y diálogos, que van encima de otras cosas.
 private val EsquemaClaro = lightColorScheme(
     primary = VioletaPrincipal,
     onPrimary = Color.White,
@@ -38,9 +40,9 @@ private val EsquemaClaro = lightColorScheme(
     onSurfaceVariant = TextoSecundarioClaro,
     surfaceContainerLowest = TarjetaClara,
     surfaceContainerLow = TarjetaClara,
-    surfaceContainer = TarjetaClara,
+    surfaceContainer = VidrioClaro,
     surfaceContainerHigh = TarjetaClara,
-    surfaceContainerHighest = TarjetaClara,
+    surfaceContainerHighest = VidrioClaro,
     outline = BordeClaro,
     outlineVariant = BordeClaro
 )
@@ -66,9 +68,9 @@ private val EsquemaOscuro = darkColorScheme(
     onSurfaceVariant = TextoSecundarioOscuro,
     surfaceContainerLowest = TarjetaOscura,
     surfaceContainerLow = TarjetaOscura,
-    surfaceContainer = TarjetaOscura,
+    surfaceContainer = VidrioOscuro,
     surfaceContainerHigh = TarjetaOscura,
-    surfaceContainerHighest = TarjetaOscura,
+    surfaceContainerHighest = VidrioOscuro,
     outline = BordeOscuro,
     outlineVariant = BordeOscuro
 )

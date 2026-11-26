@@ -3,6 +3,16 @@ package com.example.estudia.datos
 import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import com.example.estudia.datos.local.ArchivoDao
+import com.example.estudia.datos.local.FeriadoDao
+import com.example.estudia.datos.local.AsistenciaEntity
+import com.example.estudia.datos.local.CarreraDao
+import com.example.estudia.datos.local.EvaluacionEntity
+import com.example.estudia.modelo.Evaluacion
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.Feriado
+import com.example.estudia.modelo.MateriaPlan
+import com.example.estudia.modelo.MesaFinal
+import java.time.format.DateTimeFormatter
 import com.example.estudia.datos.local.CalificacionDao
 import com.example.estudia.datos.local.EventoDao
 import com.example.estudia.datos.local.MateriaDao
@@ -76,6 +86,10 @@ class RepositorioEstudiaImpl(
     private val copiaDeSeguridad: CopiaDeSeguridad,
     private val calendarioTelefono: CalendarioTelefono,
     private val lectorTexto: LectorTexto,
+    private val carreraDao: CarreraDao,
+    private val exportadorPdf: ExportadorPdf,
+    private val feriadoDao: FeriadoDao,
+    private val fuenteFeriados: FuenteFeriados,
     // Título de los bloques de estudio que guarda el temporizador. Lo lee
     // EstudiaApp de strings.xml, así el Repository no necesita Context.
     private val tituloSesionEstudio: String
@@ -100,6 +114,7 @@ class RepositorioEstudiaImpl(
     override val tema: Flow<PreferenciaTema> = preferencias.tema
     override val permisoArchivosPedido: Flow<Boolean> = preferencias.permisoArchivosPedido
     override val silenciarAlEstudiar: Flow<Boolean> = preferencias.silenciarAlEstudiar
+    override val feriados: Flow<List<Feriado>> = feriadoDao.observarTodos().map { lista -> lista.map { it.aModelo() } }
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> =
         notaDao.buscar(usuarioId, texto).map { filas ->
@@ -176,8 +191,22 @@ class RepositorioEstudiaImpl(
 
     // ---------- Materias ----------
 
-    override suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long) {
-        materiaDao.insertar(Materia(id = 0, nombre = nombre, color = color).aEntidad(usuarioId))
+    override suspend fun agregarMateria(
+        usuarioId: Int,
+        nombre: String,
+        color: Long,
+        asistenciaMinima: Int,
+        promocional: Boolean,
+        notaPromocion: Double,
+        tieneFinal: Boolean
+    ) {
+        materiaDao.insertar(
+            Materia(
+                id = 0, nombre = nombre, color = color,
+                asistenciaMinima = asistenciaMinima, promocional = promocional,
+                notaPromocion = notaPromocion, tieneFinal = tieneFinal
+            ).aEntidad(usuarioId)
+        )
     }
 
     override suspend fun actualizarMateria(usuarioId: Int, materia: Materia) {
@@ -201,6 +230,7 @@ class RepositorioEstudiaImpl(
         archivoDao.insertarTodos(materia.todosLosArchivos().map { it.aEntidad(materia.id) })
         materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materia.id)) }
         materia.tarjetas.forEach { tarjetaDao.insertar(it.aEntidad(materia.id)) }
+        materia.evaluaciones.forEach { carreraDao.insertarEvaluacion(it.aEntidad(materia.id)) }
     }
 
     // ---------- Tareas ----------
@@ -296,6 +326,7 @@ class RepositorioEstudiaImpl(
     override suspend fun restaurarEvento(materiaId: Int, evento: Evento) {
         eventoDao.insertar(evento.aEntidad(materiaId))
         temaDao.insertarTodos(evento.temas.map { it.aEntidad(evento.id) })
+        carreraDao.guardarAsistencias(evento.asistencias.map { it.aEntidad(evento.id) })
     }
 
     // ---------- Temario de los exámenes ----------
@@ -339,7 +370,7 @@ class RepositorioEstudiaImpl(
 
     // ---------- Archivos adjuntos ----------
 
-    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean {
+    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String, categoria: CategoriaArchivo): Boolean {
         val copiado = almacenamiento.copiarDesde(Uri.parse(uri)) ?: return false
         archivoDao.insertar(
             Archivo(
@@ -349,10 +380,15 @@ class RepositorioEstudiaImpl(
                 ruta = copiado.ruta,
                 tamanoBytes = copiado.tamanoBytes,
                 fechaAgregado = LocalDate.now(),
-                notaId = notaId
+                notaId = notaId,
+                categoria = categoria
             ).aEntidad(materiaId)
         )
         return true
+    }
+
+    override suspend fun cambiarCategoriaArchivo(materiaId: Int, archivo: Archivo, categoria: CategoriaArchivo) {
+        archivoDao.actualizar(archivo.copy(categoria = categoria).aEntidad(materiaId))
     }
 
     // Solo borra la fila: el archivo en disco se borra después de que pasa
@@ -517,6 +553,25 @@ class RepositorioEstudiaImpl(
             )
         ).toInt()
         insertarMaterias(usuarioId, usuario.materias)
+        insertarCarrera(usuarioId, usuario.planEstudio, usuario.finales)
+    }
+
+    // Inserta el plan de estudios y los finales como nuevos. Los ids de las
+    // correlativas se traducen a los ids nuevos que genera SQLite.
+    private suspend fun insertarCarrera(usuarioId: Int, plan: List<MateriaPlan>, finales: List<MesaFinal>) {
+        val idsNuevos = mutableMapOf<Int, Int>()
+        plan.forEach { materia ->
+            idsNuevos[materia.id] = carreraDao.insertarMateriaPlan(
+                materia.aEntidad(usuarioId).copy(id = 0, correlativas = "")
+            ).toInt()
+        }
+        plan.forEach { materia ->
+            val id = idsNuevos.getValue(materia.id)
+            carreraDao.actualizarMateriaPlan(
+                materia.copy(id = id, correlativas = materia.correlativas.mapNotNull { idsNuevos[it] }).aEntidad(usuarioId)
+            )
+        }
+        finales.forEach { carreraDao.insertarFinal(it.aEntidad(usuarioId).copy(id = 0)) }
     }
 
     // Inserta materias con todo su contenido como nuevas (los ids del objeto
@@ -534,6 +589,7 @@ class RepositorioEstudiaImpl(
             materia.eventos.forEach { evento ->
                 val eventoId = eventoDao.insertar(evento.aEntidad(materiaId).copy(id = 0)).toInt()
                 temaDao.insertarTodos(evento.temas.map { it.aEntidad(eventoId).copy(id = 0) })
+                carreraDao.guardarAsistencias(evento.asistencias.map { it.aEntidad(eventoId).copy(id = 0) })
             }
             materia.notas.forEach { nota ->
                 val notaId = notaDao.insertar(nota.aEntidad(materiaId).copy(id = 0)).toInt()
@@ -542,8 +598,78 @@ class RepositorioEstudiaImpl(
             archivoDao.insertarTodos(materia.archivos.map { it.aEntidad(materiaId).copy(id = 0, notaId = null) })
             materia.calificaciones.forEach { calificacionDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
             materia.tarjetas.forEach { tarjetaDao.insertar(it.aEntidad(materiaId).copy(id = 0)) }
+            materia.evaluaciones.forEach { carreraDao.insertarEvaluacion(it.aEntidad(materiaId).copy(id = 0)) }
         }
     }
+
+    // ---------- Mi carrera (plan de estudios) ----------
+
+    override suspend fun agregarMateriaPlan(usuarioId: Int, materia: MateriaPlan) {
+        carreraDao.insertarMateriaPlan(materia.aEntidad(usuarioId).copy(id = 0))
+    }
+
+    override suspend fun actualizarMateriaPlan(usuarioId: Int, materia: MateriaPlan) {
+        carreraDao.actualizarMateriaPlan(materia.aEntidad(usuarioId))
+    }
+
+    // Las otras materias pueden seguir teniéndola como correlativa: como ya
+    // no está en el plan, se ignora (MateriaPlan.faltanParaCursar).
+    override suspend fun eliminarMateriaPlan(usuarioId: Int, materia: MateriaPlan) {
+        carreraDao.eliminarMateriaPlan(materia.aEntidad(usuarioId))
+    }
+
+    override suspend fun restaurarMateriaPlan(usuarioId: Int, materia: MateriaPlan) {
+        carreraDao.insertarMateriaPlan(materia.aEntidad(usuarioId))
+    }
+
+    // ---------- Asistencia ----------
+
+    override suspend fun marcarAsistencia(eventoId: Int, fecha: LocalDate, presente: Boolean?) {
+        if (presente == null) carreraDao.borrarAsistencia(eventoId, fecha)
+        else carreraDao.guardarAsistencia(AsistenciaEntity(eventoId = eventoId, fecha = fecha, presente = presente))
+    }
+
+    // ---------- ¿Qué nota necesito? ----------
+
+    override suspend fun agregarEvaluacion(materiaId: Int, nombre: String, peso: Int, nota: Double?) {
+        carreraDao.insertarEvaluacion(EvaluacionEntity(materiaId = materiaId, nombre = nombre, peso = peso, nota = nota))
+    }
+
+    override suspend fun actualizarEvaluacion(materiaId: Int, evaluacion: Evaluacion) {
+        carreraDao.actualizarEvaluacion(evaluacion.aEntidad(materiaId))
+    }
+
+    override suspend fun eliminarEvaluacion(materiaId: Int, evaluacion: Evaluacion) {
+        carreraDao.eliminarEvaluacion(evaluacion.aEntidad(materiaId))
+    }
+
+    override suspend fun restaurarEvaluacion(materiaId: Int, evaluacion: Evaluacion) {
+        carreraDao.insertarEvaluacion(evaluacion.aEntidad(materiaId))
+    }
+
+    // ---------- Mesas de finales ----------
+
+    override suspend fun agregarFinal(usuarioId: Int, final: MesaFinal): MesaFinal {
+        val id = carreraDao.insertarFinal(final.aEntidad(usuarioId).copy(id = 0))
+        return final.copy(id = id.toInt())
+    }
+
+    override suspend fun actualizarFinal(usuarioId: Int, final: MesaFinal) {
+        carreraDao.actualizarFinal(final.aEntidad(usuarioId))
+    }
+
+    override suspend fun eliminarFinal(usuarioId: Int, final: MesaFinal) {
+        carreraDao.eliminarFinal(final.aEntidad(usuarioId))
+    }
+
+    override suspend fun restaurarFinal(usuarioId: Int, final: MesaFinal) {
+        carreraDao.insertarFinal(final.aEntidad(usuarioId))
+    }
+
+    // ---------- Exportar a PDF ----------
+
+    override suspend fun exportarNotaPdf(nota: Nota, nombreMateria: String): String? =
+        exportadorPdf.exportar(nota, nombreMateria, nota.fechaCreacion.format(DateTimeFormatter.ofPattern("d/M/yyyy")))
 
     // ---------- Calendario del teléfono ----------
 
@@ -555,6 +681,23 @@ class RepositorioEstudiaImpl(
                 .map { CalendarioTelefono.EventoAPasar(it, materia.nombre) }
         }
         return calendarioTelefono.sincronizar(eventos, nombreCalendario)
+    }
+
+    // ---------- Feriados ----------
+
+    override suspend fun actualizarFeriados(usarCalendario: Boolean): ResultadoFeriados? {
+        val anio = LocalDate.now().year
+        val desde = LocalDate.of(anio, 1, 1)
+        val hasta = LocalDate.of(anio + 1, 12, 31)
+        // Primero el calendario de Google del teléfono; si no está o no tiene
+        // ninguno, internet (este año y el que viene).
+        val delCalendario = if (usarCalendario) fuenteFeriados.delCalendario(desde, hasta)?.takeIf { it.isNotEmpty() } else null
+        val feriados = delCalendario ?: run {
+            val este = fuenteFeriados.deInternet(anio) ?: return null
+            este + (fuenteFeriados.deInternet(anio + 1) ?: emptyList())
+        }
+        feriadoDao.reemplazar(feriados.map { it.aEntidad() })
+        return ResultadoFeriados(feriados.size, delCalendario != null)
     }
 
     // ---------- Copia de seguridad ----------
@@ -571,10 +714,13 @@ class RepositorioEstudiaImpl(
         val usuario = usuarioActual.first() ?: return false
         val copia = copiaDeSeguridad.importar(uri) ?: return false
         usuario.materias.forEach { materiaDao.eliminar(it.aEntidad(usuario.id)) }
+        usuario.planEstudio.forEach { carreraDao.eliminarMateriaPlan(it.aEntidad(usuario.id)) }
+        usuario.finales.forEach { carreraDao.eliminarFinal(it.aEntidad(usuario.id)) }
         usuarioDao.actualizarPerfil(usuario.id, copia.nombre, copia.carrera, copia.anio, copia.email)
         usuarioDao.actualizarMetaSemanal(usuario.id, copia.metaHorasSemanales)
         usuarioDao.actualizarFotoPerfil(usuario.id, copia.fotoPerfil)
         insertarMaterias(usuario.id, copia.materias)
+        insertarCarrera(usuario.id, copia.planEstudio, copia.finales)
         return true
     }
 }

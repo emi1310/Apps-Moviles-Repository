@@ -25,7 +25,13 @@ data class Evento(
     val repetirHasta: LocalDate? = null,
     // Versión 7: temas que entran en un examen (el temario), para ir
     // marcando los que ya se estudiaron.
-    val temas: List<Tema> = emptyList()
+    val temas: List<Tema> = emptyList(),
+    // Versión 9: asistencia a las clases (una por día marcado).
+    val asistencias: List<Asistencia> = emptyList(),
+    // Versión 10: clase presencial (con aula o lugar) o virtual (con link).
+    val virtual: Boolean = false,
+    val lugar: String? = null,
+    val enlace: String? = null
 ) {
     val inicio: LocalDateTime get() = fecha.atTime(horaInicio)
 
@@ -68,3 +74,13 @@ data class Tema(
     val titulo: String,
     val estudiado: Boolean = false
 )
+
+// Link de una clase virtual tal como se escribió: sin espacios y, si no
+// tiene "http", con "https://" adelante (ej: "meet.google.com/abc" ->
+// "https://meet.google.com/abc"). null si quedó vacío.
+fun normalizarEnlace(texto: String?): String? {
+    val limpio = texto?.trim()?.replace(" ", "").orEmpty()
+    if (limpio.isEmpty()) return null
+    return if (limpio.startsWith("http://", ignoreCase = true) || limpio.startsWith("https://", ignoreCase = true)) limpio
+    else "https://$limpio"
+}

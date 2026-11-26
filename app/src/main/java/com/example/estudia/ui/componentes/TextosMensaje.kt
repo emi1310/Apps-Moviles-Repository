@@ -40,6 +40,16 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_COPIA_GUARDADA -> R.string.aviso_copia_guardada
     Mensaje.AVISO_COPIA_RESTAURADA -> R.string.aviso_copia_restaurada
     Mensaje.AVISO_COPIA_ERROR -> R.string.aviso_copia_error
+    Mensaje.AVISO_MATERIA_PLAN_ELIMINADA -> R.string.aviso_materia_plan_eliminada
+    Mensaje.AVISO_PLAN_IMPORTADO -> R.string.aviso_plan_importado
+    Mensaje.AVISO_EVALUACION_ELIMINADA -> R.string.aviso_evaluacion_eliminada
+    Mensaje.AVISO_EVALUACIONES_IMPORTADAS -> R.string.aviso_evaluaciones_importadas
+    Mensaje.AVISO_FINAL_ELIMINADO -> R.string.aviso_final_eliminado
+    Mensaje.AVISO_FINAL_APROBADO_PLAN -> R.string.aviso_final_aprobado_plan
+    Mensaje.AVISO_PDF_ERROR -> R.string.aviso_pdf_error
+    Mensaje.AVISO_FERIADOS_CALENDARIO -> R.string.aviso_feriados_calendario
+    Mensaje.AVISO_FERIADOS_INTERNET -> R.string.aviso_feriados_internet
+    Mensaje.AVISO_FERIADOS_ERROR -> R.string.aviso_feriados_error
     Mensaje.ERROR_COMPLETAR_CAMPOS -> R.string.error_completar_campos
     Mensaje.ERROR_CONTRASENA_CORTA -> R.string.error_contrasena_corta
     Mensaje.ERROR_CREDENCIALES -> R.string.error_credenciales
@@ -49,4 +59,9 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.ERROR_TITULO_CALIFICACION -> R.string.error_titulo_calificacion
     Mensaje.ERROR_USUARIO_ESPACIOS -> R.string.error_usuario_espacios
     Mensaje.ERROR_USUARIO_EXISTE -> R.string.error_usuario_existe
+    Mensaje.ERROR_ANIO_INVALIDO -> R.string.error_anio_invalido
+    Mensaje.ERROR_NOTA_FINAL -> R.string.error_nota_final
+    Mensaje.ERROR_PESO_INVALIDO -> R.string.error_peso_invalido
+    Mensaje.ERROR_PESO_SUPERA -> R.string.error_peso_supera
+    Mensaje.ERROR_CIERRE_INSCRIPCION -> R.string.error_cierre_inscripcion
 }

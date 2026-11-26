@@ -3,10 +3,10 @@ package com.example.estudia.ui.pantallas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AlternateEmail
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,7 +35,7 @@ fun RegistroScreen(
     var contrasena by remember { mutableStateOf("") }
 
     FormularioCuenta(
-        icono = Icons.Filled.PersonAdd,
+        icono = Icons.Outlined.PersonAdd,
         titulo = stringResource(R.string.crear_cuenta),
         subtitulo = stringResource(R.string.registro_subtitulo),
         campos = {
@@ -43,7 +43,7 @@ fun RegistroScreen(
                 value = nombre,
                 onValueChange = { nombre = it },
                 label = { Text(stringResource(R.string.nombre_completo)) },
-                leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.Badge, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -52,7 +52,7 @@ fun RegistroScreen(
                 value = nombreUsuario,
                 onValueChange = { nombreUsuario = it },
                 label = { Text(stringResource(R.string.nombre_usuario)) },
-                leadingIcon = { Icon(Icons.Filled.AlternateEmail, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.AlternateEmail, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -61,7 +61,7 @@ fun RegistroScreen(
                 value = contrasena,
                 onValueChange = { contrasena = it },
                 label = { Text(stringResource(R.string.contrasena)) },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 supportingText = { Text(stringResource(R.string.contrasena_minimo, SesionViewModel.LARGO_MINIMO_CONTRASENA)) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -73,7 +73,7 @@ fun RegistroScreen(
             Button(
                 onClick = { onRegistrar(nombre, nombreUsuario, contrasena) },
                 enabled = !estado.procesando,
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {
                 if (estado.procesando) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.crear_cuenta))

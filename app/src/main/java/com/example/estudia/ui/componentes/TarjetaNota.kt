@@ -5,13 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.outlined.AttachFile
+import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +51,7 @@ fun TarjetaNota(
     alAbrirArchivo: (Archivo) -> Unit,
     alEliminarArchivo: (Archivo) -> Unit,
     alPasarATexto: (Archivo) -> Unit,
+    alExportarPdf: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val color = Color(colorMateria)
@@ -83,7 +85,7 @@ fun TarjetaNota(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (nota.esFavorita) Icons.Filled.Star else Icons.Filled.StarBorder,
+                            imageVector = if (nota.esFavorita) Icons.Filled.Star else Icons.Outlined.StarBorder,
                             contentDescription = stringResource(if (nota.esFavorita) R.string.quitar_favorita else R.string.marcar_favorita),
                             tint = if (nota.esFavorita) AmarilloFavorita else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
@@ -92,10 +94,11 @@ fun TarjetaNota(
                 }
                 MenuOpciones(
                     listOf(
-                        OpcionMenu(stringResource(R.string.adjuntar_archivo), Icons.Filled.AttachFile, alTocar = alAdjuntar),
-                        OpcionMenu(stringResource(R.string.foto_sacar), Icons.Filled.PhotoCamera, alTocar = alSacarFoto),
-                        OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = alEditar),
-                        OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = alEliminar)
+                        OpcionMenu(stringResource(R.string.adjuntar_archivo), Icons.Outlined.AttachFile, alTocar = alAdjuntar),
+                        OpcionMenu(stringResource(R.string.foto_sacar), Icons.Outlined.PhotoCamera, alTocar = alSacarFoto),
+                        OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit, alTocar = alEditar),
+                        OpcionMenu(stringResource(R.string.exportar_pdf), Icons.Outlined.PictureAsPdf, alTocar = alExportarPdf),
+                        OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true, alTocar = alEliminar)
                     ),
                     descripcion = stringResource(R.string.opciones_de, nota.titulo)
                 )
@@ -123,7 +126,7 @@ fun TarjetaNota(
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = acento, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = acento, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(text = nota.fechaCreacion.aTexto(), style = MaterialTheme.typography.labelMedium, color = acento)
                 }

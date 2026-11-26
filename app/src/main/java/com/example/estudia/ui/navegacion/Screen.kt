@@ -17,6 +17,19 @@ sealed class Screen(val ruta: String) {
     object Estadisticas : Screen("estadisticas")
     object Horario : Screen("horario")
     object Logros : Screen("logros")
+    object Carrera : Screen("carrera")
+    object Asistencia : Screen("asistencia")
+    object Finales : Screen("finales")
+    object ResumenSemanal : Screen("resumen_semanal")
+    object Busqueda : Screen("busqueda")
+    // ¿Qué nota necesito?: el id de la materia (-1 = la primera).
+    object NotaNecesaria : Screen("nota_necesaria/{materiaId}") {
+        fun de(materiaId: Int) = "nota_necesaria/$materiaId"
+    }
+    // Quiz con las tarjetas de una materia.
+    object Quiz : Screen("quiz/{materiaId}") {
+        fun de(materiaId: Int) = "quiz/$materiaId"
+    }
     // Repaso de tarjetas: lleva el id de la materia (-1 = todas).
     object Repaso : Screen("repaso/{materiaId}") {
         const val ARGUMENTO = "materiaId"

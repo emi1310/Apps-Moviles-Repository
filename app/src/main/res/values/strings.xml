@@ -262,6 +262,19 @@
         <item>¿Puedo ver mis tareas sin abrir la app?</item>
         <item>¿Puedo dictar una nota en vez de escribirla?</item>
         <item>¿Puedo pasar a texto una foto del pizarrón?</item>
+        <item>¿Cómo sé qué materias puedo cursar?</item>
+        <item>¿Cómo llevo mi asistencia?</item>
+        <item>¿Cuánto necesito sacar para aprobar o promocionar?</item>
+        <item>¿Me avisan de las mesas de finales?</item>
+        <item>¿Puedo practicar con las tarjetas como en un examen?</item>
+        <item>¿Dónde veo cómo me fue en la semana?</item>
+        <item>¿Cómo busco algo en toda la app?</item>
+        <item>¿Puedo estudiar con sonido de fondo?</item>
+        <item>¿Puedo compartir una nota?</item>
+        <item>¿Puedo ordenar los archivos de una materia?</item>
+        <item>¿Cómo cargo cuánta asistencia pide una materia o si tiene final?</item>
+        <item>¿Puedo marcar una clase como virtual?</item>
+        <item>¿Cómo veo los feriados en el calendario?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -289,6 +302,19 @@
         <item>Sí: agregá el widget de Estudia+ en la pantalla de inicio del teléfono (mantené apretado un lugar vacío y elegí Widgets). Muestra tu racha y tus 3 tareas más urgentes, y se actualiza solo.</item>
         <item>Sí: al crear o editar una nota, tocá el micrófono del campo Contenido y hablá. Lo dictado se suma al final del texto.</item>
         <item>Sí: en los archivos de una nota, tocá \"Pasar a texto\" en la foto. El texto que encuentre se agrega al final de la nota (con \"Deshacer\"). Funciona sin internet.</item>
+        <item>En Materias, arriba, tocá \"Mi carrera\" y cargá las materias de tu plan con su año y sus correlativas (o pasá las que ya tenés en la app). Marcá cada una como pendiente, cursando, regular o aprobada: la app te dice cuáles ya podés cursar o rendir y qué porcentaje de la carrera llevás.</item>
+        <item>En el Calendario, arriba, tocá \"Asistencia\": aparecen tus clases de las últimas dos semanas: marcá presente o ausente con un toque. Arriba ves el porcentaje de cada materia y cuántas veces más podés faltar sin bajar del mínimo que pide cada materia (75\u00A0% si no lo cambiaste). Los feriados no cuentan. Si la clase tiene fecha de fin, se cuenta sobre todo el cuatrimestre.</item>
+        <item>En Materias, en el menú de la materia, elegí \"¿Qué nota necesito?\". Cargá cada evaluación con su peso (que sumen 100\u00A0%) y las notas que ya tengas: te dice qué promedio necesitás en lo que falta para aprobar (4) o promocionar (con la nota de promoción de la materia; si no es promocional, solo para aprobar). Podés traer las notas de exámenes que ya cargaste.</item>
+        <item>Sí: en Materias, arriba, tocá \"Mesas de finales\" y agregá la fecha de la mesa, el cierre de la inscripción y el vencimiento de la regularidad. Con los Recordatorios activados te avisamos 2 días antes de que cierre la inscripción y el día anterior a la mesa. Al cargar la nota, si aprobaste, la materia queda aprobada en Mi carrera.</item>
+        <item>Sí: en el menú de la materia elegí \"Hacer un quiz\". Son hasta 10 preguntas de opción múltiple armadas con tus tarjetas, con cronómetro y puntaje al final. Hacen falta al menos 4 tarjetas con respuestas distintas.</item>
+        <item>En Estadísticas (desde el Perfil), arriba, tocá \"Tu semana\": horas estudiadas comparadas con la semana anterior, días y sesiones, tareas, racha, las materias que más estudiaste y los exámenes que vienen. Los domingos a las 20:00 te llega el resumen como notificación (con los Recordatorios activados).</item>
+        <item>Tocá la lupa del dock (abajo a la derecha) en Inicio o Perfil; en Materias, Calendario y Notas la lupa filtra esa pantalla. Buscá a la vez en materias, tareas, notas, eventos, tarjetas, tu plan y tus finales (sin importar tildes ni mayúsculas). Tocá un resultado para ir a su sección.</item>
+        <item>Sí: en el temporizador elegí lluvia, olas o ruido blanco en \"Sonido de concentración\". Suena mientras corre la sesión y se apaga al pausar, terminar o salir de la pantalla. No usa internet.</item>
+        <item>Sí: en el menú de la nota elegí \"Exportar a PDF\". Se arma un PDF con el texto y las fotos de la nota y podés mandarlo por WhatsApp, mail o guardarlo en Drive.</item>
+        <item>Sí: en Materias, abrí la materia y en \"Archivos\" vas a ver pastillas para filtrar por Teoría, TPs, Información de la materia, Exámenes u Otros. Lo que adjuntes con un filtro elegido va a esa categoría (con \"Todos\" te pregunta a cuál). Para cambiarle la categoría a un archivo tocá el ícono que tiene a la derecha.</item>
+        <item>Al crear o editar la materia (menú → Editar) cargá el porcentaje de asistencia que pide, si es promocional y con qué nota, y si tiene final. Asistencia usa ese porcentaje para decirte cuánto podés faltar, \"¿Qué nota necesito?\" calcula con tu nota de promoción y las materias sin final no aparecen como sugerencia en Mesas de finales.</item>
+        <item>Sí: al crear o editar un evento elegí Presencial (y escribí el aula o lugar, si querés) o Virtual (y pegá el link de Meet, Zoom o el que usen). En el calendario aparece un botón \"Unirse\" que abre el link.</item>
+        <item>En el Calendario tocá el botón de los feriados, arriba. Si nos dejás leer el calendario del teléfono, los traemos de tu Google Calendar (\"Feriados en Argentina\"); si no, los bajamos de internet. Los feriados aparecen en rojo, ese día las clases dicen \"Feriado: no hay clase\" y no cuentan en la asistencia.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -298,7 +324,7 @@
     <string name="login_subtitulo">Qué bueno verte de nuevo</string>
     <string name="registro_subtitulo">En un minuto empezás a organizar tu estudio</string>
     <string name="sin_tareas_pendientes_feliz">¡Estás al día! No tenés tareas pendientes 🎉</string>
-    <string name="fecha_larga">%1$s %2$d de %3$s</string>
+    <string name="fecha_larga">%1$s\u00A0%2$d de %3$s</string>
     <string name="inicio_tus_tareas">Tus tareas</string>
     <string name="inicio_tus_tareas_sub">Pendientes de todas tus materias</string>
     <string name="inicio_completadas">Completadas</string>
@@ -326,6 +352,12 @@
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventos</item>
     </plurals>
+    <plurals name="calendario_resultados">
+        <item quantity="one">%1$d evento encontrado</item>
+        <item quantity="other">%1$d eventos encontrados</item>
+    </plurals>
+    <string name="calendario_sin_resultados">Probá con otra palabra: se busca en el título, la materia, el lugar, el enlace y el temario.</string>
+    <string name="buscar_eventos">Buscar eventos…</string>
     <string name="preferencias">Preferencias</string>
     <string name="cuenta">Cuenta</string>
     <plurals name="materias_activas">
@@ -618,4 +650,267 @@
     <string name="sin_permiso_calendario">Sin el permiso de calendario no se pueden pasar tus eventos. Podés activarlo en Ajustes, en Permisos, Calendario.</string>
     <string name="aviso_calendario_sincronizado">Calendario del teléfono actualizado: %1$d eventos de Estudia+</string>
     <string name="aviso_calendario_error">No se pudo usar el calendario del teléfono</string>
+
+    <!-- ===== Versión 9: Tu cursada ===== -->
+    <string name="estado_pendiente">Pendiente</string>
+    <string name="estado_cursando">Cursando</string>
+    <string name="estado_regular">Regular</string>
+    <string name="estado_aprobada">Aprobada</string>
+
+    <!-- Mi carrera -->
+    <string name="carrera_titulo">Mi carrera</string>
+    <string name="carrera_subtitulo">Plan de estudios y correlativas</string>
+    <string name="carrera_completada">de la carrera aprobada</string>
+    <string name="carrera_aprobadas">%1$d de %2$d materias aprobadas</string>
+    <string name="carrera_regulares_cursando">%1$d regulares · %2$d cursando</string>
+    <string name="carrera_promedio">promedio %1$s</string>
+    <string name="carrera_vacio">Cargá tu plan de estudios</string>
+    <string name="carrera_vacio_sugerencia">Agregá las materias de tu carrera con su año y sus correlativas: la app te dice cuáles podés cursar y cuánto te falta para recibirte.</string>
+    <string name="carrera_importar">Pasar mis materias de la app (%1$d)</string>
+    <string name="carrera_agregar">Agregar materia</string>
+    <string name="carrera_anio">%1$d.º año</string>
+    <string name="carrera_puede_cursar">Ya la podés cursar</string>
+    <string name="carrera_falta_cursar">Para cursarla te falta: %1$s</string>
+    <string name="carrera_puede_rendir">Ya podés rendir el final</string>
+    <string name="carrera_falta_rendir">Para rendir te falta aprobar: %1$s</string>
+    <string name="carrera_nota_final">Nota final: %1$s</string>
+    <string name="carrera_en_la_app">En la app</string>
+    <string name="carrera_cambiar_estado">Cambiar estado</string>
+    <string name="carrera_nueva_materia">Nueva materia del plan</string>
+    <string name="carrera_editar_materia">Editar materia del plan</string>
+    <string name="carrera_nombre">Nombre de la materia</string>
+    <string name="carrera_anio_campo">Año de la carrera</string>
+    <string name="carrera_correlativas">Correlativas (las que necesitás para cursarla)</string>
+    <string name="carrera_sin_otras">Todavía no hay otras materias en el plan.</string>
+    <string name="carrera_estado_titulo">¿Cómo vas con esta materia?</string>
+    <string name="carrera_nota_final_campo">Nota del final (opcional)</string>
+    <string name="error_anio_invalido">El año tiene que ser un número del 1 al 8</string>
+    <string name="error_nota_final">Para aprobar, la nota tiene que ser de 4 a 10</string>
+    <string name="aviso_materia_plan_eliminada">Materia quitada del plan</string>
+    <string name="aviso_plan_importado">Se agregaron %1$d materias al plan</string>
+
+    <!-- Asistencia -->
+    <string name="asistencia_titulo">Asistencia</string>
+    <string name="asistencia_subtitulo">Cuánto podés faltar en cada materia</string>
+    <string name="asistencia_vacio">No hay clases cargadas</string>
+    <string name="asistencia_vacio_sugerencia">Agregá tus clases en el Calendario (como semanales) para llevar la asistencia de cada materia.</string>
+    <string name="asistencia_marcar">Marcá tus clases</string>
+    <plurals name="asistencia_sin_marcar">
+        <item quantity="one">%1$d sin marcar</item>
+        <item quantity="other">%1$d sin marcar</item>
+    </plurals>
+    <string name="asistencia_sin_clases_recientes">No tuviste clases en las últimas dos semanas.</string>
+    <string name="asistencia_sin_registros">Todavía no marcaste ninguna clase</string>
+    <string name="asistencia_debajo">Estás por debajo del %1$d\u00A0%%: hablá con el profe</string>
+    <string name="asistencia_limite">Estás en el límite: no podés faltar más</string>
+    <plurals name="asistencia_faltas_disponibles">
+        <item quantity="one">Podés faltar 1 vez más</item>
+        <item quantity="other">Podés faltar %1$d veces más</item>
+    </plurals>
+    <string name="asistencia_conteo">%1$d presentes · %2$d ausentes</string>
+    <string name="asistencia_total">%1$d clases en el cuatrimestre</string>
+    <string name="asistencia_presente">Presente</string>
+    <string name="asistencia_ausente">Ausente</string>
+
+    <!-- ¿Qué nota necesito? -->
+    <string name="nota_necesaria_titulo">¿Qué nota necesito?</string>
+    <string name="nota_necesaria_subtitulo">Cuánto te falta para aprobar o promocionar</string>
+    <string name="nota_necesaria_sin_materias">No tenés materias activas</string>
+    <string name="nota_necesaria_sin_materias_sugerencia">Creá una materia para calcular cuánto necesitás.</string>
+    <string name="nota_necesaria_vacio">¿Cómo se compone la nota?</string>
+    <string name="nota_necesaria_vacio_sugerencia">Agregá cada evaluación con su peso (por ejemplo, Parcial 1: 40\u00A0%, Parcial 2: 40\u00A0%, TP: 20\u00A0%) y las notas que ya tengas.</string>
+    <string name="nota_necesaria_aprobar">Para aprobar (%1$s)</string>
+    <string name="nota_necesaria_promocionar">Para promocionar (%1$s)</string>
+    <string name="nota_necesaria_asegurada">¡Ya lo tenés asegurado!</string>
+    <string name="nota_necesaria_no_alcanza">Ya no alcanza ni con 10</string>
+    <string name="nota_necesaria_necesitas">Necesitás %1$s en lo que falta</string>
+    <string name="nota_necesaria_lo_lograste">¡Lo lograste!</string>
+    <string name="nota_necesaria_no_llegaste">No llegaste</string>
+    <string name="nota_necesaria_promedio">Tu promedio hasta ahora: %1$s (con el %2$d\u00A0%% de la nota)</string>
+    <string name="nota_necesaria_sin_rendir">Todavía no rendiste ninguna evaluación</string>
+    <string name="nota_necesaria_pesos">Los pesos suman %1$d\u00A0%%: tienen que sumar 100\u00A0%%</string>
+    <string name="nota_necesaria_importar">Traer mis notas de exámenes (%1$d)</string>
+    <string name="nota_necesaria_evaluaciones">Evaluaciones</string>
+    <string name="evaluacion_agregar">Agregar evaluación</string>
+    <string name="evaluacion_nueva">Nueva evaluación</string>
+    <string name="evaluacion_editar">Editar evaluación</string>
+    <string name="evaluacion_nombre">Evaluación</string>
+    <string name="evaluacion_peso">Pesa el %1$d\u00A0%% de la nota</string>
+    <string name="evaluacion_peso_campo">Peso (%)</string>
+    <string name="evaluacion_peso_ayuda">Cuánto vale sobre el total, de 1 a 100</string>
+    <string name="evaluacion_nota_campo">Nota (opcional)</string>
+    <string name="evaluacion_nota_ayuda">Dejala vacía si todavía no la rendiste</string>
+    <string name="evaluacion_pendiente">Pendiente</string>
+    <string name="error_peso_invalido">El peso tiene que ser un número del 1 al 100</string>
+    <string name="error_peso_supera">Con este peso las evaluaciones suman más de 100\u00A0%</string>
+    <string name="aviso_evaluacion_eliminada">Evaluación eliminada</string>
+    <string name="aviso_evaluaciones_importadas">Se agregaron %1$d notas: revisá sus pesos</string>
+
+    <!-- Mesas de finales -->
+    <string name="finales_titulo">Mesas de finales</string>
+    <string name="finales_subtitulo">Inscripciones, mesas y regularidad</string>
+    <string name="finales_vacio">No tenés finales anotados</string>
+    <string name="finales_vacio_sugerencia">Agregá la fecha de la mesa y el cierre de la inscripción: te avisamos antes para que no se te pase.</string>
+    <string name="finales_agregar">Nueva mesa</string>
+    <string name="finales_proximos">Próximos</string>
+    <string name="finales_rendidos">Rendidos</string>
+    <string name="finales_mesa">Mesa: %1$s</string>
+    <plurals name="finales_faltan_dias">
+        <item quantity="one">falta 1 día</item>
+        <item quantity="other">faltan %1$d días</item>
+    </plurals>
+    <string name="finales_ya_paso">ya pasó</string>
+    <string name="finales_inscripto">Inscripto</string>
+    <string name="finales_me_inscribi">Me inscribí</string>
+    <string name="finales_inscripcion_cerrada">Inscripción cerrada</string>
+    <string name="finales_inscripcion_hasta">Inscripción hasta el %1$s</string>
+    <string name="finales_sin_inscripcion">Sin fecha de inscripción</string>
+    <string name="finales_regularidad_vence">Regularidad hasta el %1$s</string>
+    <string name="finales_regularidad_vencida">Regularidad vencida (%1$s)</string>
+    <string name="finales_cargar_nota">Cargar nota</string>
+    <string name="finales_cambiar_nota">Cambiar nota</string>
+    <string name="finales_nuevo">Nueva mesa de final</string>
+    <string name="finales_editar">Editar mesa de final</string>
+    <string name="finales_materia">Materia</string>
+    <string name="finales_fecha_mesa">Fecha de la mesa</string>
+    <string name="finales_cierre">Cierre de la inscripción</string>
+    <string name="finales_vencimiento">Vencimiento de la regularidad</string>
+    <string name="finales_sin_fecha">Sin fecha</string>
+    <string name="finales_ya_inscripto">Ya me inscribí</string>
+    <string name="finales_nota">Nota del final</string>
+    <string name="finales_nota_ayuda">De 1 a 10. Si aprobaste, queda aprobada en Mi carrera.</string>
+    <string name="error_cierre_inscripcion">La inscripción tiene que cerrar antes de la mesa</string>
+    <string name="aviso_final_eliminado">Final eliminado</string>
+    <string name="aviso_final_aprobado_plan">¡Felicitaciones! %1$s quedó aprobada en Mi carrera</string>
+    <string name="notificacion_finales_titulo">Finales</string>
+    <string name="notificacion_final_hoy">Hoy rendís %1$s. ¡Éxitos!</string>
+    <string name="notificacion_final_manana">Mañana rendís %1$s</string>
+    <string name="notificacion_final_inscripcion">La inscripción a %1$s cierra el %2$s</string>
+
+    <!-- Quiz -->
+    <string name="quiz_titulo">Quiz</string>
+    <string name="quiz_hacer">Hacer un quiz</string>
+    <string name="quiz_pregunta_de">Pregunta %1$d de %2$d</string>
+    <string name="quiz_siguiente">Siguiente</string>
+    <string name="quiz_ver_resultado">Ver resultado</string>
+    <string name="quiz_correcta">Correcta</string>
+    <string name="quiz_incorrecta">Incorrecta</string>
+    <string name="quiz_aciertos">%1$d de %2$d correctas</string>
+    <string name="quiz_tiempo">Tiempo: %1$s</string>
+    <string name="quiz_mensaje_excelente">¡Excelente! Lo tenés muy claro.</string>
+    <string name="quiz_mensaje_bien">¡Bien! Repasá las que fallaste y volvé a intentar.</string>
+    <string name="quiz_mensaje_repasar">Todavía cuesta: repasá las tarjetas y probá de nuevo.</string>
+    <string name="quiz_otra_vez">Otra vez</string>
+    <string name="quiz_faltan_tarjetas">Faltan tarjetas</string>
+    <string name="quiz_faltan_tarjetas_sugerencia">Para el quiz hacen falta al menos 4 tarjetas con respuestas distintas en esta materia.</string>
+
+    <!-- Tu semana -->
+    <string name="resumen_titulo">Tu semana</string>
+    <string name="resumen_rango">Del %1$d de %2$s al %3$d de %4$s</string>
+    <string name="resumen_estudiaste">Esta semana estudiaste</string>
+    <string name="resumen_mas">%1$d\u00A0%% más que la semana pasada</string>
+    <string name="resumen_menos">%1$d\u00A0%% menos que la semana pasada</string>
+    <string name="resumen_sin_anterior">La semana pasada no registraste estudio</string>
+    <string name="resumen_meta">Meta: %1$d h por semana</string>
+    <string name="resumen_meta_cumplida">¡Cumpliste tu meta de %1$d h!</string>
+    <string name="resumen_dias">días estudiados</string>
+    <string name="resumen_sesiones">sesiones</string>
+    <string name="resumen_racha">días de racha</string>
+    <string name="resumen_tareas">tareas de la semana</string>
+    <string name="resumen_por_materia">Por materia</string>
+    <string name="resumen_proximos">Lo que viene (7 días)</string>
+    <string name="resumen_sin_proximos">No tenés exámenes ni entregas esta semana.</string>
+    <string name="notificacion_semana_titulo">Tu semana de estudio</string>
+    <string name="notificacion_semana_texto">Estudiaste %1$s h en %2$d días.</string>
+    <string name="notificacion_semana_mas">¡%1$d\u00A0%% más que la semana pasada!</string>
+    <string name="notificacion_semana_menos">%1$d\u00A0%% menos que la semana pasada.</string>
+
+    <!-- Búsqueda global -->
+    <string name="busqueda_titulo">Buscar</string>
+    <string name="dock_cerrar_busqueda">Cerrar búsqueda</string>
+    <string name="busqueda_subtitulo">En toda la app</string>
+    <string name="busqueda_sugerencia">Materias, tareas, notas, tarjetas…</string>
+    <string name="busqueda_vacio">¿Qué estás buscando?</string>
+    <string name="busqueda_vacio_sugerencia">Escribí al menos 2 letras. Se busca en materias, tareas, notas, eventos, tarjetas, tu plan y tus finales.</string>
+    <string name="busqueda_sin_resultados">Sin resultados</string>
+    <string name="busqueda_sin_resultados_sugerencia">No encontramos nada con «%1$s».</string>
+    <string name="busqueda_materias">Materias</string>
+    <string name="busqueda_tareas">Tareas</string>
+    <string name="busqueda_notas">Notas</string>
+    <string name="busqueda_eventos">Calendario</string>
+    <string name="busqueda_tarjetas">Tarjetas</string>
+    <string name="busqueda_carrera">Mi carrera</string>
+    <string name="busqueda_finales">Finales</string>
+
+    <!-- Sonidos de concentración -->
+    <string name="sonido_titulo">Sonido de concentración</string>
+    <string name="sonido_descripcion">Suena mientras corre la sesión</string>
+    <string name="sonido_ninguno">Ninguno</string>
+    <string name="sonido_lluvia">Lluvia</string>
+    <string name="sonido_olas">Olas</string>
+    <string name="sonido_ruido_blanco">Ruido blanco</string>
+
+    <!-- Exportar a PDF -->
+    <string name="exportar_pdf">Exportar a PDF</string>
+    <string name="exportar_pdf_compartir">Compartir nota</string>
+    <string name="aviso_pdf_error">No se pudo crear el PDF</string>
+
+    <!-- Versión 10: reglas de cada materia, archivos por categoría, clases virtuales y feriados -->
+    <string name="materia_cursada">Cursada</string>
+    <string name="materia_asistencia_minima">Asistencia mínima (%)</string>
+    <string name="materia_asistencia_ayuda">La que pide la cátedra para quedar regular (0 si no pide)</string>
+    <string name="materia_promocional">Se puede promocionar</string>
+    <string name="materia_promocional_detalle">Aprobarla sin final llegando a una nota</string>
+    <string name="materia_nota_promocion">Nota para promocionar</string>
+    <string name="materia_tiene_final">Tiene final</string>
+    <string name="materia_tiene_final_detalle_promo">Si no promocionás, rendís final</string>
+    <string name="materia_tiene_final_detalle">Al regularizarla hay que rendir final</string>
+    <string name="error_asistencia_minima">Poné un porcentaje entre 0 y 100</string>
+    <string name="error_nota_promocion">La nota de promoción va de 4 a 10</string>
+    <string name="reglas_promociona">Promociona con %1$s</string>
+    <string name="reglas_no_promociona">No promociona</string>
+    <string name="reglas_con_final">Con final</string>
+    <string name="reglas_sin_final">Sin final</string>
+    <string name="reglas_asistencia">Asistencia\u00A0%1$d\u00A0%%</string>
+    <string name="asistencia_pide">pide %1$d\u00A0%%</string>
+    <string name="asistencia_sin_minimo">Esta materia no pide asistencia</string>
+
+    <string name="categoria_teoria">Teoría</string>
+    <string name="categoria_tps">TPs</string>
+    <string name="categoria_informacion">Info de la materia</string>
+    <string name="categoria_examenes">Exámenes</string>
+    <string name="categoria_otros">Otros</string>
+    <string name="categoria_todos">Todos (%1$d)</string>
+    <string name="categoria_vacia">Todavía no hay archivos en %1$s</string>
+    <string name="categoria_cambiar">Mover a…</string>
+    <string name="categoria_donde_guardar">¿Dónde lo guardamos?</string>
+    <string name="categoria_de">%1$s, en %2$s. Cambiar categoría</string>
+
+    <string name="evento_modalidad">Modalidad</string>
+    <string name="evento_presencial">Presencial</string>
+    <string name="evento_virtual">Virtual</string>
+    <string name="evento_lugar">Aula o lugar (opcional)</string>
+    <string name="evento_enlace">Link de la clase (opcional)</string>
+    <string name="evento_enlace_ejemplo">meet.google.com/abc-defg-hij</string>
+    <string name="evento_unirse">Unirse</string>
+    <string name="evento_enlace_error">No hay ninguna app para abrir el link</string>
+
+    <string name="feriados_importar">Traer feriados</string>
+    <string name="feriados_titulo">Feriados</string>
+    <string name="feriados_explicacion">Para traer los feriados de tu Google Calendar necesitamos leer el calendario del teléfono (solo leemos los feriados). Si preferís, los bajamos de internet.</string>
+    <string name="feriados_desde_internet">Desde internet</string>
+    <string name="feriado_nombre">Feriado: %1$s</string>
+    <string name="feriado_detalle">No hay clases y no cuenta en la asistencia</string>
+    <string name="feriado_sin_clase">Feriado: no hay clase</string>
+    <string name="aviso_feriados_calendario">Listo: %1$d feriados de tu Google Calendar</string>
+    <string name="aviso_feriados_internet">Listo: %1$d feriados (bajados de internet)</string>
+    <string name="acceso_carrera">Plan y correlativas</string>
+    <string name="acceso_finales">Fechas e inscripción</string>
+    <string name="acceso_asistencia">Presentes y faltas</string>
+    <string name="acceso_horario_titulo">Horario</string>
+    <string name="acceso_horario">Tus clases por día</string>
+    <string name="acceso_semana">Esta semana contra la anterior</string>
+    <string name="perfil_titulo">Mi perfil</string>
+    <string name="perfil_subtitulo">Tus datos, preferencias y cuenta</string>
+    <string name="aviso_feriados_error">No se pudieron traer los feriados. Revisá la conexión.</string>
 </resources>

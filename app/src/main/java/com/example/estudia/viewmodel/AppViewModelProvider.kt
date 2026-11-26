@@ -25,6 +25,17 @@ object AppViewModelProvider {
         initializer { EstadisticasViewModel(estudiaApp().repositorio) }
         initializer { HorarioViewModel(estudiaApp().repositorio) }
         initializer { LogrosViewModel(estudiaApp().repositorio) }
+        initializer { CarreraViewModel(estudiaApp().repositorio) }
+        initializer { AsistenciaViewModel(estudiaApp().repositorio) }
+        initializer { FinalesViewModel(estudiaApp().repositorio) }
+        initializer { ResumenSemanalViewModel(estudiaApp().repositorio) }
+        initializer { BusquedaViewModel(estudiaApp().repositorio) }
+        initializer {
+            NotaNecesariaViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)
+        }
+        initializer {
+            QuizViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)
+        }
         // El id de la materia llega por la ruta de navegación (SavedStateHandle).
         initializer {
             RepasoViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)

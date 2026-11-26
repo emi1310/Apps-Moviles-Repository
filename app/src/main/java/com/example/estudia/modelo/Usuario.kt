@@ -22,7 +22,10 @@ data class Usuario(
     // Versión 6: foto de perfil, guardada en la carpeta interna de la app
     // (igual que los adjuntos). null = se muestra la inicial.
     val fotoPerfil: String? = null,
-    val materias: List<Materia> = emptyList()
+    val materias: List<Materia> = emptyList(),
+    // Versión 9: plan de estudios ("Mi carrera") y mesas de finales.
+    val planEstudio: List<MateriaPlan> = emptyList(),
+    val finales: List<MesaFinal> = emptyList()
 ) {
 
     // Cuenta el total de notas sumando las notas de todas las materias.

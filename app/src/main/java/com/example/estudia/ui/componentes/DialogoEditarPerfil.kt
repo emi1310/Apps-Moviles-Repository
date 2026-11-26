@@ -3,8 +3,8 @@ package com.example.estudia.ui.componentes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,7 +33,7 @@ fun DialogoEditarPerfil(
 
     DialogoApp(
         titulo = stringResource(R.string.editar_perfil),
-        icono = Icons.Filled.Person,
+        icono = Icons.Outlined.Person,
         textoConfirmar = stringResource(R.string.guardar),
         onConfirmar = {
             if (nombre.isBlank()) {
@@ -98,7 +98,7 @@ fun DialogoMeta(
 
     DialogoApp(
         titulo = stringResource(R.string.meta_semanal),
-        icono = Icons.Filled.Flag,
+        icono = Icons.Outlined.Flag,
         textoConfirmar = stringResource(R.string.guardar),
         onConfirmar = { onConfirmar(horas.toIntOrNull()) },
         onCancelar = onCancelar

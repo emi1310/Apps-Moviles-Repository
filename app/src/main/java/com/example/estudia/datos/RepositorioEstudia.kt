@@ -1,8 +1,13 @@
 package com.example.estudia.datos
 
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.Feriado
 import com.example.estudia.modelo.Calificacion
+import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.MateriaPlan
+import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PreferenciaTema
@@ -34,6 +39,8 @@ interface RepositorioEstudia {
     val tema: Flow<PreferenciaTema>
     val permisoArchivosPedido: Flow<Boolean>
     val silenciarAlEstudiar: Flow<Boolean>
+    // Feriados guardados (versión 10), ordenados por fecha.
+    val feriados: Flow<List<Feriado>>
 
     fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>>
     fun buscarTareas(usuarioId: Int, texto: String): Flow<List<TareaEncontrada>>
@@ -56,7 +63,16 @@ interface RepositorioEstudia {
 
     // ---------- Materias ----------
 
-    suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long)
+    // Las reglas de la cursada (asistencia, promoción y final) son opcionales.
+    suspend fun agregarMateria(
+        usuarioId: Int,
+        nombre: String,
+        color: Long,
+        asistenciaMinima: Int = com.example.estudia.modelo.ASISTENCIA_MINIMA,
+        promocional: Boolean = true,
+        notaPromocion: Double = com.example.estudia.modelo.NOTA_PROMOCION,
+        tieneFinal: Boolean = true
+    )
     suspend fun actualizarMateria(usuarioId: Int, materia: Materia)
     // Los archivos en disco no se borran acá, por si el usuario toca
     // "Deshacer": ver borrarArchivosDelDisco.
@@ -128,7 +144,8 @@ interface RepositorioEstudia {
     // notaId null = adjunto de la materia. Devuelve false si no se pudo.
     // uri: el que devuelve el selector de archivos, como texto (así el
     // ViewModel no depende de android.net.Uri).
-    suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean
+    suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String, categoria: CategoriaArchivo = CategoriaArchivo.OTROS): Boolean
+    suspend fun cambiarCategoriaArchivo(materiaId: Int, archivo: Archivo, categoria: CategoriaArchivo)
     suspend fun eliminarArchivo(materiaId: Int, archivo: Archivo)
     suspend fun restaurarArchivo(materiaId: Int, archivo: Archivo)
     suspend fun borrarArchivosDelDisco(archivos: List<Archivo>)
@@ -138,12 +155,52 @@ interface RepositorioEstudia {
     // texto; null = no se pudo leer la imagen.
     suspend fun leerTextoDeImagen(archivo: Archivo): String?
 
+    // ---------- Mi carrera (plan de estudios) ----------
+
+    suspend fun agregarMateriaPlan(usuarioId: Int, materia: MateriaPlan)
+    suspend fun actualizarMateriaPlan(usuarioId: Int, materia: MateriaPlan)
+    suspend fun eliminarMateriaPlan(usuarioId: Int, materia: MateriaPlan)
+    suspend fun restaurarMateriaPlan(usuarioId: Int, materia: MateriaPlan)
+
+    // ---------- Asistencia ----------
+
+    // presente null = borrar lo marcado ese día.
+    suspend fun marcarAsistencia(eventoId: Int, fecha: LocalDate, presente: Boolean?)
+
+    // ---------- ¿Qué nota necesito? ----------
+
+    suspend fun agregarEvaluacion(materiaId: Int, nombre: String, peso: Int, nota: Double?)
+    suspend fun actualizarEvaluacion(materiaId: Int, evaluacion: Evaluacion)
+    suspend fun eliminarEvaluacion(materiaId: Int, evaluacion: Evaluacion)
+    suspend fun restaurarEvaluacion(materiaId: Int, evaluacion: Evaluacion)
+
+    // ---------- Mesas de finales ----------
+
+    // Devuelve el final ya guardado, con su id.
+    suspend fun agregarFinal(usuarioId: Int, final: MesaFinal): MesaFinal
+    suspend fun actualizarFinal(usuarioId: Int, final: MesaFinal)
+    suspend fun eliminarFinal(usuarioId: Int, final: MesaFinal)
+    suspend fun restaurarFinal(usuarioId: Int, final: MesaFinal)
+
+    // ---------- Exportar a PDF ----------
+
+    // Arma un PDF de la nota (con sus fotos) para compartirlo. Devuelve la
+    // uri content:// del archivo, o null si no se pudo.
+    suspend fun exportarNotaPdf(nota: Nota, nombreMateria: String): String?
+
     // ---------- Calendario del teléfono ----------
 
     // Pasa las clases, exámenes y entregas de las materias activas al
     // calendario "Estudia+" del teléfono (necesita el permiso de calendario).
     // Devuelve cuántos eventos quedaron, o null si no se pudo.
     suspend fun sincronizarCalendario(nombreCalendario: String): Int?
+
+    // ---------- Feriados ----------
+
+    // Trae los feriados de este año y el que viene: del calendario de Google
+    // del teléfono si usarCalendario (y está), y si no, de internet. Reemplaza
+    // los guardados. Devuelve cuántos y de dónde, o null si no se pudo.
+    suspend fun actualizarFeriados(usarCalendario: Boolean): ResultadoFeriados?
 
     // ---------- Copia de seguridad ----------
 
@@ -215,3 +272,6 @@ data class ResumenDia(val tareasPendientes: Int, val eventosHoy: List<Evento>, v
 
 // inicio: cuándo empieza esta vez (en las clases semanales, la clase de hoy).
 data class EventoParaAviso(val evento: Evento, val nombreMateria: String, val inicio: LocalDateTime)
+
+// Resultado de actualizar los feriados.
+data class ResultadoFeriados(val cantidad: Int, val delCalendario: Boolean)

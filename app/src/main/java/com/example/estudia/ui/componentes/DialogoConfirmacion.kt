@@ -1,7 +1,7 @@
 package com.example.estudia.ui.componentes
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.WarningAmber
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.runtime.Composable
 
 // Ventana emergente genérica para confirmar una acción (cerrar sesión,
@@ -17,7 +17,7 @@ fun DialogoConfirmacion(
 ) {
     DialogoApp(
         titulo = null,
-        icono = Icons.Filled.WarningAmber,
+        icono = Icons.Outlined.WarningAmber,
         textoConfirmar = textoConfirmar,
         onConfirmar = onConfirmar,
         onCancelar = onCancelar,

@@ -2,8 +2,10 @@
 <!-- Carpetas que el FileProvider puede compartir con otras apps.
      - filesDir/archivos: los adjuntos, para abrirlos con otra app.
      - cacheDir/fotos: la foto que saca la app de cámara. Es temporal: la
-       app la copia a filesDir/archivos y la borra la próxima vez. -->
+       app la copia a filesDir/archivos y la borra la próxima vez.
+     - cacheDir/pdf: las notas exportadas a PDF para compartirlas. -->
 <paths>
     <files-path name="archivos" path="archivos/" />
     <cache-path name="fotos" path="fotos/" />
+    <cache-path name="pdf" path="pdf/" />
 </paths>

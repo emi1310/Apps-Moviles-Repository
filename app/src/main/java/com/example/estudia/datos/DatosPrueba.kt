@@ -37,7 +37,18 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
             )
         ),
         eventos = listOf(
-            Evento(0, "Clase: Ecuaciones diferenciales", TipoEvento.CLASE, hoy, LocalTime.of(10, 0), LocalTime.of(11, 30)),
+            // Clase semanal desde hace 4 semanas, con la asistencia marcada (una falta).
+            Evento(
+                0, "Clase: Ecuaciones diferenciales", TipoEvento.CLASE, hoy.minusWeeks(4), LocalTime.of(10, 0), LocalTime.of(11, 30),
+                semanal = true, repetirHasta = hoy.plusWeeks(11),
+                lugar = "Aula 12",
+                asistencias = listOf(
+                    Asistencia(0, hoy.minusWeeks(4), true),
+                    Asistencia(0, hoy.minusWeeks(3), true),
+                    Asistencia(0, hoy.minusWeeks(2), false),
+                    Asistencia(0, hoy.minusWeeks(1), true)
+                )
+            ),
             Evento(0, "Examen parcial", TipoEvento.EXAMEN, manana, LocalTime.of(9, 0), LocalTime.of(11, 0)),
             Evento(0, "Estudio: Ecuaciones", TipoEvento.BLOQUE_ESTUDIO, hoy, LocalTime.of(18, 0), LocalTime.of(20, 0)),
             // Días anteriores seguidos: para que se vea la racha en Estadísticas.
@@ -48,6 +59,12 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         calificaciones = listOf(
             Calificacion(0, "Trabajo práctico 1", 9.0, hoy.minusDays(40)),
             Calificacion(0, "Primer parcial", 7.5, hoy.minusDays(20))
+        ),
+        // Cómo se compone la nota, para "¿Qué nota necesito?".
+        evaluaciones = listOf(
+            Evaluacion(0, "Trabajo práctico 1", 20, 9.0),
+            Evaluacion(0, "Primer parcial", 40, 7.5),
+            Evaluacion(0, "Segundo parcial", 40, null)
         )
     )
 
@@ -56,11 +73,15 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         id = 0,
         nombre = "Física I",
         color = 0xFF00B894,
+        // Sin promoción: pide 80 % de asistencia y va a final.
+        asistenciaMinima = 80,
+        promocional = false,
         tareas = listOf(
             Tarea(id = 0, titulo = "Entregar Figma", fechaLimite = manana)
         ),
         eventos = listOf(
-            Evento(0, "Laboratorio: Ondas", TipoEvento.CLASE, hoy, LocalTime.of(14, 0), LocalTime.of(15, 30)),
+            // Clase virtual, con el link para entrar.
+            Evento(0, "Laboratorio: Ondas", TipoEvento.CLASE, hoy, LocalTime.of(14, 0), LocalTime.of(15, 30), virtual = true, enlace = "https://meet.google.com/abc-defg-hij"),
             Evento(0, "Entrega: informe de laboratorio", TipoEvento.ENTREGA, manana, LocalTime.of(23, 0), LocalTime.of(23, 59)),
             Evento(0, "Estudio: Cinemática", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(15), LocalTime.of(10, 0), LocalTime.of(12, 0))
         ),
@@ -104,6 +125,25 @@ fun crearUsuarioDePrueba(hoy: LocalDate = LocalDate.now()): Usuario {
         anio = 2,
         email = "demo@ejemplo.com",
         metaHorasSemanales = 10,
-        materias = listOf(matematica, fisica, diseno, matematicaI)
+        materias = listOf(matematica, fisica, diseno, matematicaI),
+        planEstudio = planDePrueba(),
+        finales = listOf(
+            MesaFinal(0, "Matemáticas I", hoy.plusDays(12), cierreInscripcion = hoy.plusDays(2), vencimientoRegularidad = hoy.plusMonths(8)),
+            MesaFinal(0, "Programación I", hoy.minusDays(30), inscripto = true, nota = 8.0)
+        )
     )
 }
+
+// Plan de estudios de ejemplo (los ids son temporales: solo sirven para
+// las correlativas; al guardarlo, el Repository los traduce a los reales).
+private fun planDePrueba(): List<MateriaPlan> = listOf(
+    MateriaPlan(1, "Matemáticas I", 1, EstadoPlan.REGULAR),
+    MateriaPlan(2, "Programación I", 1, EstadoPlan.APROBADA, notaFinal = 8.0),
+    MateriaPlan(3, "Inglés técnico I", 1, EstadoPlan.APROBADA, notaFinal = 9.0),
+    MateriaPlan(4, "Matemática II", 2, EstadoPlan.CURSANDO, correlativas = listOf(1)),
+    MateriaPlan(5, "Física I", 2, EstadoPlan.CURSANDO, correlativas = listOf(1)),
+    MateriaPlan(6, "Diseño web", 2, EstadoPlan.CURSANDO, correlativas = listOf(2)),
+    MateriaPlan(7, "Programación II", 2, EstadoPlan.PENDIENTE, correlativas = listOf(2)),
+    MateriaPlan(8, "Base de datos", 3, EstadoPlan.PENDIENTE, correlativas = listOf(7)),
+    MateriaPlan(9, "Práctica profesional", 3, EstadoPlan.PENDIENTE, correlativas = listOf(4, 7))
+)

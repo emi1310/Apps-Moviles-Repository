@@ -6,9 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +56,7 @@ fun HorarioScreen(viewModel: HorarioViewModel, onVolver: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onVolver) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
             }
             Column {
                 Text(text = stringResource(R.string.horario_titulo), style = MaterialTheme.typography.headlineSmall)
@@ -69,7 +69,7 @@ fun HorarioScreen(viewModel: HorarioViewModel, onVolver: () -> Unit) {
         }
 
         if (!estado.cargando && estado.totalClases == 0) {
-            EstadoVacio(Icons.Filled.EventBusy, stringResource(R.string.horario_vacio), stringResource(R.string.horario_vacio_sugerencia))
+            EstadoVacio(Icons.Outlined.EventBusy, stringResource(R.string.horario_vacio), stringResource(R.string.horario_vacio_sugerencia))
             return@Column
         }
 
@@ -83,7 +83,7 @@ fun HorarioScreen(viewModel: HorarioViewModel, onVolver: () -> Unit) {
                 .padding(18.dp)
         ) {
             CirculoBloque(tamano = 44.dp) {
-                Icon(Icons.Filled.School, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                Icon(Icons.Outlined.School, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
             }
             Spacer(modifier = Modifier.width(14.dp))
             Column {

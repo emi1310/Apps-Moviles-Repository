@@ -9,6 +9,13 @@ import com.example.estudia.datos.TareaParaAviso
 import com.example.estudia.modelo.Tema
 import com.example.estudia.modelo.Tarjeta
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.Feriado
+import com.example.estudia.datos.ResultadoFeriados
+import com.example.estudia.modelo.Asistencia
+import com.example.estudia.modelo.Evaluacion
+import com.example.estudia.modelo.MateriaPlan
+import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -48,6 +55,18 @@ class RepositorioFalso(
     override val permisoArchivosPedido: Flow<Boolean> = permisoArchivos
     val silenciar = MutableStateFlow(false)
     override val silenciarAlEstudiar: Flow<Boolean> = silenciar
+
+    // Feriados: "feriadosParaTraer" es lo que devolvería la fuente (null = falla).
+    val feriadosGuardados = MutableStateFlow<List<Feriado>>(emptyList())
+    override val feriados: Flow<List<Feriado>> = feriadosGuardados
+    var feriadosParaTraer: List<Feriado>? = emptyList()
+    var feriadosEnElCalendario = false
+
+    override suspend fun actualizarFeriados(usarCalendario: Boolean): ResultadoFeriados? {
+        val lista = feriadosParaTraer ?: return null
+        feriadosGuardados.value = lista
+        return ResultadoFeriados(lista.size, usarCalendario && feriadosEnElCalendario)
+    }
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> = usuario.map { u ->
         u?.materias.orEmpty().flatMap { m ->
@@ -101,8 +120,22 @@ class RepositorioFalso(
 
     // ---------- Materias ----------
 
-    override suspend fun agregarMateria(usuarioId: Int, nombre: String, color: Long) {
-        cambiarMaterias { it + Materia(siguienteId++, nombre, color) }
+    override suspend fun agregarMateria(
+        usuarioId: Int,
+        nombre: String,
+        color: Long,
+        asistenciaMinima: Int,
+        promocional: Boolean,
+        notaPromocion: Double,
+        tieneFinal: Boolean
+    ) {
+        cambiarMaterias {
+            it + Materia(
+                siguienteId++, nombre, color,
+                asistenciaMinima = asistenciaMinima, promocional = promocional,
+                notaPromocion = notaPromocion, tieneFinal = tieneFinal
+            )
+        }
     }
 
     override suspend fun actualizarMateria(usuarioId: Int, materia: Materia) {
@@ -228,7 +261,15 @@ class RepositorioFalso(
 
     val archivosBorradosDelDisco = mutableListOf<Archivo>()
 
-    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String): Boolean = true
+    var ultimaCategoriaAdjuntada: CategoriaArchivo? = null
+
+    override suspend fun adjuntarArchivo(materiaId: Int, notaId: Int?, uri: String, categoria: CategoriaArchivo): Boolean {
+        ultimaCategoriaAdjuntada = categoria
+        return true
+    }
+
+    override suspend fun cambiarCategoriaArchivo(materiaId: Int, archivo: Archivo, categoria: CategoriaArchivo) =
+        cambiarMateria(materiaId) { m -> m.copy(archivos = m.archivos.map { if (it.id == archivo.id) it.copy(categoria = categoria) else it }) }
 
     override suspend fun eliminarArchivo(materiaId: Int, archivo: Archivo) =
         cambiarMateria(materiaId) { m -> m.copy(archivos = m.archivos.filter { it.id != archivo.id }) }
@@ -246,6 +287,64 @@ class RepositorioFalso(
     var textoDeLaFoto: String? = ""
 
     override suspend fun leerTextoDeImagen(archivo: Archivo): String? = textoDeLaFoto
+
+    // ---------- Mi carrera ----------
+
+    override suspend fun agregarMateriaPlan(usuarioId: Int, materia: MateriaPlan) =
+        cambiarUsuario { it.copy(planEstudio = it.planEstudio + materia.copy(id = siguienteId++)) }
+
+    override suspend fun actualizarMateriaPlan(usuarioId: Int, materia: MateriaPlan) =
+        cambiarUsuario { u -> u.copy(planEstudio = u.planEstudio.map { if (it.id == materia.id) materia else it }) }
+
+    override suspend fun eliminarMateriaPlan(usuarioId: Int, materia: MateriaPlan) =
+        cambiarUsuario { u -> u.copy(planEstudio = u.planEstudio.filter { it.id != materia.id }) }
+
+    override suspend fun restaurarMateriaPlan(usuarioId: Int, materia: MateriaPlan) =
+        cambiarUsuario { it.copy(planEstudio = it.planEstudio + materia) }
+
+    // ---------- Asistencia ----------
+
+    override suspend fun marcarAsistencia(eventoId: Int, fecha: LocalDate, presente: Boolean?) =
+        cambiarEvento(eventoId) { e ->
+            val otras = e.asistencias.filter { it.fecha != fecha }
+            e.copy(asistencias = if (presente == null) otras else otras + Asistencia(siguienteId++, fecha, presente))
+        }
+
+    // ---------- ¿Qué nota necesito? ----------
+
+    override suspend fun agregarEvaluacion(materiaId: Int, nombre: String, peso: Int, nota: Double?) =
+        cambiarMateria(materiaId) { it.copy(evaluaciones = it.evaluaciones + Evaluacion(siguienteId++, nombre, peso, nota)) }
+
+    override suspend fun actualizarEvaluacion(materiaId: Int, evaluacion: Evaluacion) =
+        cambiarMateria(materiaId) { m -> m.copy(evaluaciones = m.evaluaciones.map { if (it.id == evaluacion.id) evaluacion else it }) }
+
+    override suspend fun eliminarEvaluacion(materiaId: Int, evaluacion: Evaluacion) =
+        cambiarMateria(materiaId) { m -> m.copy(evaluaciones = m.evaluaciones.filter { it.id != evaluacion.id }) }
+
+    override suspend fun restaurarEvaluacion(materiaId: Int, evaluacion: Evaluacion) =
+        cambiarMateria(materiaId) { it.copy(evaluaciones = it.evaluaciones + evaluacion) }
+
+    // ---------- Finales ----------
+
+    override suspend fun agregarFinal(usuarioId: Int, final: MesaFinal): MesaFinal {
+        val guardado = final.copy(id = siguienteId++)
+        cambiarUsuario { it.copy(finales = it.finales + guardado) }
+        return guardado
+    }
+
+    override suspend fun actualizarFinal(usuarioId: Int, final: MesaFinal) =
+        cambiarUsuario { u -> u.copy(finales = u.finales.map { if (it.id == final.id) final else it }) }
+
+    override suspend fun eliminarFinal(usuarioId: Int, final: MesaFinal) =
+        cambiarUsuario { u -> u.copy(finales = u.finales.filter { it.id != final.id }) }
+
+    override suspend fun restaurarFinal(usuarioId: Int, final: MesaFinal) =
+        cambiarUsuario { it.copy(finales = it.finales + final) }
+
+    // ---------- PDF ----------
+
+    var pdfExportado: String? = "content://pdf/nota.pdf"
+    override suspend fun exportarNotaPdf(nota: Nota, nombreMateria: String): String? = pdfExportado
 
     // ---------- Calendario del teléfono ----------
     // Cuenta los eventos que se pasarían (sin bloques de estudio).
@@ -346,6 +445,10 @@ class RepositorioFalso(
     override suspend fun rachaEnRiesgo(hoy: LocalDate): Int? = null
 
     // ---------- Ayudantes ----------
+
+    private fun cambiarUsuario(cambio: (Usuario) -> Usuario) {
+        usuario.value = usuario.value?.let(cambio)
+    }
 
     private fun cambiarMaterias(cambio: (List<Materia>) -> List<Materia>) {
         usuario.value = usuario.value?.let { it.copy(materias = cambio(it.materias)) }

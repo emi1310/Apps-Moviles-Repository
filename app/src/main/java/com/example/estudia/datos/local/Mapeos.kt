@@ -1,6 +1,13 @@
 package com.example.estudia.datos.local
 
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.Feriado
+import com.example.estudia.modelo.Asistencia
+import com.example.estudia.modelo.EstadoPlan
+import com.example.estudia.modelo.Evaluacion
+import com.example.estudia.modelo.MateriaPlan
+import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -31,7 +38,9 @@ fun UsuarioConMaterias.aModelo(): Usuario = Usuario(
     email = usuario.email,
     metaHorasSemanales = usuario.metaHorasSemanales,
     fotoPerfil = usuario.fotoPerfil,
-    materias = materias.map { it.aModelo() }.sortedBy { it.nombre.lowercase() }
+    materias = materias.map { it.aModelo() }.sortedBy { it.nombre.lowercase() },
+    planEstudio = planEstudio.map { it.aModelo() }.sortedWith(compareBy<MateriaPlan> { it.anio }.thenBy { it.id }),
+    finales = finales.map { it.aModelo() }.sortedBy { it.fechaMesa }
 )
 
 // Los archivos llegan todos juntos: los que tienen notaId van a su nota,
@@ -43,6 +52,10 @@ fun MateriaConDetalle.aModelo(): Materia {
         nombre = materia.nombre,
         color = materia.color,
         archivada = materia.archivada,
+        asistenciaMinima = materia.asistenciaMinima,
+        promocional = materia.promocional,
+        notaPromocion = materia.notaPromocion,
+        tieneFinal = materia.tieneFinal,
         // Pendientes primero; entre ellas, las de prioridad alta y después
         // las que vencen antes (las que no tienen fecha, al final).
         tareas = tareas.map { it.aModelo() }
@@ -58,7 +71,8 @@ fun MateriaConDetalle.aModelo(): Materia {
         },
         archivos = archivosModelo.filter { it.notaId == null },
         calificaciones = calificaciones.map { it.aModelo() }.sortedBy { it.fecha },
-        tarjetas = tarjetas.map { it.aModelo() }.sortedBy { it.id }
+        tarjetas = tarjetas.map { it.aModelo() }.sortedBy { it.id },
+        evaluaciones = evaluaciones.map { it.aModelo() }.sortedBy { it.id }
     )
 }
 
@@ -84,10 +98,13 @@ fun SubtareaEntity.aModelo(): Subtarea = Subtarea(id = id, titulo = titulo, comp
 fun Subtarea.aEntidad(tareaId: Int): SubtareaEntity =
     SubtareaEntity(id = id, tareaId = tareaId, titulo = titulo, completada = completada)
 
-fun EventoConTemas.aModelo(): Evento = evento.aModelo(temas.map { it.aModelo() }.sortedBy { it.id })
+fun EventoConTemas.aModelo(): Evento = evento.aModelo(
+    temas.map { it.aModelo() }.sortedBy { it.id },
+    asistencias.map { it.aModelo() }.sortedBy { it.fecha }
+)
 
 // Sin temas cuando viene de una consulta que no los trae (los recordatorios).
-fun EventoEntity.aModelo(temas: List<Tema> = emptyList()): Evento = Evento(
+fun EventoEntity.aModelo(temas: List<Tema> = emptyList(), asistencias: List<Asistencia> = emptyList()): Evento = Evento(
     id = id,
     titulo = titulo,
     tipo = textoATipo(tipo),
@@ -96,7 +113,11 @@ fun EventoEntity.aModelo(temas: List<Tema> = emptyList()): Evento = Evento(
     horaFin = horaFin,
     semanal = semanal,
     repetirHasta = repetirHasta,
-    temas = temas
+    temas = temas,
+    asistencias = asistencias,
+    virtual = virtual,
+    lugar = lugar,
+    enlace = enlace
 )
 
 fun TemaEntity.aModelo(): Tema = Tema(id = id, titulo = titulo, estudiado = estudiado)
@@ -119,7 +140,8 @@ fun ArchivoEntity.aModelo(): Archivo = Archivo(
     ruta = ruta,
     tamanoBytes = tamanoBytes,
     fechaAgregado = fechaAgregado,
-    notaId = notaId
+    notaId = notaId,
+    categoria = CategoriaArchivo.desdeTexto(categoria)
 )
 
 // ---------- Dominio -> entidad ----------
@@ -131,7 +153,11 @@ fun Materia.aEntidad(usuarioId: Int): MateriaEntity = MateriaEntity(
     usuarioId = usuarioId,
     nombre = nombre,
     color = color,
-    archivada = archivada
+    archivada = archivada,
+    asistenciaMinima = asistenciaMinima,
+    promocional = promocional,
+    notaPromocion = notaPromocion,
+    tieneFinal = tieneFinal
 )
 
 fun Tarea.aEntidad(materiaId: Int): TareaEntity = TareaEntity(
@@ -153,7 +179,10 @@ fun Evento.aEntidad(materiaId: Int): EventoEntity = EventoEntity(
     horaInicio = horaInicio,
     horaFin = horaFin,
     semanal = semanal,
-    repetirHasta = repetirHasta
+    repetirHasta = repetirHasta,
+    virtual = virtual,
+    lugar = lugar,
+    enlace = enlace
 )
 
 fun Nota.aEntidad(materiaId: Int): NotaEntity = NotaEntity(
@@ -173,7 +202,8 @@ fun Archivo.aEntidad(materiaId: Int): ArchivoEntity = ArchivoEntity(
     tipoMime = tipoMime,
     ruta = ruta,
     tamanoBytes = tamanoBytes,
-    fechaAgregado = fechaAgregado
+    fechaAgregado = fechaAgregado,
+    categoria = categoria.name
 )
 
 // ---------- Tipos que se guardan como texto ----------
@@ -218,3 +248,47 @@ fun Calificacion.aEntidad(materiaId: Int): CalificacionEntity = CalificacionEnti
     nota = nota,
     fecha = fecha
 )
+
+// ---------- Versión 9 ----------
+
+fun MateriaPlanEntity.aModelo(): MateriaPlan = MateriaPlan(
+    id = id,
+    nombre = nombre,
+    anio = anio,
+    estado = EstadoPlan.entries.firstOrNull { it.name == estado } ?: EstadoPlan.PENDIENTE,
+    correlativas = textoAIds(correlativas),
+    notaFinal = notaFinal
+)
+
+fun MateriaPlan.aEntidad(usuarioId: Int): MateriaPlanEntity = MateriaPlanEntity(
+    id = id,
+    usuarioId = usuarioId,
+    nombre = nombre,
+    anio = anio,
+    estado = estado.name,
+    correlativas = idsATexto(correlativas),
+    notaFinal = notaFinal
+)
+
+// "3,5" <-> [3, 5]
+fun idsATexto(ids: List<Int>): String = ids.distinct().joinToString(",")
+
+fun textoAIds(texto: String): List<Int> = texto.split(",").mapNotNull { it.trim().toIntOrNull() }
+
+fun AsistenciaEntity.aModelo(): Asistencia = Asistencia(id, fecha, presente)
+
+fun Asistencia.aEntidad(eventoId: Int): AsistenciaEntity = AsistenciaEntity(id, eventoId, fecha, presente)
+
+fun EvaluacionEntity.aModelo(): Evaluacion = Evaluacion(id, nombre, peso, nota)
+
+fun Evaluacion.aEntidad(materiaId: Int): EvaluacionEntity = EvaluacionEntity(id, materiaId, nombre, peso, nota)
+
+fun FinalEntity.aModelo(): MesaFinal =
+    MesaFinal(id, materia, fechaMesa, cierreInscripcion, vencimientoRegularidad, inscripto, nota)
+
+fun MesaFinal.aEntidad(usuarioId: Int): FinalEntity =
+    FinalEntity(id, usuarioId, materia, fechaMesa, cierreInscripcion, vencimientoRegularidad, inscripto, nota)
+
+fun FeriadoEntity.aModelo(): Feriado = Feriado(fecha, nombre)
+
+fun Feriado.aEntidad(): FeriadoEntity = FeriadoEntity(fecha, nombre)

@@ -9,6 +9,8 @@
          leer fotos y archivos para adjuntarlos. Se pide al tocar "Adjuntar",
          después de explicar para qué es. Sin este permiso no se puede adjuntar.
          READ_MEDIA_VISUAL_USER_SELECTED (Android 14+): el "acceso limitado". -->
+    <!-- Para bajar los feriados de internet si no están en el calendario del teléfono. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />

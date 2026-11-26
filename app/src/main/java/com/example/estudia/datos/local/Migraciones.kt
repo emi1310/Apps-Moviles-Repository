@@ -228,3 +228,78 @@ val MIGRACION_7_8 = object : Migration(7, 8) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_tarjetas_materiaId` ON `tarjetas` (`materiaId`)")
     }
 }
+
+// Versión 8 -> 9: plan de estudios, asistencias, evaluaciones (¿qué nota
+// necesito?) y mesas de finales. Son tablas nuevas: lo que ya estaba no cambia.
+val MIGRACION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `plan_materias` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`usuarioId` INTEGER NOT NULL, " +
+                "`nombre` TEXT NOT NULL, " +
+                "`anio` INTEGER NOT NULL, " +
+                "`estado` TEXT NOT NULL, " +
+                "`correlativas` TEXT NOT NULL, " +
+                "`notaFinal` REAL, " +
+                "FOREIGN KEY(`usuarioId`) REFERENCES `usuarios`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_plan_materias_usuarioId` ON `plan_materias` (`usuarioId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `asistencias` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`eventoId` INTEGER NOT NULL, " +
+                "`fecha` INTEGER NOT NULL, " +
+                "`presente` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`eventoId`) REFERENCES `eventos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_asistencias_eventoId_fecha` ON `asistencias` (`eventoId`, `fecha`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `evaluaciones` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`materiaId` INTEGER NOT NULL, " +
+                "`nombre` TEXT NOT NULL, " +
+                "`peso` INTEGER NOT NULL, " +
+                "`nota` REAL, " +
+                "FOREIGN KEY(`materiaId`) REFERENCES `materias`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_evaluaciones_materiaId` ON `evaluaciones` (`materiaId`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `finales` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`usuarioId` INTEGER NOT NULL, " +
+                "`materia` TEXT NOT NULL, " +
+                "`fechaMesa` INTEGER NOT NULL, " +
+                "`cierreInscripcion` INTEGER, " +
+                "`vencimientoRegularidad` INTEGER, " +
+                "`inscripto` INTEGER NOT NULL, " +
+                "`nota` REAL, " +
+                "FOREIGN KEY(`usuarioId`) REFERENCES `usuarios`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_finales_usuarioId` ON `finales` (`usuarioId`)")
+    }
+}
+
+// Versión 9 -> 10: reglas de la cursada de cada materia (asistencia mínima,
+// promoción y final), clases virtuales o presenciales, categoría de los
+// archivos y la tabla de feriados. Las columnas nuevas tienen un valor por
+// defecto, así lo que ya estaba guardado sigue igual (75 %, promocional con
+// 7, con final, presencial y archivos en "Otros").
+val MIGRACION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `materias` ADD COLUMN `asistenciaMinima` INTEGER NOT NULL DEFAULT 75")
+        db.execSQL("ALTER TABLE `materias` ADD COLUMN `promocional` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE `materias` ADD COLUMN `notaPromocion` REAL NOT NULL DEFAULT 7.0")
+        db.execSQL("ALTER TABLE `materias` ADD COLUMN `tieneFinal` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `virtual` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `lugar` TEXT")
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `enlace` TEXT")
+        db.execSQL("ALTER TABLE `archivos` ADD COLUMN `categoria` TEXT NOT NULL DEFAULT 'OTROS'")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `feriados` (" +
+                "`fecha` INTEGER NOT NULL, " +
+                "`nombre` TEXT NOT NULL, " +
+                "PRIMARY KEY(`fecha`))"
+        )
+    }
+}

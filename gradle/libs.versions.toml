@@ -9,7 +9,7 @@ lifecycleViewmodelCompose = "2.10.0"
 navigationCompose = "2.8.4"
 activityCompose = "1.13.0"
 kotlin = "2.2.10"
-composeBom = "2024.09.00"
+composeBom = "2025.09.01"
 datastorePreferences = "1.1.1"
 room = "2.8.4"
 ksp = "2.3.4"
@@ -17,6 +17,7 @@ workManager = "2.10.1"
 desugarJdkLibs = "2.1.5"
 coroutinesTest = "1.10.2"
 mlkitTextRecognition = "16.0.1"
+haze = "1.6.10"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +47,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
+haze = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

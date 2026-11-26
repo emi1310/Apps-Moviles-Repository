@@ -7,7 +7,11 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -59,7 +63,8 @@ fun DialogoEvento(
     fechaInicial: LocalDate,
     onConfirmar: (
         materiaId: Int, titulo: String, tipo: TipoEvento, fecha: LocalDate,
-        inicio: LocalTime, fin: LocalTime, semanal: Boolean, repetirHasta: LocalDate?
+        inicio: LocalTime, fin: LocalTime, semanal: Boolean, repetirHasta: LocalDate?,
+        virtual: Boolean, lugar: String, enlace: String
     ) -> Int?,
     onCancelar: () -> Unit
 ) {
@@ -71,11 +76,14 @@ fun DialogoEvento(
     var fin by remember { mutableStateOf(evento?.horaFin ?: LocalTime.of(10, 0)) }
     var semanal by remember { mutableStateOf(evento?.semanal ?: false) }
     var repetirHasta by remember { mutableStateOf(evento?.repetirHasta) }
+    var virtual by remember { mutableStateOf(evento?.virtual ?: false) }
+    var lugar by remember { mutableStateOf(evento?.lugar ?: "") }
+    var enlace by remember { mutableStateOf(evento?.enlace ?: "") }
     var error by remember { mutableStateOf<Int?>(null) }
 
     DialogoApp(
         titulo = stringResource(if (evento == null) R.string.nuevo_evento else R.string.editar_evento),
-        icono = Icons.Filled.Event,
+        icono = Icons.Outlined.Event,
         textoConfirmar = stringResource(if (evento == null) R.string.crear else R.string.guardar),
         onConfirmar = {
             val m = materia
@@ -84,7 +92,7 @@ fun DialogoEvento(
                 m == null -> R.string.error_elegir_materia
                 t == null -> R.string.error_elegir_tipo
                 titulo.isBlank() -> R.string.error_titulo_evento
-                else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta)
+                else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace)
             }
         },
         onCancelar = onCancelar
@@ -115,6 +123,35 @@ fun DialogoEvento(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CampoHora(stringResource(R.string.desde), inicio, { inicio = it; error = null }, Modifier.weight(1f))
             CampoHora(stringResource(R.string.hasta), fin, { fin = it; error = null }, Modifier.weight(1f))
+        }
+
+        // Presencial (con aula o lugar) o virtual (con el link). Los bloques de
+        // estudio son de uno, así que no lo piden.
+        if (tipo != null && tipo != TipoEvento.BLOQUE_ESTUDIO) {
+            EtiquetaCampo(stringResource(R.string.evento_modalidad))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BloqueOpcion(Icons.Outlined.Place, stringResource(R.string.evento_presencial), !virtual, Modifier.weight(1f)) { virtual = false }
+                BloqueOpcion(Icons.Outlined.Videocam, stringResource(R.string.evento_virtual), virtual, Modifier.weight(1f)) { virtual = true }
+            }
+            if (virtual) {
+                CampoTexto(
+                    value = enlace,
+                    onValueChange = { enlace = it },
+                    label = { Text(stringResource(R.string.evento_enlace)) },
+                    placeholder = { Text(stringResource(R.string.evento_enlace_ejemplo)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                CampoTexto(
+                    value = lugar,
+                    onValueChange = { lugar = it },
+                    label = { Text(stringResource(R.string.evento_lugar)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
         // Solo las clases se pueden repetir: se muestran todas las semanas,
@@ -161,7 +198,7 @@ private fun BloqueTipo(tipo: TipoEvento, elegido: Boolean, modifier: Modifier, o
     val colorContenido = if (elegido) Color.White else MaterialTheme.colorScheme.onSurface
     Row(
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(18.dp))
             .then(
                 if (elegido) Modifier.background(LocalDegradado.current)
@@ -178,12 +215,9 @@ private fun BloqueTipo(tipo: TipoEvento, elegido: Boolean, modifier: Modifier, o
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = stringResource(nombreTipo(tipo)),
-            style = MaterialTheme.typography.labelLarge,
-            color = colorContenido,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+        TextoAjustable(
+            stringResource(nombreTipo(tipo)), MaterialTheme.typography.labelLarge, Modifier.padding(vertical = 6.dp),
+            color = colorContenido, maxLines = 2
         )
     }
 }

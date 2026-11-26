@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Quiz
+import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -65,7 +65,7 @@ fun DialogoTemario(
 
     DialogoApp(
         titulo = evento.titulo,
-        icono = Icons.Filled.Quiz,
+        icono = Icons.Outlined.Quiz,
         textoConfirmar = null,
         onConfirmar = {},
         onCancelar = onCerrar,
@@ -114,7 +114,7 @@ fun DialogoTemario(
                     .padding(start = 12.dp)
             ) {
                 Icon(
-                    imageVector = if (tema.estudiado) Icons.Filled.CheckBox else Icons.Filled.CheckBoxOutlineBlank,
+                    imageVector = if (tema.estudiado) Icons.Filled.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
                     contentDescription = null,
                     tint = if (tema.estudiado) color else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -127,7 +127,7 @@ fun DialogoTemario(
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = { onEliminar(tema) }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.temario_quitar))
+                    Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.temario_quitar))
                 }
             }
         }
@@ -147,7 +147,7 @@ fun DialogoTemario(
                 },
                 enabled = nuevo.isNotBlank()
             ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.temario_agregar), tint = acento)
+                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.temario_agregar), tint = acento)
             }
         }
     }

@@ -57,7 +57,16 @@ data class MateriaEntity(
     val usuarioId: Int,
     val nombre: String,
     val color: Long,             // ARGB, ej: 0xFF6C5CE7
-    val archivada: Boolean = false
+    val archivada: Boolean = false,
+    // Versión 10: reglas de la cursada (ver Materia).
+    @ColumnInfo(defaultValue = "75")
+    val asistenciaMinima: Int = 75,
+    @ColumnInfo(defaultValue = "1")
+    val promocional: Boolean = true,
+    @ColumnInfo(defaultValue = "7.0")
+    val notaPromocion: Double = 7.0,
+    @ColumnInfo(defaultValue = "1")
+    val tieneFinal: Boolean = true
 )
 
 @Entity(
@@ -178,7 +187,12 @@ data class EventoEntity(
     // Versión 4: clases que se repiten cada semana (ver Evento.ocurreEl).
     @ColumnInfo(defaultValue = "0")
     val semanal: Boolean = false,
-    val repetirHasta: LocalDate? = null
+    val repetirHasta: LocalDate? = null,
+    // Versión 10: clase virtual (con link) o presencial (con aula o lugar).
+    @ColumnInfo(defaultValue = "0")
+    val virtual: Boolean = false,
+    val lugar: String? = null,
+    val enlace: String? = null
 )
 
 @Entity(
@@ -234,7 +248,10 @@ data class ArchivoEntity(
     val tipoMime: String,        // ej: "application/pdf", "image/jpeg"
     val ruta: String,
     val tamanoBytes: Long,
-    val fechaAgregado: LocalDate
+    val fechaAgregado: LocalDate,
+    // Versión 10: "TEORIA", "TPS", "INFORMACION", "EXAMENES" u "OTROS".
+    @ColumnInfo(defaultValue = "'OTROS'")
+    val categoria: String = "OTROS"
 )
 
 // Versión 5: notas de los exámenes de cada materia (escala de 1 a 10).
@@ -257,4 +274,111 @@ data class CalificacionEntity(
     val titulo: String,
     val nota: Double,
     val fecha: LocalDate
+)
+
+// ---------- Versión 9 ----------
+
+// "Mi carrera": materias del plan de estudios del usuario. Las correlativas
+// se guardan como texto con los ids separados por coma ("3,5"): son pocas y
+// siempre se leen junto con todo el plan, no hace falta otra tabla.
+@Entity(
+    tableName = "plan_materias",
+    foreignKeys = [
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["usuarioId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("usuarioId")]
+)
+data class MateriaPlanEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val usuarioId: Int,
+    val nombre: String,
+    val anio: Int,
+    val estado: String,          // "PENDIENTE", "CURSANDO", "REGULAR" o "APROBADA"
+    val correlativas: String,
+    val notaFinal: Double? = null
+)
+
+// Asistencia a una clase en un día. Una sola fila por clase y día (índice
+// único): marcar de nuevo reemplaza la anterior.
+@Entity(
+    tableName = "asistencias",
+    foreignKeys = [
+        ForeignKey(
+            entity = EventoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["eventoId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["eventoId", "fecha"], unique = true)]
+)
+data class AsistenciaEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val eventoId: Int,
+    val fecha: LocalDate,
+    val presente: Boolean
+)
+
+// "¿Qué nota necesito?": evaluaciones de una materia con su peso (%).
+@Entity(
+    tableName = "evaluaciones",
+    foreignKeys = [
+        ForeignKey(
+            entity = MateriaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["materiaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("materiaId")]
+)
+data class EvaluacionEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val materiaId: Int,
+    val nombre: String,
+    val peso: Int,
+    val nota: Double? = null
+)
+
+// Mesas de finales. Son del usuario (no de una materia de la app): la
+// materia puede estar archivada o no existir, se guarda su nombre.
+@Entity(
+    tableName = "finales",
+    foreignKeys = [
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["usuarioId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("usuarioId")]
+)
+data class FinalEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val usuarioId: Int,
+    val materia: String,
+    val fechaMesa: LocalDate,
+    val cierreInscripcion: LocalDate? = null,
+    val vencimientoRegularidad: LocalDate? = null,
+    val inscripto: Boolean = false,
+    val nota: Double? = null
+)
+
+// Versión 10: feriados (traídos del calendario de Google del teléfono o de
+// internet). Son de todos los usuarios del teléfono: no dependen de la cuenta.
+@Entity(tableName = "feriados")
+data class FeriadoEntity(
+    @PrimaryKey
+    val fecha: LocalDate,
+    val nombre: String
 )

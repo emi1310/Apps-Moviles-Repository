@@ -5,6 +5,8 @@ import android.app.UiModeManager
 import android.os.Build
 import com.example.estudia.datos.AlmacenamientoArchivos
 import com.example.estudia.datos.CopiaDeSeguridad
+import com.example.estudia.datos.ExportadorPdf
+import com.example.estudia.datos.FuenteFeriados
 import com.example.estudia.datos.CalendarioTelefono
 import com.example.estudia.datos.LectorTexto
 import com.example.estudia.datos.PreferenciasDataStore
@@ -57,6 +59,10 @@ class EstudiaApp : Application() {
             copiaDeSeguridad = CopiaDeSeguridad(this),
             calendarioTelefono = CalendarioTelefono(this),
             lectorTexto = LectorTexto(this),
+            carreraDao = db.carreraDao(),
+            exportadorPdf = ExportadorPdf(this),
+            feriadoDao = db.feriadoDao(),
+            fuenteFeriados = FuenteFeriados(this),
             tituloSesionEstudio = getString(R.string.sesion_estudio_titulo)
         )
     }

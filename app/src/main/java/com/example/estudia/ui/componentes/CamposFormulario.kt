@@ -7,10 +7,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -59,14 +59,14 @@ fun CampoFecha(
 ) {
     var abierto by remember { mutableStateOf(false) }
     CampoBloque(
-        icono = Icons.Filled.CalendarMonth,
+        icono = Icons.Outlined.CalendarMonth,
         texto = fecha?.aTexto() ?: textoVacio ?: stringResource(R.string.sin_fecha),
         onClick = { abierto = true },
         modifier = modifier
     ) {
         if (permitirVacio && fecha != null) {
             IconButton(onClick = { onCambiar(null) }) {
-                Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.quitar_fecha))
+                Icon(Icons.Outlined.Clear, contentDescription = stringResource(R.string.quitar_fecha))
             }
         }
     }
@@ -100,7 +100,7 @@ fun CampoHora(
 ) {
     var abierto by remember { mutableStateOf(false) }
     CampoBloque(
-        icono = Icons.Filled.Schedule,
+        icono = Icons.Outlined.Schedule,
         texto = "$etiqueta ${hora.aTexto()}",
         onClick = { abierto = true },
         modifier = modifier
@@ -132,12 +132,12 @@ fun Buscador(texto: String, onCambiar: (String) -> Unit, sugerencia: String, mod
         onValueChange = onCambiar,
         placeholder = { Text(sugerencia, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         leadingIcon = {
-            Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         },
         trailingIcon = {
             if (texto.isNotEmpty()) {
                 IconButton(onClick = { onCambiar("") }) {
-                    Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.borrar_busqueda))
+                    Icon(Icons.Outlined.Clear, contentDescription = stringResource(R.string.borrar_busqueda))
                 }
             }
         },

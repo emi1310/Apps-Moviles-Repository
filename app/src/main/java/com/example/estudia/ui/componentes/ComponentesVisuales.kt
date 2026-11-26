@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.estudia.modelo.TipoEvento
 
 // Piezas visuales que se repiten en varias pantallas. Tenerlas en un solo
@@ -44,7 +45,8 @@ fun EncabezadoPantalla(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = titulo, style = MaterialTheme.typography.headlineMedium)
+            // Si el título no entra al lado de los botones, se achica un poco.
+            TextoAjustable(titulo, MaterialTheme.typography.headlineMedium, minimo = 20.sp)
             if (subtitulo != null) {
                 Text(
                     text = subtitulo,
@@ -112,7 +114,8 @@ fun TarjetaSeccion(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = bordeVidrio()
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -169,8 +172,8 @@ fun ChipMateria(nombre: String, color: Long) {
 
 // Ícono de cada tipo de evento.
 fun iconoTipo(tipo: TipoEvento): ImageVector = when (tipo) {
-    TipoEvento.CLASE -> Icons.Filled.School
-    TipoEvento.EXAMEN -> Icons.Filled.Quiz
-    TipoEvento.ENTREGA -> Icons.AutoMirrored.Filled.Assignment
-    else -> Icons.Filled.Timer
+    TipoEvento.CLASE -> Icons.Outlined.School
+    TipoEvento.EXAMEN -> Icons.Outlined.Quiz
+    TipoEvento.ENTREGA -> Icons.AutoMirrored.Outlined.Assignment
+    else -> Icons.Outlined.Timer
 }

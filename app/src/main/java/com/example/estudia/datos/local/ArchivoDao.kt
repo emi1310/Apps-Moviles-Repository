@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 // Operaciones sobre la tabla "archivos".
 @Dao
@@ -14,6 +15,10 @@ interface ArchivoDao {
 
     @Insert
     suspend fun insertarTodos(archivos: List<ArchivoEntity>)
+
+    // Versión 10: para cambiar la categoría.
+    @Update
+    suspend fun actualizar(archivo: ArchivoEntity)
 
     @Delete
     suspend fun eliminar(archivo: ArchivoEntity)

@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.modelo.Materia
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.reglas
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tarjeta
@@ -33,7 +35,6 @@ import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.DialogoCalificacion
-import com.example.estudia.ui.componentes.Buscador
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoConfirmacion
@@ -45,12 +46,17 @@ import com.example.estudia.ui.componentes.OpcionMenu
 import com.example.estudia.ui.componentes.PastillaFiltro
 import com.example.estudia.ui.componentes.RecolectarAvisos
 import com.example.estudia.ui.componentes.TarjetaMateria
+import com.example.estudia.ui.componentes.TarjetaAcceso
+import com.example.estudia.ui.theme.BloqueNaranja
+import com.example.estudia.ui.theme.BloqueVioleta
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.WorkspacePremium
 import com.example.estudia.ui.componentes.abrirArchivo
 import com.example.estudia.viewmodel.MateriasViewModel
 import java.time.LocalDate
 
 // Pantalla "Mis Materias": materias activas o archivadas, con sus tareas y
-// archivos, y un buscador de tareas. Todas las operaciones las hace
+// archivos; la lupa del dock busca entre las tareas. Todas las operaciones las hace
 // MateriasViewModel; esta pantalla solo dibuja y avisa de los eventos.
 @Composable
 fun MateriasScreen(
@@ -58,10 +64,19 @@ fun MateriasScreen(
     // true cuando se eligió crear desde el botón "+" del dock.
     crearAlAbrir: Boolean = false,
     onCreacionAbierta: () -> Unit = {},
+    // Lo que se escribe en la lupa del dock: busca entre las tareas.
+    busqueda: String = "",
     // Abre el repaso de las tarjetas de esa materia.
-    onRepasar: (Int) -> Unit = {}
+    onRepasar: (Int) -> Unit = {},
+    // Quiz con las tarjetas y "¿Qué nota necesito?" de esa materia.
+    onQuiz: (Int) -> Unit = {},
+    onNotaNecesaria: (Int) -> Unit = {},
+    // Accesos de arriba: el plan de estudios y las mesas de finales.
+    onAbrirCarrera: () -> Unit = {},
+    onAbrirFinales: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
     RecolectarAvisos(viewModel.avisos)
     val context = LocalContext.current
     val avisos = LocalAvisos.current
@@ -79,18 +94,20 @@ fun MateriasScreen(
     // rememberSaveable: si Android recrea la pantalla mientras el usuario
     // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
     var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
+    // Categoría que va a tener lo que se adjunte (Teoría, TPs...).
+    var categoriaParaAdjuntar by rememberSaveable { mutableStateOf(CategoriaArchivo.OTROS) }
 
     // Selector de archivos: solo se abre con el permiso de fotos y archivos
     // (ver selectorDeArchivos).
     val permisoArchivosPedido by viewModel.permisoArchivosPedido.collectAsStateWithLifecycle()
     val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
         val id = idMateriaParaAdjuntar
-        if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri.toString())
+        if (uri != null && id != null) viewModel.adjuntarArchivo(id, uri.toString(), categoriaParaAdjuntar)
         idMateriaParaAdjuntar = null
     }
     // Cámara: la foto se guarda como un archivo más de la materia.
     val sacarFoto = camaraDeFotos { uri ->
-        idMateriaParaAdjuntar?.let { viewModel.adjuntarArchivo(it, uri) }
+        idMateriaParaAdjuntar?.let { viewModel.adjuntarArchivo(it, uri, categoriaParaAdjuntar) }
         idMateriaParaAdjuntar = null
     }
 
@@ -114,8 +131,12 @@ fun MateriasScreen(
                         R.plurals.materias_activas, estado.todas.count { !it.archivada }, estado.todas.count { !it.archivada }
                     )
                 )
-                Buscador(estado.busqueda, viewModel::cambiarBusqueda, stringResource(R.string.buscar_tareas))
-                Spacer(modifier = Modifier.height(8.dp))
+                // Accesos a la carrera completa: el plan con sus correlativas y
+                // las mesas de finales.
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 12.dp).height(IntrinsicSize.Min)) {
+                    TarjetaAcceso(stringResource(R.string.carrera_titulo), stringResource(R.string.acceso_carrera), Icons.Outlined.School, BloqueVioleta, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirCarrera)
+                    TarjetaAcceso(stringResource(R.string.finales_titulo), stringResource(R.string.acceso_finales), Icons.Outlined.WorkspacePremium, BloqueNaranja, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirFinales)
+                }
             }
 
             if (estado.buscando) {
@@ -123,7 +144,7 @@ fun MateriasScreen(
                 if (estado.resultadosBusqueda.isEmpty()) {
                     item {
                         EstadoVacio(
-                            Icons.Filled.SearchOff,
+                            Icons.Outlined.SearchOff,
                             stringResource(R.string.sin_resultados),
                             stringResource(R.string.sin_resultados_sugerencia)
                         )
@@ -136,7 +157,7 @@ fun MateriasScreen(
                         completada = encontrada.tarea.completada,
                         onEliminar = { viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea) },
                         forma = RoundedCornerShape(12.dp),
-                        fondoContenido = MaterialTheme.colorScheme.background
+                        fondoContenido = MaterialTheme.colorScheme.surfaceContainer
                     ) {
                         FilaTarea(
                             tarea = encontrada.tarea,
@@ -144,12 +165,12 @@ fun MateriasScreen(
                             subtitulo = encontrada.nombreMateria,
                             onAlternar = { viewModel.alternarTarea(encontrada.materiaId, encontrada.tarea) },
                             opciones = listOf(
-                                OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) {
+                                OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit) {
                                     // El buscador no trae las subtareas: se edita la tarea completa.
                                     val completa = estado.todas.flatMap { it.tareas }.firstOrNull { it.id == encontrada.tarea.id }
                                     tareaEnDialogo = encontrada.materiaId to (completa ?: encontrada.tarea)
                                 },
-                                OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true) {
+                                OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true) {
                                     viewModel.eliminarTarea(encontrada.materiaId, encontrada.tarea)
                                 }
                             )
@@ -170,13 +191,13 @@ fun MateriasScreen(
                     if (estado.materias.isEmpty() && !estado.cargando) {
                         if (estado.mostrarArchivadas) {
                             EstadoVacio(
-                                Icons.Filled.Archive,
+                                Icons.Outlined.Archive,
                                 stringResource(R.string.sin_materias_archivadas),
                                 stringResource(R.string.sin_materias_archivadas_sugerencia)
                             )
                         } else {
                             EstadoVacio(
-                                Icons.AutoMirrored.Filled.MenuBook,
+                                Icons.AutoMirrored.Outlined.MenuBook,
                                 stringResource(R.string.sin_materias_activas),
                                 stringResource(R.string.sin_materias_activas_sugerencia)
                             )
@@ -192,12 +213,14 @@ fun MateriasScreen(
                         onAgregarTarea = { tareaEnDialogo = materia.id to null },
                         onEditarTarea = { tareaEnDialogo = materia.id to it },
                         onEliminarTarea = { viewModel.eliminarTarea(materia.id, it) },
-                        onAdjuntarArchivo = {
+                        onAdjuntarArchivo = { categoria ->
                             idMateriaParaAdjuntar = materia.id
+                            categoriaParaAdjuntar = categoria
                             elegirArchivo()
                         },
-                        onSacarFoto = {
+                        onSacarFoto = { categoria ->
                             idMateriaParaAdjuntar = materia.id
+                            categoriaParaAdjuntar = categoria
                             sacarFoto()
                         },
                         onAbrirArchivo = { archivo ->
@@ -206,6 +229,7 @@ fun MateriasScreen(
                             }
                         },
                         onEliminarArchivo = { viewModel.eliminarArchivo(materia.id, it) },
+                        onCambiarCategoria = { archivo, categoria -> viewModel.cambiarCategoriaArchivo(materia.id, archivo, categoria) },
                         onAgregarCalificacion = { calificacionEnDialogo = materia.id to null },
                         onEditarCalificacion = { calificacionEnDialogo = materia.id to it },
                         onEliminarCalificacion = { viewModel.eliminarCalificacion(materia.id, it) },
@@ -213,6 +237,8 @@ fun MateriasScreen(
                         onEditarTarjeta = { tarjetaEnDialogo = materia.id to it },
                         onEliminarTarjeta = { viewModel.eliminarTarjeta(materia.id, it) },
                         onRepasar = { onRepasar(materia.id) },
+                        onQuiz = { onQuiz(materia.id) },
+                        onNotaNecesaria = { onNotaNecesaria(materia.id) },
                         onEditar = { materiaParaEditar = materia },
                         onArchivar = { viewModel.alternarArchivada(materia) },
                         onEliminar = { materiaParaEliminar = materia }
@@ -226,8 +252,8 @@ fun MateriasScreen(
         DialogoMateria(
             nombreInicial = "",
             nombreDisponible = { viewModel.nombreDisponible(it) },
-            onConfirmar = {
-                viewModel.agregarMateria(it)
+            onConfirmar = { nombre, reglas ->
+                viewModel.agregarMateria(nombre, reglas)
                 crearMateria = false
             },
             onCancelar = { crearMateria = false }
@@ -238,8 +264,9 @@ fun MateriasScreen(
         DialogoMateria(
             nombreInicial = materia.nombre,
             nombreDisponible = { viewModel.nombreDisponible(it, exceptoId = materia.id) },
-            onConfirmar = {
-                viewModel.renombrarMateria(materia, it)
+            reglasIniciales = materia.reglas,
+            onConfirmar = { nombre, reglas ->
+                viewModel.editarMateria(materia, nombre, reglas)
                 materiaParaEditar = null
             },
             onCancelar = { materiaParaEditar = null }

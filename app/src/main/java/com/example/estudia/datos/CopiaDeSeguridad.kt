@@ -3,6 +3,14 @@ package com.example.estudia.datos
 import android.content.Context
 import android.net.Uri
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.ASISTENCIA_MINIMA
+import com.example.estudia.modelo.CategoriaArchivo
+import com.example.estudia.modelo.NOTA_PROMOCION
+import com.example.estudia.modelo.Asistencia
+import com.example.estudia.modelo.EstadoPlan
+import com.example.estudia.modelo.Evaluacion
+import com.example.estudia.modelo.MateriaPlan
+import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -30,7 +38,8 @@ import java.util.zip.ZipOutputStream
 // (con el selector del sistema, sin permisos) y después puede restaurar en
 // este u otro teléfono. Adentro tiene:
 //  - datos.json: el perfil y todas las materias, con sus tareas (y pasos),
-//    eventos (y temarios), notas, notas de exámenes y la lista de archivos.
+//    eventos (y temarios y asistencias), notas, notas de exámenes,
+//    evaluaciones, la lista de archivos, el plan de estudios y los finales.
 //  - archivos/...: el contenido de los adjuntos y de la foto de perfil.
 // La contraseña no se guarda nunca. Es una fuente de datos más del Repository.
 class CopiaDeSeguridad(context: Context) {
@@ -109,12 +118,27 @@ private fun usuarioAJson(u: Usuario) = JSONObject()
     .put("metaHorasSemanales", u.metaHorasSemanales ?: JSONObject.NULL)
     .put("fotoPerfil", u.fotoPerfil ?: JSONObject.NULL)
     .put("materias", JSONArray(u.materias.map { materiaAJson(it) }))
+    // Versión 9: plan de estudios (con su id, para las correlativas) y finales.
+    .put("planEstudio", JSONArray(u.planEstudio.map { p ->
+        JSONObject().put("id", p.id).put("nombre", p.nombre).put("anio", p.anio).put("estado", p.estado.name)
+            .put("correlativas", JSONArray(p.correlativas)).put("notaFinal", p.notaFinal ?: JSONObject.NULL)
+    }))
+    .put("finales", JSONArray(u.finales.map { f ->
+        JSONObject().put("materia", f.materia).put("fechaMesa", f.fechaMesa.toString())
+            .put("cierreInscripcion", f.cierreInscripcion?.toString() ?: JSONObject.NULL)
+            .put("vencimientoRegularidad", f.vencimientoRegularidad?.toString() ?: JSONObject.NULL)
+            .put("inscripto", f.inscripto).put("nota", f.nota ?: JSONObject.NULL)
+    }))
 
 private fun materiaAJson(m: Materia) = JSONObject()
     .put("id", m.id)
     .put("nombre", m.nombre)
     .put("color", m.color)
     .put("archivada", m.archivada)
+    .put("asistenciaMinima", m.asistenciaMinima)
+    .put("promocional", m.promocional)
+    .put("notaPromocion", m.notaPromocion)
+    .put("tieneFinal", m.tieneFinal)
     .put("tareas", JSONArray(m.tareas.map { t ->
         JSONObject()
             .put("titulo", t.titulo)
@@ -134,6 +158,10 @@ private fun materiaAJson(m: Materia) = JSONObject()
             .put("semanal", e.semanal)
             .put("repetirHasta", e.repetirHasta?.toString() ?: JSONObject.NULL)
             .put("temas", JSONArray(e.temas.map { JSONObject().put("titulo", it.titulo).put("estudiado", it.estudiado) }))
+            .put("asistencias", JSONArray(e.asistencias.map { JSONObject().put("fecha", it.fecha.toString()).put("presente", it.presente) }))
+            .put("virtual", e.virtual)
+            .put("lugar", e.lugar ?: JSONObject.NULL)
+            .put("enlace", e.enlace ?: JSONObject.NULL)
     }))
     .put("notas", JSONArray(m.notas.map { n ->
         JSONObject()
@@ -151,9 +179,13 @@ private fun materiaAJson(m: Materia) = JSONObject()
             .put("tamanoBytes", a.tamanoBytes)
             .put("fechaAgregado", a.fechaAgregado.toString())
             .put("notaId", a.notaId ?: JSONObject.NULL)
+            .put("categoria", a.categoria.name)
     }))
     .put("tarjetas", JSONArray(m.tarjetas.map { t ->
         JSONObject().put("pregunta", t.pregunta).put("respuesta", t.respuesta).put("caja", t.caja).put("proximoRepaso", t.proximoRepaso.toString())
+    }))
+    .put("evaluaciones", JSONArray(m.evaluaciones.map { e ->
+        JSONObject().put("nombre", e.nombre).put("peso", e.peso).put("nota", e.nota ?: JSONObject.NULL)
     }))
     .put("calificaciones", JSONArray(m.calificaciones.map { c ->
         JSONObject().put("titulo", c.titulo).put("nota", c.nota).put("fecha", c.fecha.toString())
@@ -164,6 +196,7 @@ private fun materiaAJson(m: Materia) = JSONObject()
 
 private fun JSONObject.textoONull(clave: String): String? = if (isNull(clave)) null else getString(clave)
 private fun JSONObject.enteroONull(clave: String): Int? = if (isNull(clave)) null else getInt(clave)
+private fun JSONObject.doubleONull(clave: String): Double? = if (!has(clave) || isNull(clave)) null else getDouble(clave)
 private fun <T> JSONArray.mapear(f: (JSONObject) -> T): List<T> = (0 until length()).map { f(getJSONObject(it)) }
 
 private fun jsonAUsuario(j: JSONObject): Usuario = Usuario(
@@ -176,7 +209,29 @@ private fun jsonAUsuario(j: JSONObject): Usuario = Usuario(
     email = j.textoONull("email"),
     metaHorasSemanales = j.enteroONull("metaHorasSemanales"),
     fotoPerfil = j.textoONull("fotoPerfil")?.let { File(it).name },
-    materias = j.getJSONArray("materias").mapear { jsonAMateria(it) }
+    materias = j.getJSONArray("materias").mapear { jsonAMateria(it) },
+    // Las copias anteriores a la versión 9 no tienen plan ni finales.
+    planEstudio = j.optJSONArray("planEstudio")?.mapear { p ->
+        MateriaPlan(
+            id = p.getInt("id"),
+            nombre = p.getString("nombre"),
+            anio = p.getInt("anio"),
+            estado = EstadoPlan.entries.firstOrNull { it.name == p.getString("estado") } ?: EstadoPlan.PENDIENTE,
+            correlativas = p.getJSONArray("correlativas").let { a -> (0 until a.length()).map { a.getInt(it) } },
+            notaFinal = p.doubleONull("notaFinal")
+        )
+    } ?: emptyList(),
+    finales = j.optJSONArray("finales")?.mapear { f ->
+        MesaFinal(
+            id = 0,
+            materia = f.getString("materia"),
+            fechaMesa = LocalDate.parse(f.getString("fechaMesa")),
+            cierreInscripcion = f.textoONull("cierreInscripcion")?.let { LocalDate.parse(it) },
+            vencimientoRegularidad = f.textoONull("vencimientoRegularidad")?.let { LocalDate.parse(it) },
+            inscripto = f.getBoolean("inscripto"),
+            nota = f.doubleONull("nota")
+        )
+    } ?: emptyList()
 )
 
 private fun jsonAMateria(j: JSONObject): Materia {
@@ -189,7 +244,8 @@ private fun jsonAMateria(j: JSONObject): Materia {
             ruta = File(a.getString("ruta")).name,
             tamanoBytes = a.getLong("tamanoBytes"),
             fechaAgregado = LocalDate.parse(a.getString("fechaAgregado")),
-            notaId = a.enteroONull("notaId")
+            notaId = a.enteroONull("notaId"),
+            categoria = CategoriaArchivo.desdeTexto(a.textoONull("categoria"))
         )
     }
     return Materia(
@@ -197,6 +253,11 @@ private fun jsonAMateria(j: JSONObject): Materia {
         nombre = j.getString("nombre"),
         color = j.getLong("color"),
         archivada = j.getBoolean("archivada"),
+        // Versión 10 (las copias viejas no lo tienen: quedan los valores de siempre).
+        asistenciaMinima = j.optInt("asistenciaMinima", ASISTENCIA_MINIMA),
+        promocional = j.optBoolean("promocional", true),
+        notaPromocion = j.optDouble("notaPromocion", NOTA_PROMOCION),
+        tieneFinal = j.optBoolean("tieneFinal", true),
         tareas = j.getJSONArray("tareas").mapear { t ->
             Tarea(
                 id = 0,
@@ -218,7 +279,11 @@ private fun jsonAMateria(j: JSONObject): Materia {
                 horaFin = LocalTime.parse(e.getString("horaFin")),
                 semanal = e.getBoolean("semanal"),
                 repetirHasta = e.textoONull("repetirHasta")?.let { LocalDate.parse(it) },
-                temas = e.getJSONArray("temas").mapear { Tema(0, it.getString("titulo"), it.getBoolean("estudiado")) }
+                temas = e.getJSONArray("temas").mapear { Tema(0, it.getString("titulo"), it.getBoolean("estudiado")) },
+                asistencias = e.optJSONArray("asistencias")?.mapear { Asistencia(0, LocalDate.parse(it.getString("fecha")), it.getBoolean("presente")) } ?: emptyList(),
+                virtual = e.optBoolean("virtual", false),
+                lugar = e.textoONull("lugar"),
+                enlace = e.textoONull("enlace")
             )
         },
         notas = j.getJSONArray("notas").mapear { n ->
@@ -237,6 +302,7 @@ private fun jsonAMateria(j: JSONObject): Materia {
         tarjetas = j.optJSONArray("tarjetas")?.mapear { t ->
             Tarjeta(0, t.getString("pregunta"), t.getString("respuesta"), t.getInt("caja"), LocalDate.parse(t.getString("proximoRepaso")))
         } ?: emptyList(),
+        evaluaciones = j.optJSONArray("evaluaciones")?.mapear { Evaluacion(0, it.getString("nombre"), it.getInt("peso"), it.doubleONull("nota")) } ?: emptyList(),
         calificaciones = j.getJSONArray("calificaciones").mapear { c ->
             Calificacion(0, c.getString("titulo"), c.getDouble("nota"), LocalDate.parse(c.getString("fecha")))
         }

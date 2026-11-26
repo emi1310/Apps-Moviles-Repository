@@ -5,9 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Videocam
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.example.estudia.modelo.TipoEvento
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
@@ -125,8 +133,11 @@ fun TarjetaEventoCalendario(
     onEditar: () -> Unit,
     onEliminar: () -> Unit,
     onAbrirTemario: (() -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Ese día es feriado: las clases no se dan.
+    esFeriado: Boolean = false
 ) {
+    val context = LocalContext.current
     val color = Color(item.colorMateria)
     val acento = colorAcentoTexto(color)
     val evento = item.evento
@@ -179,18 +190,72 @@ fun TarjetaEventoCalendario(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                // Presencial (con el aula, si se cargó) o virtual.
+                if (evento.virtual || evento.lugar != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+                        Icon(
+                            if (evento.virtual) Icons.Outlined.Videocam else Icons.Outlined.Place,
+                            contentDescription = null,
+                            tint = acento,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (evento.virtual) stringResource(R.string.evento_virtual) else evento.lugar.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = acento,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
             CirculoBloque(tamano = 40.dp) {
                 Icon(iconoTipo(item.evento.tipo), contentDescription = null, modifier = Modifier.size(22.dp))
             }
             MenuOpciones(
                 listOfNotNull(
-                    onAbrirTemario?.let { OpcionMenu(stringResource(R.string.temario_ver), Icons.Filled.Checklist, alTocar = it) },
-                    OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
-                    OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
+                    onAbrirTemario?.let { OpcionMenu(stringResource(R.string.temario_ver), Icons.Outlined.Checklist, alTocar = it) },
+                    OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit, alTocar = onEditar),
+                    OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true, alTocar = onEliminar)
                 ),
                 descripcion = stringResource(R.string.opciones_de, item.evento.titulo)
             )
+        }
+        // Feriado: ese día la clase no se da (y no cuenta en la asistencia).
+        if (esFeriado && evento.tipo == TipoEvento.CLASE) {
+            Text(
+                text = stringResource(R.string.feriado_sin_clase),
+                style = MaterialTheme.typography.labelMedium,
+                color = acento,
+                modifier = Modifier
+                    .padding(start = 12.dp, bottom = 12.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(fondoSuave(color))
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
+            )
+        } else if (evento.virtual && evento.enlace != null) {
+            // Clase virtual con link: botón para entrar.
+            val sinApp = stringResource(R.string.evento_enlace_error)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(fondoSuave(color))
+                    .clickable(role = Role.Button) {
+                        try {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(evento.enlace)))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, sinApp, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Outlined.Videocam, contentDescription = null, tint = acento, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.evento_unirse), style = MaterialTheme.typography.labelLarge, color = acento)
+            }
         }
         // Examen: cuánto falta y cuántos temas del temario van estudiados.
         if (onAbrirTemario != null) {

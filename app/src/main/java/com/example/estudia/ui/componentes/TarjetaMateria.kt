@@ -8,28 +8,31 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Grade
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material.icons.outlined.CheckBoxOutlineBlank
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Calculate
+import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Style
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.modelo.Archivo
+import com.example.estudia.modelo.CategoriaArchivo
 import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Prioridad
@@ -66,10 +70,11 @@ fun TarjetaMateria(
     onAgregarTarea: () -> Unit,
     onEditarTarea: (Tarea) -> Unit,
     onEliminarTarea: (Tarea) -> Unit,
-    onAdjuntarArchivo: () -> Unit,
-    onSacarFoto: () -> Unit,
+    onAdjuntarArchivo: (CategoriaArchivo) -> Unit,
+    onSacarFoto: (CategoriaArchivo) -> Unit,
     onAbrirArchivo: (Archivo) -> Unit,
     onEliminarArchivo: (Archivo) -> Unit,
+    onCambiarCategoria: (Archivo, CategoriaArchivo) -> Unit,
     onAgregarCalificacion: () -> Unit,
     onEditarCalificacion: (Calificacion) -> Unit,
     onEliminarCalificacion: (Calificacion) -> Unit,
@@ -77,6 +82,8 @@ fun TarjetaMateria(
     onEditarTarjeta: (Tarjeta) -> Unit,
     onEliminarTarjeta: (Tarjeta) -> Unit,
     onRepasar: () -> Unit,
+    onQuiz: () -> Unit,
+    onNotaNecesaria: () -> Unit,
     onEditar: () -> Unit,
     onArchivar: () -> Unit,
     onEliminar: () -> Unit,
@@ -118,6 +125,14 @@ fun TarjetaMateria(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        // Reglas de la cursada: ej "Promociona con 7 · Con final · Asistencia 75 %".
+                        Text(
+                            text = textoReglas(materia),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = acento,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                     // Inicial en un círculo del color de la materia.
                     CirculoBloque(tamano = 48.dp) {
@@ -125,13 +140,15 @@ fun TarjetaMateria(
                     }
                     MenuOpciones(
                         listOf(
-                            OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit, alTocar = onEditar),
+                            OpcionMenu(stringResource(R.string.nota_necesaria_titulo), Icons.Outlined.Calculate, alTocar = onNotaNecesaria),
+                            OpcionMenu(stringResource(R.string.quiz_hacer), Icons.Outlined.Quiz, alTocar = onQuiz),
+                            OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit, alTocar = onEditar),
                             OpcionMenu(
                                 stringResource(if (materia.archivada) R.string.desarchivar else R.string.archivar),
-                                if (materia.archivada) Icons.Filled.Unarchive else Icons.Filled.Archive,
+                                if (materia.archivada) Icons.Outlined.Unarchive else Icons.Outlined.Archive,
                                 alTocar = onArchivar
                             ),
-                            OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true, alTocar = onEliminar)
+                            OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true, alTocar = onEliminar)
                         ),
                         descripcion = stringResource(R.string.opciones_de, materia.nombre)
                     )
@@ -147,7 +164,7 @@ fun TarjetaMateria(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     Icon(
-                        imageVector = if (expandida) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                        imageVector = if (expandida) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(28.dp)
@@ -172,7 +189,7 @@ fun TarjetaMateria(
                 modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                BloqueDetalle(Icons.Filled.TaskAlt, stringResource(R.string.tareas_pendientes_titulo), color) {
+                BloqueDetalle(Icons.Outlined.TaskAlt, stringResource(R.string.tareas_pendientes_titulo), color) {
                     if (materia.tareas.isEmpty()) TextoVacio(stringResource(R.string.sin_tareas))
                     materia.tareas.forEach { tarea ->
                         // key: si la tarea se elimina y se recupera con "Deshacer",
@@ -191,17 +208,17 @@ fun TarjetaMateria(
                                     onAlternar = { onAlternarTarea(tarea) },
                                     onAlternarSubtarea = { onAlternarSubtarea(tarea, it) },
                                     opciones = listOf(
-                                        OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) { onEditarTarea(tarea) },
-                                        OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true) { onEliminarTarea(tarea) }
+                                        OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit) { onEditarTarea(tarea) },
+                                        OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true) { onEliminarTarea(tarea) }
                                     )
                                 )
                             }
                         }
                     }
-                    BotonBloque(stringResource(R.string.agregar_tarea), Icons.Filled.Add, color, onAgregarTarea)
+                    BotonBloque(stringResource(R.string.agregar_tarea), Icons.Outlined.Add, color, onAgregarTarea)
                 }
 
-                BloqueDetalle(Icons.Filled.Grade, stringResource(R.string.notas_examenes), color) {
+                BloqueDetalle(Icons.Outlined.Grade, stringResource(R.string.notas_examenes), color) {
                     if (materia.calificaciones.isEmpty()) TextoVacio(stringResource(R.string.sin_calificaciones))
                     materia.calificaciones.forEach { calificacion ->
                         key(calificacion.id) {
@@ -218,12 +235,12 @@ fun TarjetaMateria(
                             }
                         }
                     }
-                    BotonBloque(stringResource(R.string.agregar_calificacion), Icons.Filled.Add, color, onAgregarCalificacion)
+                    BotonBloque(stringResource(R.string.agregar_calificacion), Icons.Outlined.Add, color, onAgregarCalificacion)
                 }
 
                 // ---------- Tarjetas de estudio ----------
                 val paraHoy = materia.tarjetasParaHoy(hoy).size
-                BloqueDetalle(Icons.Filled.Style, stringResource(R.string.tarjetas_titulo), color) {
+                BloqueDetalle(Icons.Outlined.Style, stringResource(R.string.tarjetas_titulo), color) {
                     if (materia.tarjetas.isEmpty()) TextoVacio(stringResource(R.string.tarjetas_vacio))
                     materia.tarjetas.forEach { tarjeta ->
                         key(tarjeta.id) {
@@ -245,8 +262,8 @@ fun TarjetaMateria(
                                 }
                                 MenuOpciones(
                                     listOf(
-                                        OpcionMenu(stringResource(R.string.editar), Icons.Filled.Edit) { onEditarTarjeta(tarjeta) },
-                                        OpcionMenu(stringResource(R.string.eliminar), Icons.Filled.Delete, destructiva = true) { onEliminarTarjeta(tarjeta) }
+                                        OpcionMenu(stringResource(R.string.editar), Icons.Outlined.Edit) { onEditarTarjeta(tarjeta) },
+                                        OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true) { onEliminarTarjeta(tarjeta) }
                                     ),
                                     descripcion = stringResource(R.string.opciones_de, tarjeta.pregunta)
                                 )
@@ -254,35 +271,39 @@ fun TarjetaMateria(
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BotonBloque(stringResource(R.string.tarjeta_agregar), Icons.Filled.Add, color, onAgregarTarjeta, Modifier.weight(1f))
+                        BotonBloque(stringResource(R.string.tarjeta_agregar), Icons.Outlined.Add, color, onAgregarTarjeta, Modifier.weight(1f))
                         if (paraHoy > 0) {
                             BotonBloque(
                                 "${stringResource(R.string.tarjetas_repasar)} ($paraHoy)",
-                                Icons.Filled.PlayArrow, color, onRepasar, Modifier.weight(1f)
+                                Icons.Outlined.PlayArrow, color, onRepasar, Modifier.weight(1f)
                             )
                         }
                     }
                 }
 
-                BloqueDetalle(Icons.Filled.Folder, stringResource(R.string.archivos_cantidad, materia.archivos.size), color) {
+                BloqueDetalle(Icons.Outlined.Folder, stringResource(R.string.archivos_cantidad, materia.archivos.size), color) {
                     if (materia.archivos.isEmpty()) TextoVacio(stringResource(R.string.sin_archivos))
-                    ListaArchivos(materia.archivos, color, onAbrirArchivo, onEliminarArchivo)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        BotonBloque(stringResource(R.string.adjuntar_archivo), Icons.Filled.AttachFile, color, onAdjuntarArchivo, Modifier.weight(1f))
-                        BotonBloque(stringResource(R.string.foto_sacar), Icons.Filled.PhotoCamera, color, onSacarFoto, Modifier.weight(1f))
-                    }
+                    ArchivosPorCategoria(
+                        archivos = materia.archivos,
+                        color = color,
+                        onAbrir = onAbrirArchivo,
+                        onEliminar = onEliminarArchivo,
+                        onCambiarCategoria = onCambiarCategoria,
+                        onAdjuntar = onAdjuntarArchivo,
+                        onSacarFoto = onSacarFoto
+                    )
                 }
             }
         }
     }
 }
 
-// Bloque dentro de la materia expandida (con el fondo de la pantalla, para
-// que se distinga de la tarjeta): un título con su ícono en un círculo del
+// Bloque dentro de la materia expandida (vidrio dentro del vidrio: un velo
+// suave con borde brillante, para que se distinga de la tarjeta): un título con su ícono en un círculo del
 // color de la materia y el contenido debajo.
 @Composable
 private fun BloqueDetalle(icono: ImageVector, titulo: String, color: Color, contenido: @Composable ColumnScope.() -> Unit) {
-    Surface(shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.background) {
+    Surface(shape = RoundedCornerShape(22.dp), color = rellenoVidrio(), border = bordeVidrio()) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 2.dp)) {
                 IconoCircular(icono, colorAcentoTexto(color), tamano = 32.dp, fondo = color.copy(alpha = 0.16f))
@@ -297,7 +318,7 @@ private fun BloqueDetalle(icono: ImageVector, titulo: String, color: Color, cont
 // Acción de un bloque ("Agregar tarea", "Adjuntar archivo"): un bloque
 // tenue del color de la materia, de todo el ancho (o del que le den).
 @Composable
-private fun BotonBloque(
+internal fun BotonBloque(
     texto: String,
     icono: ImageVector,
     color: Color,
@@ -317,7 +338,7 @@ private fun BotonBloque(
     ) {
         Icon(icono, contentDescription = null, tint = colorTexto, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(6.dp))
-        Text(texto, style = MaterialTheme.typography.labelLarge, color = colorTexto)
+        TextoAjustable(texto, MaterialTheme.typography.labelLarge, color = colorTexto, maxLines = 2, textAlign = TextAlign.Center)
     }
 }
 
@@ -371,7 +392,7 @@ fun FilaTarea(
                         if (!tarea.completada) EtiquetaPrioridad(tarea.prioridad)
                         if (conAviso) {
                             Icon(
-                                Icons.Filled.NotificationsActive,
+                                Icons.Outlined.NotificationsActive,
                                 contentDescription = stringResource(R.string.aviso_con_recordatorio),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
@@ -413,7 +434,7 @@ private fun FilaSubtarea(subtarea: Subtarea, onAlternar: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = if (subtarea.completada) Icons.Filled.CheckBox else Icons.Filled.CheckBoxOutlineBlank,
+            imageVector = if (subtarea.completada) Icons.Filled.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
             contentDescription = null,
             tint = if (subtarea.completada) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
@@ -427,3 +448,12 @@ private fun FilaSubtarea(subtarea: Subtarea, onAlternar: () -> Unit) {
         )
     }
 }
+
+// Resumen de las reglas de la cursada de una materia, en una línea.
+@Composable
+fun textoReglas(materia: Materia): String = listOf(
+    if (materia.promocional) stringResource(R.string.reglas_promociona, textoNota(materia.notaPromocion))
+    else stringResource(R.string.reglas_no_promociona),
+    stringResource(if (materia.tieneFinal) R.string.reglas_con_final else R.string.reglas_sin_final),
+    stringResource(R.string.reglas_asistencia, materia.asistenciaMinima)
+).joinToString(" · ")

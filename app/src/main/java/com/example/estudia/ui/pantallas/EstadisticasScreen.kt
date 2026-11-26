@@ -6,10 +6,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.DonutLarge
-import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.DonutLarge
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.ui.componentes.TarjetaAcceso
+import com.example.estudia.ui.theme.BloqueAzul
+import androidx.compose.material.icons.outlined.DateRange
 import com.example.estudia.ui.componentes.EtiquetaNota
 import com.example.estudia.ui.componentes.GraficoSemanas
 import com.example.estudia.ui.componentes.GraficoTortaHoras
@@ -36,7 +39,7 @@ import com.example.estudia.viewmodel.EstadisticasViewModel
 // de las últimas semanas, el promedio de las notas y en qué materias se
 // estudió más. Solo dibuja: los cálculos los hace EstadisticasViewModel.
 @Composable
-fun EstadisticasScreen(viewModel: EstadisticasViewModel, onVolver: () -> Unit) {
+fun EstadisticasScreen(viewModel: EstadisticasViewModel, onVolver: () -> Unit, onAbrirSemana: () -> Unit = {}) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
@@ -49,17 +52,23 @@ fun EstadisticasScreen(viewModel: EstadisticasViewModel, onVolver: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onVolver) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
             }
             Text(text = stringResource(R.string.estadisticas_titulo), style = MaterialTheme.typography.headlineSmall)
         }
+
+        // Resumen de esta semana comparada con la anterior.
+        TarjetaAcceso(
+            stringResource(R.string.resumen_titulo), stringResource(R.string.acceso_semana),
+            Icons.Outlined.DateRange, BloqueAzul, Modifier.fillMaxWidth(), apilada = false, alTocar = onAbrirSemana
+        )
 
         TarjetaRacha(estado)
 
         // ---------- Horas por semana ----------
         TarjetaSeccion(
             titulo = stringResource(R.string.estadisticas_horas_semana),
-            icono = Icons.Filled.BarChart,
+            icono = Icons.Outlined.BarChart,
             color = MaterialTheme.colorScheme.primary,
             detalle = textoHoras(estado.minutosEstaSemana)
         ) {
@@ -77,7 +86,7 @@ fun EstadisticasScreen(viewModel: EstadisticasViewModel, onVolver: () -> Unit) {
         // ---------- Promedio de las notas ----------
         TarjetaSeccion(
             titulo = stringResource(R.string.estadisticas_promedio),
-            icono = Icons.Filled.School,
+            icono = Icons.Outlined.School,
             color = MaterialTheme.colorScheme.tertiary
         ) {
             val promedio = estado.promedioGeneral
@@ -109,7 +118,7 @@ fun EstadisticasScreen(viewModel: EstadisticasViewModel, onVolver: () -> Unit) {
         if (estado.minutosUltimoMes.isNotEmpty()) {
             TarjetaSeccion(
                 titulo = stringResource(R.string.estadisticas_ultimo_mes),
-                icono = Icons.Filled.DonutLarge,
+                icono = Icons.Outlined.DonutLarge,
                 color = MaterialTheme.colorScheme.secondary,
                 detalle = textoHoras(estado.minutosUltimoMes.sumOf { it.second })
             ) {

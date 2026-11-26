@@ -13,7 +13,9 @@ data class Archivo(
     val ruta: String,
     val tamanoBytes: Long,
     val fechaAgregado: LocalDate,
-    val notaId: Int? = null
+    val notaId: Int? = null,
+    // Versión 10: para agrupar los archivos de la materia.
+    val categoria: CategoriaArchivo = CategoriaArchivo.OTROS
 ) {
     val esImagen: Boolean get() = tipoMime.startsWith("image/")
     val esPdf: Boolean get() = tipoMime == "application/pdf"
@@ -23,5 +25,14 @@ data class Archivo(
         if (tamanoBytes < 1024) return "$tamanoBytes B"
         val kb = tamanoBytes / 1024.0
         return if (kb < 1024) "${kb.toInt()} KB" else String.format("%.1f MB", kb / 1024)
+    }
+}
+
+// Categoría de un archivo de la materia (teoría, TPs, info de la cátedra...).
+enum class CategoriaArchivo { TEORIA, TPS, INFORMACION, EXAMENES, OTROS;
+    companion object {
+        // Para leer lo guardado en la base o en una copia: si no se
+        // reconoce (ej: copia vieja), queda en "Otros".
+        fun desdeTexto(texto: String?): CategoriaArchivo = entries.firstOrNull { it.name == texto } ?: OTROS
     }
 }

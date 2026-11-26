@@ -21,7 +21,10 @@ import java.util.concurrent.TimeUnit
 //    2 horas antes si ya pasó ese momento (EventoWorker).
 //  - Un aviso 15 minutos antes de cada clase (también EventoWorker).
 //  - El aviso de cada tarea que lo tenga, a las 9:00 (TareaWorker).
-//  - El aviso de racha en riesgo, todos los días a las 20:00 (RachaWorker).
+//  - El aviso de racha en riesgo, todos los días a las 20:00 (RachaWorker);
+//    los domingos, a esa hora, también el resumen de la semana.
+//  - Los finales (inscripción que cierra, mesa de mañana) van con el
+//    resumen de las 8:00 (RecordatorioWorker).
 //  - El fin del temporizador de estudio (TemporizadorWorker).
 class ProgramadorRecordatorios(context: Context) {
 

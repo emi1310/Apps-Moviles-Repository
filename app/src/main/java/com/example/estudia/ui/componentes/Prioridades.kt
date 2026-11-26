@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,7 +57,7 @@ fun EtiquetaPrioridad(prioridad: Prioridad, modifier: Modifier = Modifier) {
             .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Filled.Flag, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+        Icon(Icons.Outlined.Flag, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = nombrePrioridad(prioridad),
@@ -78,7 +78,7 @@ fun SelectorPrioridad(elegida: Prioridad, onElegir: (Prioridad) -> Unit) {
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp)
+                    .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .background(if (activa) color else color.copy(alpha = 0.12f))
                     .selectable(selected = activa, role = Role.RadioButton) { onElegir(opcion) },
@@ -86,15 +86,14 @@ fun SelectorPrioridad(elegida: Prioridad, onElegir: (Prioridad) -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Filled.Flag,
+                    Icons.Outlined.Flag,
                     contentDescription = null,
                     tint = if (activa) Color.White else color,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = nombrePrioridad(opcion),
-                    style = MaterialTheme.typography.labelLarge,
+                TextoAjustable(
+                    nombrePrioridad(opcion), MaterialTheme.typography.labelLarge, Modifier.padding(vertical = 6.dp),
                     color = if (activa) Color.White else MaterialTheme.colorScheme.onSurface
                 )
             }

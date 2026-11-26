@@ -93,6 +93,8 @@ dependencies {
     // OCR: pasar a texto la foto del pizarrón. El modelo viene dentro de la
     // app, así funciona sin internet.
     implementation(libs.mlkit.text.recognition)
+    // Efecto de vidrio esmerilado (desenfoca lo que pasa por detrás del dock).
+    implementation(libs.haze)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     constraints {
         // room-testing (MigrationTestHelper) necesita kotlinx-serialization 1.8+,

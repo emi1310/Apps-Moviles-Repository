@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -114,19 +114,23 @@ fun Deslizable(
                 horizontalArrangement = if (direccion == SwipeToDismissBoxValue.StartToEnd) Arrangement.Start else Arrangement.End
             ) {
                 if (direccion == SwipeToDismissBoxValue.StartToEnd) {
-                    Icon(if (completada) Icons.AutoMirrored.Filled.Undo else Icons.Filled.Check, contentDescription = null, tint = colorIcono)
+                    Icon(if (completada) Icons.AutoMirrored.Outlined.Undo else Icons.Outlined.Check, contentDescription = null, tint = colorIcono)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(textoCompletar, color = colorIcono, style = MaterialTheme.typography.labelLarge)
                 } else if (direccion == SwipeToDismissBoxValue.EndToStart) {
                     Text(textoEliminar, color = colorIcono, style = MaterialTheme.typography.labelLarge)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Filled.Delete, contentDescription = null, tint = colorIcono)
+                    Icon(Icons.Outlined.Delete, contentDescription = null, tint = colorIcono)
                 }
             }
         }
     ) {
         // Las filas transparentes se pintan con fondoContenido; las tarjetas ya tienen su color.
-        val fondo = if (fondoContenido == Color.Transparent) Modifier else Modifier.clip(forma).background(fondoContenido)
+        // Mientras se desliza, abajo va el color del fondo: las tarjetas son de
+        // vidrio y si no se vería el verde o el rojo a través.
+        val deslizando = estado.dismissDirection != SwipeToDismissBoxValue.Settled
+        val base = if (deslizando) Modifier.clip(forma).background(MaterialTheme.colorScheme.background) else Modifier
+        val fondo = base.then(if (fondoContenido == Color.Transparent) Modifier else Modifier.clip(forma).background(fondoContenido))
         Box(modifier = fondo) {
             contenido()
         }

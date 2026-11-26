@@ -32,6 +32,9 @@ fun CasillaDia(
     seleccionado: Boolean,
     coloresEventos: List<Long>,
     modifier: Modifier = Modifier,
+    // Versión 10: los feriados llevan el número en rojo (como en los
+    // calendarios de papel).
+    feriado: Boolean = false,
     onSeleccionar: () -> Unit
 ) {
     val forma = RoundedCornerShape(14.dp)
@@ -43,6 +46,7 @@ fun CasillaDia(
     }
     val colorTexto = when {
         seleccionado -> Color.White
+        feriado -> RojoFeriado
         esHoy -> MaterialTheme.colorScheme.onSecondaryContainer
         else -> MaterialTheme.colorScheme.onSurface
     }
@@ -63,7 +67,7 @@ fun CasillaDia(
                     text = fecha.dayOfMonth.toString(),
                     color = colorTexto,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (seleccionado || esHoy) FontWeight.Bold else FontWeight.Medium
+                    fontWeight = if (seleccionado || esHoy || feriado) FontWeight.Bold else FontWeight.Medium
                 )
                 if (coloresEventos.isNotEmpty()) {
                     Row(
@@ -85,3 +89,6 @@ fun CasillaDia(
         }
     }
 }
+
+// Rojo de los feriados: se lee sobre el fondo claro y el oscuro.
+private val RojoFeriado = Color(0xFFE5484D)

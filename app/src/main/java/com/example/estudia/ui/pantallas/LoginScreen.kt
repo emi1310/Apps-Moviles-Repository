@@ -3,8 +3,8 @@ package com.example.estudia.ui.pantallas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,7 +31,7 @@ fun LoginScreen(
     var contrasena by remember { mutableStateOf("") }
 
     FormularioCuenta(
-        icono = Icons.Filled.Lock,
+        icono = Icons.Outlined.Lock,
         titulo = stringResource(R.string.iniciar_sesion),
         subtitulo = stringResource(R.string.login_subtitulo),
         campos = {
@@ -39,7 +39,7 @@ fun LoginScreen(
                 value = nombreUsuario,
                 onValueChange = { nombreUsuario = it },
                 label = { Text(stringResource(R.string.usuario)) },
-                leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -48,7 +48,7 @@ fun LoginScreen(
                 value = contrasena,
                 onValueChange = { contrasena = it },
                 label = { Text(stringResource(R.string.contrasena)) },
-                leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
+                leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
@@ -60,7 +60,7 @@ fun LoginScreen(
             Button(
                 onClick = { onIniciarSesion(nombreUsuario, contrasena) },
                 enabled = !estado.procesando,
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
             ) {
                 if (estado.procesando) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 else Text(stringResource(R.string.iniciar_sesion))

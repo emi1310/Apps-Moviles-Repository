@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
@@ -62,9 +65,18 @@ fun DialogoApp(
     // blanco no se leería encima.
     val rojo = RojoPeligro
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        // Lo de atrás (la app) queda desenfocado y el diálogo es de vidrio:
+        // translúcido si el teléfono puede desenfocar; si no, opaco.
+        DesenfocarDetras()
+        val fondoVentana = colorVentanaVidrio()
+        // Adentro, los campos y bloques (que usan surfaceVariant o
+        // surfaceContainer) pasan a ser un velo suave, así se ve el vidrio.
+        val relleno = rellenoVidrio()
+        MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(surfaceVariant = relleno, surfaceContainer = relleno)) {
         Surface(
             shape = RoundedCornerShape(32.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer,
+            color = fondoVentana,
+            border = bordeVidrio(),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -98,13 +110,14 @@ fun DialogoApp(
                     contenido()
                 }
                 Spacer(modifier = Modifier.height(20.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Los dos botones con el mismo alto aunque uno ocupe dos renglones.
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
                     BotonPastilla(
                         texto = textoCancelar,
                         fondo = SolidColor(MaterialTheme.colorScheme.surfaceVariant),
                         colorTexto = MaterialTheme.colorScheme.onSurface,
                         onClick = onCancelar,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).fillMaxHeight()
                     )
                     if (textoConfirmar != null) {
                         BotonPastilla(
@@ -112,11 +125,12 @@ fun DialogoApp(
                             fondo = if (destructivo) SolidColor(rojo) else LocalDegradado.current,
                             colorTexto = Color.White,
                             onClick = onConfirmar,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).fillMaxHeight()
                         )
                     }
                 }
             }
+        }
         }
     }
 }
@@ -131,13 +145,16 @@ private fun BotonPastilla(
 ) {
     Box(
         modifier = modifier
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(50))
             .background(fondo)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = texto, style = MaterialTheme.typography.titleSmall, color = colorTexto, maxLines = 1)
+        TextoAjustable(
+            texto, MaterialTheme.typography.titleSmall, Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            color = colorTexto, maxLines = 2, textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -269,5 +286,53 @@ fun SelectorMateria(materias: List<Materia>, seleccionada: Materia?, onSeleccion
                 )
             }
         }
+    }
+}
+
+// Fila con un interruptor dentro de un diálogo (toda la fila se puede tocar).
+@Composable
+fun FilaInterruptor(titulo: String, valor: Boolean, onCambiar: (Boolean) -> Unit, detalle: String? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .toggleable(value = valor, role = Role.Switch, onValueChange = onCambiar)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(titulo, style = MaterialTheme.typography.bodyLarge)
+            if (detalle != null) {
+                Text(detalle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(checked = valor, onCheckedChange = null)
+    }
+}
+
+// Bloque elegible con ícono y texto (ej: Presencial / Virtual). El elegido
+// va con el degradado violeta y el texto en blanco.
+@Composable
+fun BloqueOpcion(icono: ImageVector, texto: String, elegido: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        modifier = modifier
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .then(
+                if (elegido) Modifier.background(LocalDegradado.current)
+                else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+            .selectable(selected = elegido, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icono, contentDescription = null, tint = if (elegido) Color.White else MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        TextoAjustable(
+            texto, MaterialTheme.typography.labelLarge, Modifier.padding(vertical = 6.dp),
+            color = if (elegido) Color.White else MaterialTheme.colorScheme.onSurface, maxLines = 2
+        )
     }
 }

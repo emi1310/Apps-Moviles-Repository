@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +35,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.estudia.ui.componentes.AccionRapida
 import com.example.estudia.ui.componentes.DockFlotante
+import com.example.estudia.ui.componentes.LocalHaze
+import com.example.estudia.ui.componentes.buscaEnLaPantalla
+import com.example.estudia.ui.componentes.fondoAurora
+import androidx.compose.ui.graphics.Color
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.ControladorAvisos
 import com.example.estudia.ui.componentes.LocalAvisos
@@ -53,6 +60,14 @@ import com.example.estudia.ui.pantallas.NotasScreen
 import com.example.estudia.ui.pantallas.PerfilScreen
 import com.example.estudia.ui.pantallas.RegistroScreen
 import com.example.estudia.ui.pantallas.TemporizadorScreen
+import com.example.estudia.ui.pantallas.AsistenciaScreen
+import com.example.estudia.ui.pantallas.BusquedaScreen
+import com.example.estudia.ui.pantallas.CarreraScreen
+import com.example.estudia.ui.pantallas.FinalesScreen
+import com.example.estudia.ui.pantallas.NotaNecesariaScreen
+import com.example.estudia.ui.pantallas.QuizScreen
+import com.example.estudia.ui.pantallas.ResumenSemanalScreen
+import com.example.estudia.viewmodel.TipoResultado
 import com.example.estudia.viewmodel.AppViewModelProvider
 import com.example.estudia.viewmodel.SesionUiState
 import com.example.estudia.viewmodel.SesionViewModel
@@ -85,6 +100,23 @@ fun AppNavegacion(
     // Lo que pidió el botón "+" del dock: la pantalla en la que se está abre
     // su diálogo de creación y después lo limpia.
     var accionPendiente by rememberSaveable { mutableStateOf<AccionRapida?>(null) }
+
+    // Búsqueda desde la lupa del dock (en Materias, Calendario y Notas filtra la lista).
+    // Se cierra y se borra al cambiar de pantalla.
+    var buscando by rememberSaveable { mutableStateOf(false) }
+    var textoBusqueda by rememberSaveable { mutableStateOf("") }
+    // (Se guarda la ruta para no borrar la búsqueda al girar el teléfono.)
+    var rutaDeLaBusqueda by rememberSaveable { mutableStateOf(rutaActual) }
+    LaunchedEffect(rutaActual) {
+        if (rutaActual != rutaDeLaBusqueda) {
+            buscando = false
+            textoBusqueda = ""
+            rutaDeLaBusqueda = rutaActual
+        }
+    }
+
+    // Qué se desenfoca detrás del dock de vidrio: el fondo y las pantallas.
+    val haze = remember { HazeState() }
     val irA: (Screen) -> Unit = { destino ->
         navController.navigate(destino.ruta) {
             popUpTo(Screen.Inicio.ruta) { saveState = true }
@@ -127,8 +159,14 @@ fun AppNavegacion(
         onTemporizadorAbierto()
     }
 
-    CompositionLocalProvider(LocalAvisos provides avisos) {
+    CompositionLocalProvider(LocalAvisos provides avisos, LocalHaze provides haze) {
         Scaffold(
+            // Transparente: el fondo con manchas de color lo pinta el contenido
+            // (así también se desenfoca detrás del dock).
+            containerColor = Color.Transparent,
+            // Con fondo transparente Material no sabe de qué color va el texto
+            // (quedaba negro en el tema oscuro): se le indica el del tema.
+            contentColor = MaterialTheme.colorScheme.onBackground,
             // Único Scaffold de la app (como en la clase): muestra los avisos de
             // todas las pantallas.
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -142,10 +180,21 @@ fun AppNavegacion(
                 ) {
                     DockFlotante(
                         rutaActual = rutaActual,
+                        buscando = buscando,
+                        textoBusqueda = textoBusqueda,
                         onSeleccionar = irA,
                         onCrear = { accion ->
                             if (accion == AccionRapida.ESTUDIAR) navController.navigate(Screen.Temporizador.ruta)
                             else accionPendiente = accion
+                        },
+                        onBuscar = {
+                            if (buscaEnLaPantalla(rutaActual)) buscando = true
+                            else navController.navigate(Screen.Busqueda.ruta)
+                        },
+                        onCambiarBusqueda = { textoBusqueda = it },
+                        onCerrarBusqueda = {
+                            buscando = false
+                            textoBusqueda = ""
                         }
                     )
                 }
@@ -154,6 +203,7 @@ fun AppNavegacion(
           // El contenido pasa por detrás del dock flotante: solo se respeta el
           // espacio de arriba y las listas suman LocalEspacioDock abajo.
           CompositionLocalProvider(LocalEspacioDock provides if (mostrarBarra) espacioInterno.calculateBottomPadding() else 0.dp) {
+          Box(modifier = Modifier.fillMaxSize().fondoAurora().hazeSource(haze)) {
             NavHost(
                 navController = navController,
                 startDestination = destinoInicial,
@@ -206,7 +256,12 @@ fun AppNavegacion(
                     MateriasScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.MATERIA,
+                        busqueda = textoBusqueda,
                         onRepasar = { navController.navigate(Screen.Repaso.de(it)) },
+                        onQuiz = { navController.navigate(Screen.Quiz.de(it)) },
+                        onNotaNecesaria = { navController.navigate(Screen.NotaNecesaria.de(it)) },
+                        onAbrirCarrera = { navController.navigate(Screen.Carrera.ruta) },
+                        onAbrirFinales = { navController.navigate(Screen.Finales.ruta) },
                         onCreacionAbierta = { accionPendiente = null }
                     )
                 }
@@ -215,8 +270,14 @@ fun AppNavegacion(
                     CalendarioScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.EVENTO,
+                        busqueda = textoBusqueda,
+                        onCerrarBusqueda = {
+                            buscando = false
+                            textoBusqueda = ""
+                        },
                         onCreacionAbierta = { accionPendiente = null },
-                        onAbrirHorario = { navController.navigate(Screen.Horario.ruta) }
+                        onAbrirHorario = { navController.navigate(Screen.Horario.ruta) },
+                        onAbrirAsistencia = { navController.navigate(Screen.Asistencia.ruta) }
                     )
                 }
 
@@ -224,6 +285,7 @@ fun AppNavegacion(
                     NotasScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
                         crearAlAbrir = accionPendiente == AccionRapida.NOTA,
+                        busqueda = textoBusqueda,
                         onCreacionAbierta = { accionPendiente = null }
                     )
                 }
@@ -246,7 +308,8 @@ fun AppNavegacion(
                 composable(Screen.Estadisticas.ruta) {
                     EstadisticasScreen(
                         viewModel = viewModel(factory = AppViewModelProvider.Factory),
-                        onVolver = { navController.popBackStack() }
+                        onVolver = { navController.popBackStack() },
+                        onAbrirSemana = { navController.navigate(Screen.ResumenSemanal.ruta) }
                     )
                 }
 
@@ -284,7 +347,55 @@ fun AppNavegacion(
                 composable(Screen.Ayuda.ruta) {
                     AyudaScreen(onVolver = { navController.popBackStack() })
                 }
+
+                composable(Screen.Carrera.ruta) {
+                    CarreraScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(Screen.Asistencia.ruta) {
+                    AsistenciaScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(Screen.Finales.ruta) {
+                    FinalesScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(Screen.ResumenSemanal.ruta) {
+                    ResumenSemanalScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(Screen.Busqueda.ruta) {
+                    BusquedaScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onVolver = { navController.popBackStack() },
+                        // Cada resultado lleva a la sección donde está.
+                        onAbrir = { tipo ->
+                            when (tipo) {
+                                TipoResultado.MATERIA, TipoResultado.TAREA, TipoResultado.TARJETA -> irA(Screen.Materias)
+                                TipoResultado.NOTA -> irA(Screen.Notas)
+                                TipoResultado.EVENTO -> irA(Screen.Calendario)
+                                TipoResultado.CARRERA -> navController.navigate(Screen.Carrera.ruta)
+                                TipoResultado.FINAL -> navController.navigate(Screen.Finales.ruta)
+                            }
+                        }
+                    )
+                }
+
+                composable(
+                    Screen.NotaNecesaria.ruta,
+                    arguments = listOf(navArgument(Screen.Repaso.ARGUMENTO) { type = NavType.IntType })
+                ) {
+                    NotaNecesariaScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(
+                    Screen.Quiz.ruta,
+                    arguments = listOf(navArgument(Screen.Repaso.ARGUMENTO) { type = NavType.IntType })
+                ) {
+                    QuizScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
             }
+          }
           }
         }
 

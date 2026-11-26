@@ -9,15 +9,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DonutLarge
-import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.outlined.DonutLarge
+import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.Today
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Style
+import androidx.compose.material.icons.outlined.Today
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -94,7 +95,7 @@ fun InicioScreen(
         if (estado.totalTarjetas > 0) {
             TarjetaSeccion(
                 titulo = stringResource(R.string.inicio_tarjetas_titulo),
-                icono = Icons.Filled.Style,
+                icono = Icons.Outlined.Style,
                 color = MaterialTheme.colorScheme.primary,
                 detalle = estado.tarjetasParaHoy.toString()
             ) {
@@ -113,7 +114,7 @@ fun InicioScreen(
         // ---------- Próximos exámenes y entregas ----------
         TarjetaSeccion(
             titulo = stringResource(R.string.proximos_eventos),
-            icono = Icons.Filled.Event,
+            icono = Icons.Outlined.Event,
             color = MaterialTheme.colorScheme.tertiary
         ) {
             if (estado.proximosEventos.isEmpty()) {
@@ -143,14 +144,14 @@ fun InicioScreen(
         if (estado.materiasActivas.isNotEmpty()) {
             TarjetaSeccion(
                 titulo = stringResource(R.string.progreso_por_materia),
-                icono = Icons.Filled.BarChart,
+                icono = Icons.Outlined.BarChart,
                 color = MaterialTheme.colorScheme.secondary
             ) {
                 GraficoBarrasProgreso(materias = estado.materiasActivas)
             }
             TarjetaSeccion(
                 titulo = stringResource(R.string.horas_por_materia),
-                icono = Icons.Filled.DonutLarge,
+                icono = Icons.Outlined.DonutLarge,
                 color = MaterialTheme.colorScheme.primary,
                 detalle = stringResource(R.string.horas_corto, estado.horasEstudio)
             ) {
@@ -241,8 +242,8 @@ private fun TarjetaTareas(
                         Icons.Filled.CheckCircle, MaterialTheme.colorScheme.secondary, stringResource(R.string.inicio_completadas),
                         stringResource(R.string.inicio_completadas_valor, estado.tareasCompletadas, estado.totalTareas)
                     )
-                    DatoTareas(Icons.Filled.Today, MaterialTheme.colorScheme.primary, stringResource(R.string.inicio_para_hoy), estado.tareasParaHoy.toString())
-                    DatoTareas(Icons.Filled.Warning, MaterialTheme.colorScheme.error, stringResource(R.string.inicio_vencidas), estado.tareasVencidas.toString())
+                    DatoTareas(Icons.Outlined.Today, MaterialTheme.colorScheme.primary, stringResource(R.string.inicio_para_hoy), estado.tareasParaHoy.toString())
+                    DatoTareas(Icons.Outlined.Warning, MaterialTheme.colorScheme.error, stringResource(R.string.inicio_vencidas), estado.tareasVencidas.toString())
                 }
                 AnilloTareas(estado.progresoTareas, estado.tareasPendientes.size)
             }

@@ -7,9 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -85,9 +85,9 @@ fun BienvenidaScreen(onComenzar: () -> Unit) {
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Caracteristica(Icons.Filled.TaskAlt, stringResource(R.string.bienvenida_tareas))
-                Caracteristica(Icons.Filled.CalendarMonth, stringResource(R.string.bienvenida_calendario))
-                Caracteristica(Icons.Filled.NotificationsActive, stringResource(R.string.bienvenida_recordatorios))
+                Caracteristica(Icons.Outlined.TaskAlt, stringResource(R.string.bienvenida_tareas))
+                Caracteristica(Icons.Outlined.CalendarMonth, stringResource(R.string.bienvenida_calendario))
+                Caracteristica(Icons.Outlined.NotificationsActive, stringResource(R.string.bienvenida_recordatorios))
             }
 
             Spacer(modifier = Modifier.height(36.dp))
@@ -95,7 +95,7 @@ fun BienvenidaScreen(onComenzar: () -> Unit) {
             Button(
                 onClick = onComenzar,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = VioletaPrincipal),
-                modifier = Modifier.fillMaxWidth().height(54.dp)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 54.dp)
             ) {
                 Text(stringResource(R.string.comenzar), style = MaterialTheme.typography.titleMedium)
             }

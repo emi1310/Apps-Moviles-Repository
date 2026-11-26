@@ -2,8 +2,8 @@ package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.StickyNote2
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.StickyNote2
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -35,7 +35,7 @@ fun DialogoNota(
 
     DialogoApp(
         titulo = stringResource(if (nota == null) R.string.nueva_nota else R.string.editar_nota),
-        icono = Icons.Filled.StickyNote2,
+        icono = Icons.Outlined.StickyNote2,
         textoConfirmar = stringResource(if (nota == null) R.string.crear else R.string.guardar),
         onConfirmar = {
             error = when {
@@ -71,7 +71,7 @@ fun DialogoNota(
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = dictar) {
-                    Icon(Icons.Filled.Mic, contentDescription = stringResource(R.string.dictar))
+                    Icon(Icons.Outlined.Mic, contentDescription = stringResource(R.string.dictar))
                 }
             }
         )

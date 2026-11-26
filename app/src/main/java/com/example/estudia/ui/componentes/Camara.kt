@@ -16,8 +16,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.NoPhotography
-import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.outlined.NoPhotography
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,7 +87,7 @@ fun camaraDeFotos(onFoto: (String) -> Unit): () -> Unit {
     if (mostrarExplicacion) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_camara_titulo),
-            icono = Icons.Filled.PhotoCamera,
+            icono = Icons.Outlined.PhotoCamera,
             textoConfirmar = stringResource(R.string.continuar),
             onConfirmar = {
                 mostrarExplicacion = false
@@ -103,7 +103,7 @@ fun camaraDeFotos(onFoto: (String) -> Unit): () -> Unit {
     if (mostrarBloqueado) {
         DialogoApp(
             titulo = stringResource(R.string.sin_permiso_camara_titulo),
-            icono = Icons.Filled.NoPhotography,
+            icono = Icons.Outlined.NoPhotography,
             textoConfirmar = stringResource(R.string.ir_a_ajustes),
             onConfirmar = {
                 mostrarBloqueado = false
