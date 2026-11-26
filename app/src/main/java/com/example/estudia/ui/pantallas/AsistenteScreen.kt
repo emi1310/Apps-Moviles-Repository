@@ -50,6 +50,7 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MensajeIA
 import com.example.estudia.modelo.TarjetaSugerida
 import com.example.estudia.ui.componentes.CampoTexto
+import com.example.estudia.ui.componentes.abrirGemini
 import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EtiquetaCampo
@@ -270,6 +271,22 @@ private fun AvisoSinClave(onConectar: () -> Unit) {
                 .padding(vertical = 12.dp)
         ) {
             Text(stringResource(R.string.ia_conectar), color = Color.White, style = MaterialTheme.typography.labelLarge)
+        }
+        // Sin conectar nada: abrir la app de Gemini (lo mismo que el + del dock).
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(stringResource(R.string.ia_sin_clave_gemini), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(8.dp))
+        val contexto = LocalContext.current
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(50))
+                .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
+                .clickable(role = androidx.compose.ui.semantics.Role.Button) { abrirGemini(contexto) }
+                .padding(vertical = 12.dp)
+        ) {
+            Text(stringResource(R.string.abrir_gemini), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
         }
     }
 }

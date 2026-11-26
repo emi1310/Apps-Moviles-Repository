@@ -35,6 +35,7 @@ import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.EditCalendar
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.LibraryAdd
+import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.filled.StickyNote2
@@ -82,23 +83,26 @@ import com.example.estudia.ui.theme.DegradadoInicio
 val LocalEspacioDock = compositionLocalOf<Dp> { 0.dp }
 
 // Lo que hace el botón "+" del dock: depende de la pantalla en la que se está.
-enum class AccionRapida { MATERIA, EVENTO, NOTA, ESTUDIAR }
+enum class AccionRapida { MATERIA, EVENTO, NOTA, ESTUDIAR, GEMINI }
 
 // En Materias crea una materia, en Calendario un evento y en Notas una nota;
-// en Inicio y en Perfil empieza una sesión de estudio.
+// en el Asistente abre la app de Gemini; en Inicio y en Perfil empieza una
+// sesión de estudio.
 fun accionDelBoton(rutaActual: String?): AccionRapida = when (rutaActual) {
     Screen.Materias.ruta -> AccionRapida.MATERIA
     Screen.Calendario.ruta -> AccionRapida.EVENTO
     Screen.Notas.ruta -> AccionRapida.NOTA
+    Screen.Asistente.ruta -> AccionRapida.GEMINI
     else -> AccionRapida.ESTUDIAR
 }
 
-// Ícono del botón "+" según lo que va a crear.
+// Ícono del botón "+" según lo que va a hacer.
 fun iconoAccion(accion: AccionRapida): ImageVector = when (accion) {
     AccionRapida.MATERIA -> Icons.Outlined.LibraryAdd
     AccionRapida.EVENTO -> Icons.Outlined.EditCalendar
     AccionRapida.NOTA -> Icons.Outlined.PostAdd
     AccionRapida.ESTUDIAR -> Icons.Outlined.Timer
+    AccionRapida.GEMINI -> Icons.Outlined.OpenInNew
 }
 
 // Pantallas donde la lupa del dock filtra la lista ahí mismo (en las demás
@@ -343,6 +347,7 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
             AccionRapida.EVENTO -> R.string.nuevo_evento
             AccionRapida.NOTA -> R.string.nueva_nota
             AccionRapida.ESTUDIAR -> R.string.empezar_a_estudiar
+            AccionRapida.GEMINI -> R.string.abrir_gemini
         }
     )
     val degradado = Brush.linearGradient(listOf(DegradadoInicio, DegradadoFin))
@@ -386,7 +391,7 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         // Cada pantalla tiene su ícono: libro con "+" en Materias, calendario
-        // en Calendario, hoja con "+" en Notas y el reloj (empezar a estudiar)
+        // en Calendario, hoja con "+" en Notas, salir a Gemini en el Asistente y el reloj (empezar a estudiar)
         // en Inicio y Perfil. Al cambiar, el ícono gira y aparece creciendo.
         AnimatedContent(
             targetState = accion,

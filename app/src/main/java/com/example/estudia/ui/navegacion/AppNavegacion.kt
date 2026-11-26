@@ -34,6 +34,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.estudia.ui.componentes.AccionRapida
+import com.example.estudia.ui.componentes.abrirGemini
+import com.example.estudia.R
+import kotlinx.coroutines.launch
 import com.example.estudia.ui.componentes.DockFlotante
 import com.example.estudia.ui.componentes.LocalHaze
 import com.example.estudia.ui.componentes.buscaEnLaPantalla
@@ -98,7 +101,8 @@ fun AppNavegacion(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
-    val recursos = LocalContext.current.resources
+    val contexto = LocalContext.current
+    val recursos = contexto.resources
     val avisos = remember { ControladorAvisos(snackbarHostState, alcance, recursos) }
 
     // Lo que pidió el botón "+" del dock: la pantalla en la que se está abre
@@ -188,8 +192,13 @@ fun AppNavegacion(
                         textoBusqueda = textoBusqueda,
                         onSeleccionar = irA,
                         onCrear = { accion ->
-                            if (accion == AccionRapida.ESTUDIAR) navController.navigate(Screen.Temporizador.ruta)
-                            else accionPendiente = accion
+                            when (accion) {
+                                AccionRapida.ESTUDIAR -> navController.navigate(Screen.Temporizador.ruta)
+                                AccionRapida.GEMINI -> if (!abrirGemini(contexto)) {
+                                    alcance.launch { snackbarHostState.showSnackbar(recursos.getString(R.string.gemini_no_se_pudo_abrir)) }
+                                }
+                                else -> accionPendiente = accion
+                            }
                         },
                         onBuscar = {
                             if (buscaEnLaPantalla(rutaActual)) buscando = true

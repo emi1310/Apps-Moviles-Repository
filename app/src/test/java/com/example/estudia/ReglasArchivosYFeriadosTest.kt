@@ -66,10 +66,10 @@ class ReglasArchivosYFeriadosTest {
 
     @Test
     fun cadaPantallaTieneSuIconoEnElBotonCrear() {
-        val acciones = listOf(Screen.Materias.ruta, Screen.Calendario.ruta, Screen.Notas.ruta, Screen.Inicio.ruta).map { accionDelBoton(it) }
-        assertEquals(listOf(AccionRapida.MATERIA, AccionRapida.EVENTO, AccionRapida.NOTA, AccionRapida.ESTUDIAR), acciones)
-        // Los cuatro íconos son distintos.
-        assertEquals(4, AccionRapida.entries.map { iconoAccion(it) }.toSet().size)
+        val acciones = listOf(Screen.Materias.ruta, Screen.Calendario.ruta, Screen.Notas.ruta, Screen.Asistente.ruta, Screen.Inicio.ruta).map { accionDelBoton(it) }
+        assertEquals(listOf(AccionRapida.MATERIA, AccionRapida.EVENTO, AccionRapida.NOTA, AccionRapida.GEMINI, AccionRapida.ESTUDIAR), acciones)
+        // Los cinco íconos son distintos.
+        assertEquals(5, AccionRapida.entries.map { iconoAccion(it) }.toSet().size)
     }
 
     // ---------- Reglas de la cursada ----------
