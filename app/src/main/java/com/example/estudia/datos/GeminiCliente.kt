@@ -3,6 +3,11 @@ package com.example.estudia.datos
 import android.util.Base64
 import com.example.estudia.modelo.ClaseHorarioTexto
 import com.example.estudia.modelo.DECLARACION_FUNCIONES
+import com.example.estudia.modelo.FUNCION_BUSCAR
+import com.example.estudia.modelo.FuenteWeb
+import com.example.estudia.modelo.MAXIMO_BUSQUEDAS
+import com.example.estudia.modelo.MAXIMO_FUENTES_WEB
+import com.example.estudia.modelo.pedidoBusqueda
 import com.example.estudia.modelo.ESQUEMA_EVALUACION
 import com.example.estudia.modelo.ESQUEMA_HORARIO
 import com.example.estudia.modelo.ESQUEMA_MAPA
@@ -76,52 +81,101 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
 
     // Con streamGenerateContent (alt=sse) Gemini manda la respuesta en eventos
     // "data: {...}" a medida que la escribe.
+    //
+    // Si la IA pide buscar en internet (la función buscar_en_internet), la
+    // app hace la búsqueda con Google aparte, le devuelve lo que encontró y
+    // la IA sigue respondiendo con eso (hasta 2 búsquedas por respuesta).
     override fun conversar(clave: String, conversacion: List<MensajeIA>, contexto: String): Flow<PiezaRespuesta> = channelFlow {
         if (clave.isBlank()) {
             send(PiezaRespuesta.Error(ErrorIA.SIN_CLAVE))
             return@channelFlow
         }
-        val cuerpo = cuerpo(contenidos(conversacion), null, instruccionConDatos(contexto)).put("tools", JSONArray(DECLARACION_FUNCIONES))
+        val contenidos = contenidos(conversacion)
+        val instruccion = instruccionConDatos(contexto)
         withContext(Dispatchers.IO) {
-            var conexion: HttpURLConnection? = null
+            var llegoAlgo = false
+            var bloqueado = false
+            var busquedas = 0
             try {
-                conexion = abrir(clave, "streamGenerateContent?alt=sse")
-                conexion.outputStream.use { it.write(cuerpo.toString().toByteArray(Charsets.UTF_8)) }
-                val codigo = conexion.responseCode
-                if (codigo != HttpURLConnection.HTTP_OK) {
-                    send(PiezaRespuesta.Error(errorDeCodigo(codigo, conexion)))
-                    return@withContext
-                }
-                var llegoAlgo = false
-                var bloqueado = false
-                conexion.inputStream.bufferedReader(Charsets.UTF_8).use { lector ->
-                    while (true) {
-                        val linea = lector.readLine() ?: break
-                        if (!linea.startsWith("data:")) continue
-                        val evento = JSONObject(linea.removePrefix("data:").trim())
-                        val candidato = evento.optJSONArray("candidates")?.optJSONObject(0) ?: continue
-                        if (candidato.optString("finishReason") == "SAFETY") bloqueado = true
-                        val partes = candidato.optJSONObject("content")?.optJSONArray("parts") ?: continue
-                        for (i in 0 until partes.length()) {
-                            val parte = partes.optJSONObject(i) ?: continue
-                            if (parte.optBoolean("thought")) continue
-                            val llamada = parte.optJSONObject("functionCall")
-                            if (llamada != null) {
-                                val args = llamada.optJSONObject("args") ?: JSONObject()
-                                val mapa = args.keys().asSequence().associateWith { args.opt(it)?.toString().orEmpty() }
-                                accionDesdeLlamada(llamada.optString("name"), mapa)?.let {
-                                    llegoAlgo = true
-                                    send(PiezaRespuesta.Accion(it))
-                                }
-                            } else {
-                                val texto = parte.optString("text")
-                                if (texto.isNotEmpty()) {
-                                    llegoAlgo = true
-                                    send(PiezaRespuesta.Texto(texto))
+                while (true) {
+                    val cuerpo = cuerpo(contenidos, null, instruccion).put("tools", JSONArray(DECLARACION_FUNCIONES))
+                    var conexion: HttpURLConnection? = null
+                    // Lo que dijo la IA en esta vuelta (para devolvérselo si pidió buscar).
+                    val textoDeLaVuelta = StringBuilder()
+                    var pedidoDeBusqueda: JSONObject? = null
+                    var consulta = ""
+                    try {
+                        conexion = abrir(clave, "streamGenerateContent?alt=sse")
+                        conexion.outputStream.use { it.write(cuerpo.toString().toByteArray(Charsets.UTF_8)) }
+                        val codigo = conexion.responseCode
+                        if (codigo != HttpURLConnection.HTTP_OK) {
+                            send(PiezaRespuesta.Error(errorDeCodigo(codigo, conexion)))
+                            return@withContext
+                        }
+                        conexion.inputStream.bufferedReader(Charsets.UTF_8).use { lector ->
+                            while (true) {
+                                val linea = lector.readLine() ?: break
+                                if (!linea.startsWith("data:")) continue
+                                val evento = JSONObject(linea.removePrefix("data:").trim())
+                                val candidato = evento.optJSONArray("candidates")?.optJSONObject(0) ?: continue
+                                if (candidato.optString("finishReason") == "SAFETY") bloqueado = true
+                                val partes = candidato.optJSONObject("content")?.optJSONArray("parts") ?: continue
+                                for (i in 0 until partes.length()) {
+                                    val parte = partes.optJSONObject(i) ?: continue
+                                    if (parte.optBoolean("thought")) continue
+                                    val llamada = parte.optJSONObject("functionCall")
+                                    if (llamada != null) {
+                                        val args = llamada.optJSONObject("args") ?: JSONObject()
+                                        val mapa = args.keys().asSequence().associateWith { args.opt(it)?.toString().orEmpty() }
+                                        if (llamada.optString("name") == FUNCION_BUSCAR) {
+                                            // Se guarda la parte entera (con su firma, si trae).
+                                            if (pedidoDeBusqueda == null) {
+                                                pedidoDeBusqueda = parte
+                                                consulta = mapa["consulta"].orEmpty().trim()
+                                            }
+                                        } else {
+                                            accionDesdeLlamada(llamada.optString("name"), mapa)?.let {
+                                                llegoAlgo = true
+                                                send(PiezaRespuesta.Accion(it))
+                                            }
+                                        }
+                                    } else {
+                                        val texto = parte.optString("text")
+                                        if (texto.isNotEmpty()) {
+                                            llegoAlgo = true
+                                            textoDeLaVuelta.append(texto)
+                                            send(PiezaRespuesta.Texto(texto))
+                                        }
+                                    }
                                 }
                             }
                         }
+                    } finally {
+                        conexion?.disconnect()
                     }
+                    val pedido = pedidoDeBusqueda
+                    if (pedido == null || consulta.isEmpty() || busquedas >= MAXIMO_BUSQUEDAS) break
+                    busquedas++
+                    send(PiezaRespuesta.Buscando(consulta))
+                    val encontrado = buscarEnInternet(clave, consulta)
+                    if (encontrado != null && encontrado.second.isNotEmpty()) send(PiezaRespuesta.FuentesWeb(encontrado.second))
+                    // Se le devuelve a la IA su pedido y lo que se encontró.
+                    val partesModelo = JSONArray()
+                    if (textoDeLaVuelta.isNotEmpty()) partesModelo.put(JSONObject().put("text", textoDeLaVuelta.toString()))
+                    partesModelo.put(pedido)
+                    contenidos.put(JSONObject().put("role", "model").put("parts", partesModelo))
+                    val resultado = encontrado?.first ?: "No se pudo buscar en internet en este momento. Respondé con lo que sepas y aclaralo."
+                    contenidos.put(
+                        JSONObject().put("role", "user").put(
+                            "parts",
+                            JSONArray().put(
+                                JSONObject().put(
+                                    "functionResponse",
+                                    JSONObject().put("name", FUNCION_BUSCAR).put("response", JSONObject().put("resultado", resultado))
+                                )
+                            )
+                        )
+                    )
                 }
                 if (!llegoAlgo) send(PiezaRespuesta.Error(if (bloqueado) ErrorIA.BLOQUEADO else ErrorIA.OTRO))
             } catch (e: CancellationException) {
@@ -130,9 +184,42 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
                 send(PiezaRespuesta.Error(ErrorIA.SIN_INTERNET))
             } catch (e: Exception) {
                 send(PiezaRespuesta.Error(ErrorIA.OTRO))
-            } finally {
-                conexion?.disconnect()
             }
+        }
+    }
+
+    // Búsqueda en Google (la herramienta google_search de Gemini): devuelve un
+    // resumen de lo encontrado y las páginas de donde sale. null si falló.
+    private fun buscarEnInternet(clave: String, consulta: String): Pair<String, List<FuenteWeb>>? {
+        val cuerpo = JSONObject()
+            .put("contents", pedidoUsuario(pedidoBusqueda(consulta)))
+            .put("tools", JSONArray().put(JSONObject().put("google_search", JSONObject())))
+        var conexion: HttpURLConnection? = null
+        return try {
+            conexion = abrir(clave, "generateContent")
+            conexion.outputStream.use { it.write(cuerpo.toString().toByteArray(Charsets.UTF_8)) }
+            if (conexion.responseCode != HttpURLConnection.HTTP_OK) return null
+            val respuesta = JSONObject(conexion.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
+            val candidato = respuesta.optJSONArray("candidates")?.optJSONObject(0) ?: return null
+            val partes = candidato.optJSONObject("content")?.optJSONArray("parts")
+            val texto = (0 until (partes?.length() ?: 0))
+                .mapNotNull { partes!!.optJSONObject(it) }
+                .filter { !it.optBoolean("thought") }
+                .joinToString("") { it.optString("text") }
+                .trim()
+            val trozos = candidato.optJSONObject("groundingMetadata")?.optJSONArray("groundingChunks")
+            val fuentes = (0 until (trozos?.length() ?: 0)).mapNotNull { i ->
+                val web = trozos!!.optJSONObject(i)?.optJSONObject("web") ?: return@mapNotNull null
+                val url = web.optString("uri")
+                if (url.isBlank()) null else FuenteWeb(web.optString("title").ifBlank { url }, url)
+            }.distinctBy { it.titulo }.take(MAXIMO_FUENTES_WEB)
+            if (texto.isBlank()) null else texto to fuentes
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        } finally {
+            conexion?.disconnect()
         }
     }
 

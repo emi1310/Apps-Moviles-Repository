@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fila de una tarea en el widget: un velo suave del violeta. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_fila" />
+    <corners android:radius="14dp" />
+</shape>

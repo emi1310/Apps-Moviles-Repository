@@ -29,6 +29,7 @@ import com.example.estudia.modelo.SesionPlan
 import com.example.estudia.modelo.TAMANO_MAXIMO_PDF
 import com.example.estudia.modelo.TarjetaSugerida
 import com.example.estudia.modelo.Usuario
+import com.example.estudia.modelo.TipoEvento
 import com.example.estudia.modelo.buscarParecido
 import com.example.estudia.modelo.contextoDeNotas
 import com.example.estudia.modelo.contextoDelEstudiante
@@ -297,7 +298,9 @@ class AsistenteViewModel(
                 charla.update { it.copy(conversacion = it.conversacion + MensajeIA(false, "", fuentes = relevantes.map { n -> n.titulo })) }
                 asistente.conversar(claveEnUso(), enviada, contexto).collect { pieza ->
                     when (pieza) {
-                        is PiezaRespuesta.Texto -> cambiarUltima { it.copy(texto = it.texto + pieza.texto) }
+                        is PiezaRespuesta.Texto -> cambiarUltima { it.copy(texto = it.texto + pieza.texto, buscando = null) }
+                        is PiezaRespuesta.Buscando -> cambiarUltima { it.copy(buscando = pieza.consulta) }
+                        is PiezaRespuesta.FuentesWeb -> cambiarUltima { it.copy(fuentesWeb = (it.fuentesWeb + pieza.fuentes).distinctBy { f -> f.url }) }
                         is PiezaRespuesta.Accion -> charla.update { c ->
                             val ultima = c.conversacion.last()
                             // Si la burbuja ya tiene una acción, la siguiente va aparte.
@@ -314,7 +317,7 @@ class AsistenteViewModel(
                     val conversacion = when {
                         ultima == null || ultima.deUsuario -> c.conversacion
                         ultima.texto.isBlank() && ultima.accion == null -> c.conversacion.dropLast(1)
-                        else -> limpiarRespuesta(ultima.texto).let { limpio -> c.conversacion.dropLast(1) + ultima.copy(texto = limpio, mostrado = limpio) }
+                        else -> limpiarRespuesta(ultima.texto).let { limpio -> c.conversacion.dropLast(1) + ultima.copy(texto = limpio, mostrado = limpio, buscando = null) }
                     }
                     c.copy(conversacion = conversacion, pensando = false)
                 }
@@ -362,22 +365,52 @@ class AsistenteViewModel(
 
     // indice: la posición del mensaje con la acción en la charla.
     fun confirmarAccion(indice: Int) {
-        val mensaje = charla.value.conversacion.getOrNull(indice) ?: return
-        val accion = mensaje.accion ?: return
-        if (mensaje.estadoAccion != EstadoAccion.PENDIENTE) return
         viewModelScope.launch {
-            val materias = repositorio.usuarioActual.first()?.materias.orEmpty().filter { !it.archivada }
-            val materia = materiaParecida(accion.materia, materias)
-            val hecha = materia != null && ejecutar(accion, materia)
-            cambiarEstado(indice, if (hecha) EstadoAccion.HECHA else EstadoAccion.FALLO)
+            val aviso = hacerAccion(indice) ?: return@launch
+            avisar(aviso)
+            guardarCharla()
+        }
+    }
+
+    // "Confirmar todas": hace, en orden, todas las acciones que esperan.
+    fun confirmarTodas() {
+        val pendientes = charla.value.conversacion.indices.filter {
+            val m = charla.value.conversacion[it]
+            m.accion != null && m.estadoAccion == EstadoAccion.PENDIENTE
+        }
+        if (pendientes.isEmpty()) return
+        viewModelScope.launch {
+            val avisos = pendientes.mapNotNull { hacerAccion(it) }
+            val hechas = pendientes.count { charla.value.conversacion[it].estadoAccion == EstadoAccion.HECHA }
             avisar(
-                when {
-                    materia == null -> Aviso(Mensaje.AVISO_ACCION_IA_SIN_MATERIA, listOf(accion.materia))
-                    hecha -> Aviso(Mensaje.AVISO_ACCION_IA_HECHA)
-                    else -> Aviso(Mensaje.AVISO_ACCION_IA_ERROR)
-                }
+                if (hechas == pendientes.size) Aviso(Mensaje.AVISO_ACCIONES_IA_HECHAS, listOf(hechas))
+                else avisos.firstOrNull { it.mensaje != Mensaje.AVISO_ACCION_IA_HECHA && it.mensaje != Mensaje.AVISO_ACCION_IA_BORRADA }
+                    ?: Aviso(Mensaje.AVISO_ACCIONES_IA_HECHAS, listOf(hechas))
             )
             guardarCharla()
+        }
+    }
+
+    // Hace la acción de ese mensaje, marca cómo quedó y devuelve el aviso que
+    // corresponde (null si no había nada que hacer).
+    private suspend fun hacerAccion(indice: Int): Aviso? {
+        val mensaje = charla.value.conversacion.getOrNull(indice) ?: return null
+        val accion = mensaje.accion ?: return null
+        if (mensaje.estadoAccion != EstadoAccion.PENDIENTE) return null
+        val usuario = repositorio.usuarioActual.first() ?: return null
+        val hecho = try {
+            ejecutar(accion, usuario)
+        } catch (e: Exception) {
+            Hecho(ResultadoAccion.FALLO)
+        }
+        cambiarEstado(indice, if (hecho.resultado == ResultadoAccion.HECHA) EstadoAccion.HECHA else EstadoAccion.FALLO)
+        return when (hecho.resultado) {
+            ResultadoAccion.SIN_MATERIA -> Aviso(Mensaje.AVISO_ACCION_IA_SIN_MATERIA, listOf(accion.materia))
+            ResultadoAccion.NO_ENCONTRADO -> Aviso(Mensaje.AVISO_ACCION_IA_NO_ENCONTRADO)
+            ResultadoAccion.FALLO -> Aviso(Mensaje.AVISO_ACCION_IA_ERROR)
+            ResultadoAccion.HECHA ->
+                if (hecho.alDeshacer != null) Aviso(Mensaje.AVISO_ACCION_IA_BORRADA, alDeshacer = hecho.alDeshacer, alConfirmar = hecho.alConfirmar)
+                else Aviso(Mensaje.AVISO_ACCION_IA_HECHA)
         }
     }
 
@@ -391,25 +424,162 @@ class AsistenteViewModel(
         c.copy(conversacion = c.conversacion.mapIndexed { i, m -> if (i == indice) m.copy(estadoAccion = estado) else m })
     }
 
-    private suspend fun ejecutar(accion: AccionPropuesta, materia: Materia): Boolean = when (accion) {
-        is AccionPropuesta.CrearTarea -> {
-            val tarea = repositorio.agregarTarea(materia.id, accion.titulo, accion.fechaLimite, accion.prioridad)
-            avisosSistema?.programarTarea(tarea)
-            true
+    private enum class ResultadoAccion { HECHA, SIN_MATERIA, NO_ENCONTRADO, FALLO }
+
+    // Cómo salió una acción. Las que borran devuelven cómo deshacerlo (y qué
+    // hacer si no se deshace, como borrar los archivos del disco).
+    private class Hecho(
+        val resultado: ResultadoAccion,
+        val alDeshacer: (suspend () -> Unit)? = null,
+        val alConfirmar: (suspend () -> Unit)? = null
+    )
+
+    private val hecha = Hecho(ResultadoAccion.HECHA)
+    private val noEncontrada = Hecho(ResultadoAccion.NO_ENCONTRADO)
+
+    // Hace lo que pidió la IA (ya confirmado por el estudiante). Las cosas se
+    // buscan por el nombre que usó la IA: la materia, y adentro la tarea, el
+    // evento o la nota más parecidos.
+    private suspend fun ejecutar(accion: AccionPropuesta, usuario: Usuario): Hecho {
+        if (accion is AccionPropuesta.CrearMateria) {
+            val colores = MateriasViewModel.COLORES
+            repositorio.agregarMateria(usuario.id, accion.materia, colores[usuario.materias.size % colores.size])
+            return hecha
         }
-        is AccionPropuesta.CrearEvento -> {
-            val evento = repositorio.agregarEvento(materia.id, Evento(0, accion.titulo, accion.tipo, accion.fecha, accion.inicio, accion.fin))
-            avisosSistema?.programarEvento(evento)
-            true
-        }
-        is AccionPropuesta.MarcarTema -> {
-            val examenes = materia.eventos.filter { it.temas.isNotEmpty() }
-            val examen = buscarParecido(accion.examen, examenes.map { it.titulo })?.let { examenes[it] }
-            val tema = examen?.let { e -> buscarParecido(accion.tema, e.temas.map { it.titulo })?.let { e.temas[it] } }
-            if (examen == null || tema == null) false
-            else {
-                if (!tema.estudiado) repositorio.alternarTema(examen.id, tema)
-                true
+        // Para cambiar o borrar una materia vale también una archivada.
+        val dondeBuscar = if (accion is AccionPropuesta.EditarMateria || accion is AccionPropuesta.BorrarMateria) usuario.materias
+        else usuario.materias.filter { !it.archivada }
+        val materia = materiaParecida(accion.materia, dondeBuscar) ?: return Hecho(ResultadoAccion.SIN_MATERIA)
+        fun tarea(nombre: String) = buscarParecido(nombre, materia.tareas.map { it.titulo })?.let { materia.tareas[it] }
+        fun evento(nombre: String) = buscarParecido(nombre, materia.eventos.map { it.titulo })?.let { materia.eventos[it] }
+        fun nota(nombre: String) = buscarParecido(nombre, materia.notas.map { it.titulo })?.let { materia.notas[it] }
+
+        return when (accion) {
+            is AccionPropuesta.CrearMateria -> hecha
+            is AccionPropuesta.CrearTarea -> {
+                val nueva = repositorio.agregarTarea(materia.id, accion.titulo, accion.fechaLimite, accion.prioridad)
+                avisosSistema?.programarTarea(nueva)
+                hecha
+            }
+            is AccionPropuesta.EditarTarea -> {
+                val t = tarea(accion.tarea) ?: return noEncontrada
+                val cambiada = t.copy(
+                    titulo = accion.nuevoTitulo ?: t.titulo,
+                    fechaLimite = if (accion.quitarFecha) null else accion.nuevaFecha ?: t.fechaLimite,
+                    prioridad = accion.nuevaPrioridad ?: t.prioridad
+                )
+                repositorio.actualizarTarea(materia.id, cambiada)
+                if (!cambiada.completada) avisosSistema?.programarTarea(cambiada)
+                hecha
+            }
+            is AccionPropuesta.CompletarTarea -> {
+                val t = tarea(accion.tarea) ?: return noEncontrada
+                val cambiada = t.copy(completada = accion.hecha)
+                repositorio.actualizarTarea(materia.id, cambiada)
+                if (cambiada.completada) avisosSistema?.cancelarTarea(t.id) else avisosSistema?.programarTarea(cambiada)
+                hecha
+            }
+            is AccionPropuesta.BorrarTarea -> {
+                val t = tarea(accion.tarea) ?: return noEncontrada
+                repositorio.eliminarTarea(materia.id, t)
+                avisosSistema?.cancelarTarea(t.id)
+                Hecho(ResultadoAccion.HECHA, alDeshacer = {
+                    repositorio.restaurarTarea(materia.id, t)
+                    if (!t.completada) avisosSistema?.programarTarea(t)
+                })
+            }
+            is AccionPropuesta.CrearEvento -> {
+                val nuevo = repositorio.agregarEvento(materia.id, Evento(0, accion.titulo, accion.tipo, accion.fecha, accion.inicio, accion.fin))
+                avisosSistema?.programarEvento(nuevo)
+                hecha
+            }
+            is AccionPropuesta.EditarEvento -> {
+                val e = evento(accion.evento) ?: return noEncontrada
+                val inicio = accion.nuevoInicio ?: e.horaInicio
+                // Si solo cambia la hora de inicio, se mantiene lo que duraba.
+                val fin = accion.nuevoFin ?: if (accion.nuevoInicio != null) inicio.plusMinutes(e.duracionMinutos()) else e.horaFin
+                if (!fin.isAfter(inicio)) return Hecho(ResultadoAccion.FALLO)
+                val cambiado = e.copy(
+                    titulo = accion.nuevoTitulo ?: e.titulo,
+                    fecha = accion.nuevaFecha ?: e.fecha,
+                    horaInicio = inicio,
+                    horaFin = fin,
+                    lugar = accion.nuevoLugar ?: e.lugar
+                )
+                repositorio.actualizarEvento(materia.id, cambiado)
+                avisosSistema?.programarEvento(cambiado)
+                hecha
+            }
+            is AccionPropuesta.BorrarEvento -> {
+                val e = evento(accion.evento) ?: return noEncontrada
+                repositorio.eliminarEvento(materia.id, e)
+                avisosSistema?.cancelarEvento(e.id)
+                Hecho(ResultadoAccion.HECHA, alDeshacer = {
+                    repositorio.restaurarEvento(materia.id, e)
+                    avisosSistema?.programarEvento(e)
+                })
+            }
+            is AccionPropuesta.MarcarTema -> {
+                val examenes = materia.eventos.filter { it.temas.isNotEmpty() }
+                val examen = buscarParecido(accion.examen, examenes.map { it.titulo })?.let { examenes[it] }
+                val tema = examen?.let { e -> buscarParecido(accion.tema, e.temas.map { it.titulo })?.let { e.temas[it] } }
+                if (examen == null || tema == null) noEncontrada
+                else {
+                    if (!tema.estudiado) repositorio.alternarTema(examen.id, tema)
+                    hecha
+                }
+            }
+            is AccionPropuesta.AgregarTema -> {
+                // Primero entre los exámenes; si no, cualquier evento con ese nombre.
+                val examenes = materia.eventos.filter { it.tipo == TipoEvento.EXAMEN }
+                val examen = buscarParecido(accion.examen, examenes.map { it.titulo })?.let { examenes[it] } ?: evento(accion.examen)
+                    ?: return noEncontrada
+                repositorio.agregarTema(examen.id, accion.tema)
+                hecha
+            }
+            is AccionPropuesta.CrearNota -> {
+                repositorio.agregarNota(materia.id, accion.titulo, textoPlano(accion.contenido))
+                hecha
+            }
+            is AccionPropuesta.EditarNota -> {
+                val n = nota(accion.nota) ?: return noEncontrada
+                val base = accion.nuevoContenido?.let { textoPlano(it) } ?: n.contenido
+                val contenido = accion.agregarTexto?.let { extra -> listOf(base.trimEnd(), textoPlano(extra)).filter { it.isNotBlank() }.joinToString("\n\n") } ?: base
+                repositorio.actualizarNota(materia.id, n.copy(titulo = accion.nuevoTitulo ?: n.titulo, contenido = contenido))
+                hecha
+            }
+            is AccionPropuesta.BorrarNota -> {
+                val n = nota(accion.nota) ?: return noEncontrada
+                repositorio.eliminarNota(materia.id, n)
+                Hecho(
+                    ResultadoAccion.HECHA,
+                    alDeshacer = { repositorio.restaurarNota(materia.id, n) },
+                    alConfirmar = { repositorio.borrarArchivosDelDisco(n.archivos) }
+                )
+            }
+            is AccionPropuesta.EditarMateria -> {
+                repositorio.actualizarMateria(usuario.id, materia.copy(nombre = accion.nuevoNombre ?: materia.nombre, archivada = accion.archivar ?: materia.archivada))
+                hecha
+            }
+            is AccionPropuesta.BorrarMateria -> {
+                repositorio.eliminarMateria(usuario.id, materia)
+                materia.eventos.forEach { avisosSistema?.cancelarEvento(it.id) }
+                Hecho(
+                    ResultadoAccion.HECHA,
+                    alDeshacer = {
+                        repositorio.restaurarMateria(usuario.id, materia)
+                        avisosSistema?.programarEventos(materia.eventos)
+                    },
+                    alConfirmar = { repositorio.borrarArchivosDelDisco(materia.todosLosArchivos()) }
+                )
+            }
+            is AccionPropuesta.CrearTarjeta -> {
+                repositorio.agregarTarjeta(materia.id, accion.pregunta, accion.respuesta)
+                hecha
+            }
+            is AccionPropuesta.AgregarCalificacion -> {
+                repositorio.agregarCalificacion(materia.id, accion.titulo, accion.nota, accion.fecha ?: hoy())
+                hecha
             }
         }
     }

@@ -18,7 +18,10 @@ data class MensajeIA(
     val adjuntos: List<AdjuntoIA> = emptyList(),
     val accion: AccionPropuesta? = null,
     val estadoAccion: EstadoAccion = EstadoAccion.PENDIENTE,
-    val fuentes: List<String> = emptyList()
+    val fuentes: List<String> = emptyList(),
+    // Páginas de internet que usó (si buscó) y lo que está buscando ahora.
+    val fuentesWeb: List<FuenteWeb> = emptyList(),
+    val buscando: String? = null
 )
 
 // Un archivo que va con un mensaje: una foto (JPEG) o un PDF. No es data class
@@ -52,8 +55,14 @@ const val INSTRUCCION_ASISTENTE =
         "Si no estás seguro de algo, decilo y sugerí revisarlo en la bibliografía de la materia. " +
         "Podés usar Markdown simple: **negrita**, listas con \"-\" o \"1.\" y títulos cortos con \"##\" (sin tablas). " +
         "Escribí las fórmulas entre signos \$, con notación LaTeX simple (por ejemplo \$x^2 + \\frac{1}{2}\$). " +
-        "Si el estudiante te pide crear una tarea, agendar un examen, una clase o un bloque de estudio, o marcar un tema " +
-        "como estudiado, usá las funciones que tenés: la app le pide que lo confirme antes de guardarlo. " +
+        "Podés hacer cosas en la app con las funciones que tenés: crear, cambiar, completar o borrar tareas; agendar, " +
+        "mover o borrar exámenes, entregas, clases y bloques de estudio; agregar o marcar temas del temario; crear, editar " +
+        "o borrar notas; crear, renombrar, archivar o borrar materias; crear tarjetas de repaso y anotar calificaciones. " +
+        "Cuando el estudiante te pida algo así, llamá a la función (una vez por cada cosa, aunque sean varias) con los " +
+        "nombres tal como figuran en sus datos: la app le muestra cada acción y la hace cuando la confirma. " +
+        "No digas que ya está hecho: decí que lo confirme. " +
+        "Si te pregunta algo que no está en sus datos y no sabés con seguridad (algo actual, una fecha, un dato, " +
+        "una noticia), usá buscar_en_internet y respondé con lo que encuentres. " +
         "Si te pasan fragmentos de sus notas y usás algo de ellos, decí de qué nota sale, con el título entre « »."
 
 // Las notas largas se recortan para no pasarse del tamaño de un pedido.
@@ -113,5 +122,22 @@ const val PEDIDO_PRUEBA = "Respondé solamente: OK"
 sealed interface PiezaRespuesta {
     data class Texto(val texto: String) : PiezaRespuesta
     data class Accion(val accion: AccionPropuesta) : PiezaRespuesta
+    // La IA pidió buscar en internet: se muestra "Buscando…" mientras tanto.
+    data class Buscando(val consulta: String) : PiezaRespuesta
+    // Las páginas de donde sale lo que encontró.
+    data class FuentesWeb(val fuentes: List<FuenteWeb>) : PiezaRespuesta
     data class Error(val error: ErrorIA) : PiezaRespuesta
 }
+
+// Una página de internet de donde la IA sacó algo (al buscar con Google).
+data class FuenteWeb(val titulo: String, val url: String)
+
+// Cuántas veces puede buscar en internet en una misma respuesta, y cuántas
+// páginas se muestran como fuentes.
+const val MAXIMO_BUSQUEDAS = 2
+const val MAXIMO_FUENTES_WEB = 5
+
+// Lo que se le pide a Google (por Gemini) cuando la IA quiere buscar algo.
+fun pedidoBusqueda(consulta: String): String =
+    "Buscá en internet y resumí en español lo que encuentres sobre esto, con datos concretos, fechas y cifras si las hay. " +
+        "Si hay información contradictoria o desactualizada, decilo.\n\n$consulta"

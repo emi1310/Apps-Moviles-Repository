@@ -26,8 +26,9 @@ import com.example.estudia.notificaciones.ModoNoMolestar
 import com.example.estudia.notificaciones.NotificacionTemporizador
 import com.example.estudia.notificaciones.Notificaciones
 import com.example.estudia.notificaciones.ProgramadorRecordatorios
-import com.example.estudia.widget.WidgetEstudia
-import com.example.estudia.widget.WidgetHoy
+import com.example.estudia.widget.WidgetTemporizador
+import com.example.estudia.widget.actualizarTodosLosWidgets
+import com.example.estudia.widget.actualizarWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -118,8 +119,13 @@ class EstudiaApp : Application() {
         // (una tarea hecha, una sesión de estudio, cerrar sesión...).
         scope.launch {
             repositorio.usuarioActual.distinctUntilChanged().collect {
-                WidgetEstudia.actualizarTodos(this@EstudiaApp)
-                WidgetHoy.actualizarTodos(this@EstudiaApp)
+                actualizarTodosLosWidgets(this@EstudiaApp)
+            }
+        }
+        // El widget "Estudiar" sigue la sesión del temporizador (empezar, pausar, terminar).
+        scope.launch {
+            repositorio.sesionEstudio.distinctUntilChanged().collect {
+                actualizarWidget(this@EstudiaApp, WidgetTemporizador::class.java)
             }
         }
         // Copia automática semanal: se programa (o se cancela) al prenderla o apagarla.

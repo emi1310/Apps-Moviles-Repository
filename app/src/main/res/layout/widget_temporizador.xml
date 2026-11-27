@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Estudiar": la sesión del temporizador en curso (materia, tiempo
+     que falta y botones para pausar, seguir o terminar, sin abrir la app) o,
+     si no hay ninguna, un botón para empezar. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tempo_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo_widget_degradado"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <TextView
+        android:id="@+id/tempo_titulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="#D9FFFFFF"
+        android:textSize="13sp" />
+
+    <!-- Con sesión: el tiempo y los botones. -->
+    <LinearLayout
+        android:id="@+id/tempo_sesion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Chronometer
+            android:id="@+id/tempo_reloj"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFFFF"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tempo_pausado"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFFFF"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/tempo_pausar"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/fondo_widget_circulo"
+            android:contentDescription="@string/widget_pausar"
+            android:padding="11dp"
+            android:src="@drawable/wi_pausa" />
+
+        <ImageView
+            android:id="@+id/tempo_terminar"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/fondo_widget_circulo"
+            android:contentDescription="@string/widget_terminar"
+            android:padding="12dp"
+            android:src="@drawable/wi_terminar" />
+    </LinearLayout>
+
+    <!-- Sin sesión: botón para empezar. -->
+    <LinearLayout
+        android:id="@+id/tempo_empezar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/fondo_widget_boton"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/wi_seguir" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="@string/widget_empezar"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

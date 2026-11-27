@@ -53,6 +53,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.Estudia">
         <activity
             android:name=".MainActivity"
@@ -97,6 +98,48 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/info_widget_hoy" />
         </receiver>
+
+        <!-- Widget "Panel": botones que abren la app directo en una función. -->
+        <receiver
+            android:name=".widget.WidgetPanel"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/info_widget_panel" />
+        </receiver>
+
+        <!-- Widget "Estudiar": la sesión del temporizador con sus botones. -->
+        <receiver
+            android:name=".widget.WidgetTemporizador"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/info_widget_temporizador" />
+        </receiver>
+
+        <!-- Widget "Próximo examen". -->
+        <receiver
+            android:name=".widget.WidgetExamen"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/info_widget_examen" />
+        </receiver>
+
+        <!-- Acciones de los widgets sin abrir la app (completar una tarea).
+             No es "exported": solo lo llaman los widgets de la propia app. -->
+        <receiver
+            android:name=".widget.WidgetAccionesReceiver"
+            android:exported="false" />
 
         <!-- Comparte los adjuntos (filesDir/archivos) con otras apps para
              abrirlos, con acceso temporal de solo lectura. No es exportado:

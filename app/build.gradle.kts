@@ -26,8 +26,10 @@ android {
         applicationId = "com.example.estudia"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Subirlo en cada versión: con el mismo número, algunos launchers (Samsung,
+        // Xiaomi...) no actualizan el ícono al instalar encima.
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

@@ -8,4 +8,5 @@
     <color name="widget_texto_secundario">#FFA5A1B5</color>
     <color name="widget_acento">#FFA99CFF</color>
     <color name="widget_fuego">#FFFFB347</color>
+    <color name="widget_fila">#26A99CFF</color>
 </resources>

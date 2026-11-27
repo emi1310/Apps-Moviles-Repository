@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Próximo examen": cuántos días faltan, cuál es y cuánto del
+     temario está estudiado. Tocarlo abre el Calendario. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/examen_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo_widget"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_examen_titulo"
+        android:textColor="@color/widget_acento"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/examen_dias"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_texto"
+            android:textSize="38sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/examen_dias_texto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/widget_texto_secundario"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/examen_nombre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_texto"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/examen_materia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/widget_texto_secundario"
+        android:textSize="12sp" />
+
+    <ProgressBar
+        android:id="@+id/examen_avance"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progressBackgroundTint="@color/widget_fila"
+        android:progressTint="@color/widget_acento" />
+
+    <TextView
+        android:id="@+id/examen_temas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/widget_texto_secundario"
+        android:textSize="11sp" />
+</LinearLayout>

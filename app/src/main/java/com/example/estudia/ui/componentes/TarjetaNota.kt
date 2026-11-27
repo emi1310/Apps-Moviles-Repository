@@ -1,6 +1,7 @@
 package com.example.estudia.ui.componentes
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,11 +53,22 @@ fun TarjetaNota(
     alEliminarArchivo: (Archivo) -> Unit,
     alPasarATexto: (Archivo) -> Unit,
     alExportarPdf: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Tocar la tarjeta abre la nota completa (NotaDetalleScreen).
+    alAbrir: () -> Unit = {}
 ) {
     val color = Color(colorMateria)
     val acento = colorAcentoTexto(color)
-    BloqueColor(color = color, modifier = modifier.padding(vertical = 6.dp)) {
+    val textoAbrir = stringResource(R.string.nota_abrir)
+    BloqueColor(
+        color = color,
+        // La tarjeta se agranda hasta ser la nota abierta (y vuelve al cerrarla).
+        modifier = modifier
+            .padding(vertical = 6.dp)
+            .limitesCompartidos("nota-${nota.id}")
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClickLabel = textoAbrir, onClick = alAbrir)
+    ) {
         Column(modifier = Modifier.padding(start = 20.dp, top = 12.dp, end = 4.dp, bottom = 18.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f).padding(top = 6.dp)) {
@@ -72,7 +84,8 @@ fun TarjetaNota(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.elementoCompartido("titulo-nota-${nota.id}")
                     )
                 }
                 // Favorita: estrella amarilla en un círculo amarillo suave; si no, gris.

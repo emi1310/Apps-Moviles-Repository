@@ -10,7 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.estudia.ui.navegacion.AccionExterna
 import com.example.estudia.ui.navegacion.AppNavegacion
+import com.example.estudia.ui.navegacion.accionDelIntent
 import com.example.estudia.ui.theme.TemaElegido
 import com.example.estudia.viewmodel.AppViewModelProvider
 import com.example.estudia.viewmodel.SesionViewModel
@@ -23,32 +25,31 @@ class MainActivity : ComponentActivity() {
     // by viewModels hace que el ViewModel sobreviva a rotaciones de pantalla.
     private val sesionViewModel: SesionViewModel by viewModels { AppViewModelProvider.Factory }
 
-    // Pedido de abrir el temporizador: llega al tocar su notificación
-    // (NotificacionTemporizador). Android se lo entrega a la Activity, por
-    // eso se recibe acá. Es estado de Compose, así AppNavegacion navega
-    // apenas cambia.
-    private var abrirTemporizador by mutableStateOf(false)
+    // Lo que se pidió desde afuera (un botón de un widget o la notificación
+    // del temporizador). Android se lo entrega a la Activity, por eso se
+    // recibe acá. Es estado de Compose, así AppNavegacion lo hace apenas cambia.
+    private var accionExterna by mutableStateOf<AccionExterna?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) abrirTemporizador = intent.getBooleanExtra(EXTRA_ABRIR_TEMPORIZADOR, false)
+        if (savedInstanceState == null) accionExterna = accionDelIntent(intent)
         setContent {
             val tema by sesionViewModel.tema.collectAsStateWithLifecycle()
             TemaElegido(tema) {
                 AppNavegacion(
                     sesionViewModel = sesionViewModel,
-                    abrirTemporizador = abrirTemporizador,
-                    onTemporizadorAbierto = { abrirTemporizador = false }
+                    accionExterna = accionExterna,
+                    onAccionHecha = { accionExterna = null }
                 )
             }
         }
     }
 
-    // La app ya estaba abierta y se tocó la notificación del temporizador.
+    // La app ya estaba abierta y se tocó un widget o la notificación.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.getBooleanExtra(EXTRA_ABRIR_TEMPORIZADOR, false)) abrirTemporizador = true
+        accionDelIntent(intent)?.let { accionExterna = it }
     }
 
     companion object {

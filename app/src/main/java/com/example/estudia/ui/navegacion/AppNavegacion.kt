@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +43,11 @@ import com.example.estudia.ui.componentes.rememberFondoLiquido
 import com.example.estudia.ui.componentes.rememberLuzDelTelefono
 import com.example.estudia.ui.componentes.deslizarEntreSecciones
 import com.example.estudia.ui.componentes.LocalCambiarSeccion
+import com.example.estudia.ui.componentes.LocalTransicionCompartida
+import com.example.estudia.ui.componentes.LocalAlcanceAnimado
+import com.example.estudia.ui.pantallas.NotaDetalleScreen
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import com.example.estudia.ui.componentes.seccionVecina
 import com.example.estudia.ui.componentes.LocalLuz
 import androidx.compose.ui.graphics.graphicsLayer
@@ -96,12 +102,14 @@ import com.example.estudia.viewmodel.TODAS_LAS_MATERIAS
 // Cada pantalla pide su propio ViewModel con viewModel(factory = ...):
 // queda asociado a esa entrada de la navegación y se destruye al salir.
 // La sesión la maneja SesionViewModel, que vive mientras vive la Activity.
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AppNavegacion(
     sesionViewModel: SesionViewModel,
-    // true cuando se tocó la notificación del temporizador (ver MainActivity).
-    abrirTemporizador: Boolean = false,
-    onTemporizadorAbierto: () -> Unit = {}
+    // Lo que se pidió desde un widget o la notificación del temporizador
+    // (ver MainActivity y AccionExterna).
+    accionExterna: AccionExterna? = null,
+    onAccionHecha: () -> Unit = {}
 ) {
     val sesionUiState by sesionViewModel.sesionUiState.collectAsStateWithLifecycle()
     val authUiState by sesionViewModel.authUiState.collectAsStateWithLifecycle()
@@ -169,14 +177,28 @@ fun AppNavegacion(
         }
     }
 
-    // Al tocar la notificación del temporizador se va directo a esa pantalla
-    // (si hay alguien con sesión iniciada).
-    LaunchedEffect(abrirTemporizador, sesionUiState) {
-        if (!abrirTemporizador) return@LaunchedEffect
+    // Un botón de un widget o la notificación del temporizador: se hace la
+    // acción (si hay alguien con sesión iniciada). Las de crear abren la
+    // sección y su diálogo, como el botón + del dock.
+    LaunchedEffect(accionExterna, sesionUiState) {
+        val accion = accionExterna ?: return@LaunchedEffect
         if (sesionUiState is SesionUiState.Activa) {
-            navController.navigate(Screen.Temporizador.ruta) { launchSingleTop = true }
+            // Recién abierta la app, se espera a que la navegación esté lista.
+            navController.currentBackStackEntryFlow.first()
+            when (accion) {
+                AccionExterna.TEMPORIZADOR -> navController.navigate(Screen.Temporizador.ruta) { launchSingleTop = true }
+                AccionExterna.NUEVA_NOTA -> { accionPendiente = AccionRapida.NOTA; irA(Screen.Notas) }
+                AccionExterna.NUEVO_EVENTO -> { accionPendiente = AccionRapida.EVENTO; irA(Screen.Calendario) }
+                AccionExterna.NUEVA_MATERIA -> { accionPendiente = AccionRapida.MATERIA; irA(Screen.Materias) }
+                AccionExterna.ASISTENTE -> irA(Screen.Asistente)
+                AccionExterna.HORARIO -> navController.navigate(Screen.Horario.ruta) { launchSingleTop = true }
+                AccionExterna.CALENDARIO -> irA(Screen.Calendario)
+                AccionExterna.MATERIAS -> irA(Screen.Materias)
+                AccionExterna.NOTAS -> irA(Screen.Notas)
+                AccionExterna.BUSCAR -> navController.navigate(Screen.Busqueda.ruta) { launchSingleTop = true }
+            }
         }
-        onTemporizadorAbierto()
+        onAccionHecha()
     }
 
     // Guía de primera vez (usuario nuevo, sin materias). Sus botones cierran la
@@ -270,6 +292,10 @@ fun AppNavegacion(
             // El fondo va en su propia capa: así, cuando se mueve, no se
             // redibuja toda la pantalla.
             Box(modifier = Modifier.matchParentSize().graphicsLayer().fondoAurora())
+            // Para las transiciones compartidas (la tarjeta de una nota que se
+            // agranda hasta ser la nota abierta): ver TransicionCompartida.kt.
+            SharedTransitionLayout {
+            CompositionLocalProvider(LocalTransicionCompartida provides this) {
             NavHost(
                 navController = navController,
                 startDestination = destinoInicial,
@@ -358,13 +384,30 @@ fun AppNavegacion(
                 }
 
                 composable(Screen.Notas.ruta) {
-                    NotasScreen(
-                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
-                        crearAlAbrir = accionPendiente == AccionRapida.NOTA,
-                        busqueda = textoBusqueda,
-                        onCreacionAbierta = { accionPendiente = null },
-                        onAbrirMapas = { navController.navigate(Screen.Mapas.ruta) }
-                    )
+                    CompositionLocalProvider(LocalAlcanceAnimado provides this) {
+                        NotasScreen(
+                            viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                            crearAlAbrir = accionPendiente == AccionRapida.NOTA,
+                            busqueda = textoBusqueda,
+                            onCreacionAbierta = { accionPendiente = null },
+                            onAbrirMapas = { navController.navigate(Screen.Mapas.ruta) },
+                            onAbrirNota = { navController.navigate(Screen.Nota.de(it)) }
+                        )
+                    }
+                }
+
+                // La nota abierta usa el ViewModel de la lista de notas (el de
+                // su pantalla en la pila), así los cambios se ven en las dos.
+                composable(Screen.Nota.ruta, arguments = listOf(navArgument(Screen.Nota.ARGUMENTO) { type = NavType.IntType })) { entrada ->
+                    val dueño = remember(entrada) { runCatching { navController.getBackStackEntry(Screen.Notas.ruta) }.getOrNull() ?: entrada }
+                    CompositionLocalProvider(LocalAlcanceAnimado provides this) {
+                        NotaDetalleScreen(
+                            notaId = entrada.arguments?.getInt(Screen.Nota.ARGUMENTO) ?: -1,
+                            viewModel = viewModel(viewModelStoreOwner = dueño, factory = AppViewModelProvider.Factory),
+                            // Solo si sigue abierta: puede pedirse dos veces (al borrarla).
+                            onVolver = { if (navController.currentDestination?.route == Screen.Nota.ruta) navController.popBackStack() }
+                        )
+                    }
                 }
 
                 composable(Screen.Perfil.ruta) {
@@ -489,6 +532,8 @@ fun AppNavegacion(
                 ) {
                     QuizScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
                 }
+            }
+            }
             }
           }
           }

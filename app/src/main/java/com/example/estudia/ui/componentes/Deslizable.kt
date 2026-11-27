@@ -19,7 +19,6 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.abs
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -76,8 +76,15 @@ fun Deslizable(
     //   llegó a RECORRIDO_MINIMO del ancho, la fila vuelve a su lugar).
     var ancho by remember { mutableIntStateOf(0) }
     lateinit var estado: SwipeToDismissBoxState
-    estado = rememberSwipeToDismissBoxState(
-        confirmValueChange = { valor ->
+    val densidad = LocalDensity.current
+    // remember (no rememberSaveable): si la fila se borra y vuelve con
+    // "Deshacer" (con el mismo id), arranca de cero, en su lugar. Con el
+    // estado guardado volvía "deslizada para borrar" y quedaba trabada.
+    estado = remember {
+        SwipeToDismissBoxState(
+            initialValue = SwipeToDismissBoxValue.Settled,
+            density = densidad,
+            confirmValueChange = { valor ->
             val recorrido = runCatching { abs(estado.requireOffset()) }.getOrDefault(0f)
             val suficiente = ancho > 0 && recorrido >= ancho * RECORRIDO_MINIMO
             when (valor) {
@@ -89,14 +96,15 @@ fun Deslizable(
                     if (suficiente) alEliminar?.invoke()
                     suficiente && alEliminar != null
                 }
-                SwipeToDismissBoxValue.Settled -> false
+                // Volver a su lugar siempre se permite (antes no, y una fila
+                // que quedaba corrida ya no se podía mover).
+                SwipeToDismissBoxValue.Settled -> true
             }
         },
-        positionalThreshold = { total -> total * 0.5f }
-    )
-    // El estado se guarda por fila (por su id). Si algo borrado vuelve con
-    // "Deshacer", vuelve con el mismo id y recuperaría el estado "deslizada
-    // para borrar" (corrida, con el fondo rojo). Al aparecer, vuelve a su lugar.
+            positionalThreshold = { total -> total * 0.5f }
+        )
+    }
+    // Por las dudas: si al aparecer no está en su lugar, vuelve.
     LaunchedEffect(Unit) {
         if (estado.currentValue != SwipeToDismissBoxValue.Settled) estado.reset()
     }

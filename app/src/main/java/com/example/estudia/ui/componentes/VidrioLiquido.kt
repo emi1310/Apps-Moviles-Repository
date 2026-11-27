@@ -196,11 +196,13 @@ fun Modifier.vidrioLiquido(forma: Shape, sombra: Dp = 16.dp, tinte: Color? = nul
 fun Modifier.superficieVidrio(
     forma: Shape,
     color: Color = MaterialTheme.colorScheme.surfaceContainer,
-    borde: Boolean = true
+    borde: Boolean = true,
+    // false en piezas grandes (una pantalla entera): no se "hinchan" al tocarlas.
+    hinchar: Boolean = true
 ): Modifier {
     val fondo = LocalFondoLiquido.current
     val pieza = if (fondo != null && vidrioLiquidoDisponible()) {
-        piezaLiquida(fondo, fondo.capaAurora, forma, color, fuerza = 12.dp, desenfoque = 0.dp, leerVersion = false)
+        piezaLiquida(fondo, fondo.capaAurora, forma, color, fuerza = 12.dp, desenfoque = 0.dp, leerVersion = false, hinchar = hinchar)
     } else null
     if (pieza == null) {
         val base = this.clip(forma).background(color)

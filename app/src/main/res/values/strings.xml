@@ -303,7 +303,7 @@
         <item>En tu Perfil tocá \"Guardar copia\" y elegí dónde guardar el archivo (por ejemplo en Drive). Para recuperar todo, tocá \"Restaurar copia\" y elegí ese archivo: se reemplazan tus datos actuales. También podés activar la \"Copia automática semanal\": elegís una carpeta y cada semana se guarda sola una copia (se conservan las 4 últimas).</item>
         <item>En Materias, expandí una materia y en \"Tarjetas de estudio\" agregá preguntas con su respuesta. Con \"Repasar\" (o desde Inicio) las vas respondiendo: si la sabías vuelve en unos días, cada vez más espaciado; si no, vuelve mañana. Así repasás más lo que te cuesta.</item>
         <item>Sí: en el Calendario tocá el botón de arriba con el calendario y las flechas y elegí \"Pasar al calendario del teléfono\". La primera vez pide permiso de calendario. Se crea un calendario propio llamado \"Estudia+\" con tus clases, exámenes, entregas y bloques de estudio que vienen, y desde ahí se mantiene al día solo cada vez que cambiás algo (desde el mismo botón podés dejar de sincronizar). Para verlos en Google Calendar en la compu o en otro teléfono, elegí \"Exportar archivo .ics\" e importalo ahí.</item>
-        <item>Sí: agregá el widget de Estudia+ en la pantalla de inicio del teléfono (mantené apretado un lugar vacío y elegí Widgets). Hay dos: \"Estudia+\" muestra tu racha y tus 3 tareas más urgentes, y \"Hoy\" muestra tus clases, exámenes, entregas y bloques de estudio del día, más las tareas que vencen hoy. Se actualizan solos.</item>
+        <item>Sí: en la pantalla de inicio del teléfono mantené apretado un lugar vacío, elegí Widgets y después Estudia+. Hay cinco: \"Tareas\" (tus tareas más urgentes; el círculo las completa sin abrir la app), \"Hoy\" (lo que tenés en el día), \"Panel\" (botones para crear una nota, un evento o una materia, estudiar, el Asistente, el horario, la agenda y buscar), \"Estudiar\" (el temporizador con Pausar y Terminar) y \"Próximo examen\" (días que faltan y avance del temario). Se actualizan solos.</item>
         <item>Sí: al crear o editar una nota, tocá el micrófono del campo Contenido y hablá. Lo dictado se suma al final del texto.</item>
         <item>Sí: en los archivos de una nota, tocá \"Pasar a texto\" en la foto. El texto que encuentre se agrega al final de la nota (con \"Deshacer\"). Funciona sin internet.</item>
         <item>En Materias, arriba, tocá \"Mi carrera\" y cargá las materias de tu plan con su año y sus correlativas (o pasá las que ya tenés en la app). Marcá cada una como pendiente, cursando, regular o aprobada: la app te dice cuáles ya podés cursar o rendir y qué porcentaje de la carrera llevás.</item>
@@ -322,7 +322,7 @@
         <item>En Materias, arriba, tocá \"Bibliografía\" y después \"Nueva fuente\". Elegí si es libro, artículo, web o apunte y cargá título, autores (Apellido, Inicial.; separados con punto y coma), año y editorial: mientras escribís ves la cita en normas APA 7. \"Copiar cita\" la deja lista para pegar en tu trabajo, y en el menú ⋮ está la versión corta para el texto, como (Cormen et al., 2009).</item>
         <item>Sí: al crear una nota elegí una plantilla: Resumen Cornell, Esquema, Cuadro comparativo o Línea de tiempo. El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
         <item>En Notas, arriba, tocá \"Mapas mentales\" y \"Nuevo mapa\", y escribí el tema central. Tocá una idea y elegí \"Nueva idea\" para sumarle una rama (se ubica sola). Arrastrá las ideas para acomodarlas, mové el mapa con un dedo y acercalo con dos. Cada rama tiene su color. Con \"Compartir como imagen\" lo mandás por WhatsApp o lo guardás en Drive.</item>
-        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen (al terminarlo te da la nota, guarda los temas flojos y los pasa a tarjetas), lee PDFs y fotos de varias hojas, y con una foto de tu horario carga tus clases semanales. La respuesta se va escribiendo en vivo (podés cortarla), muestra negritas, listas y fórmulas, y si le pedís \"anotame el TP para el viernes\" te propone crear la tarea y la guarda cuando confirmás. Busca en el contenido de tus notas y te dice de cuál sacó la respuesta. Las charlas se guardan solas (botón del reloj, arriba) y, si pasaron sesiones del plan de estudio, te ofrece reacomodarlas. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
+        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen (al terminarlo te da la nota, guarda los temas flojos y los pasa a tarjetas), lee PDFs y fotos de varias hojas, y con una foto de tu horario carga tus clases semanales. La respuesta se va escribiendo en vivo (podés cortarla), muestra negritas, listas y fórmulas, y le podés dar instrucciones para hacer cosas en la app: crear, cambiar, completar o borrar tareas, eventos, notas y materias, agregar temas al temario, crear tarjetas o anotar una calificación (por ejemplo \"anotame el TP para el viernes\", \"pasá el parcial al martes\" o \"borrá la nota de derivadas\"). Cada cosa aparece en una tarjeta y se hace cuando confirmás; si son varias, \"Confirmar todas\". Lo que se borra se puede deshacer. Si le preguntás algo que no está en la app, busca en internet con Google y te muestra las páginas que usó. Busca en el contenido de tus notas y te dice de cuál sacó la respuesta. Las charlas se guardan solas (botón del reloj, arriba) y, si pasaron sesiones del plan de estudio, te ofrece reacomodarlas. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -574,7 +574,7 @@
     <string name="cerrar">Cerrar</string>
 
     <!-- Widget -->
-    <string name="widget_descripcion">Tu racha y tus próximas tareas</string>
+    <string name="widget_descripcion">Tus próximas tareas: completalas tocando el círculo, sin abrir la app</string>
     <string name="widget_racha">🔥 %1$d</string>
     <plurals name="widget_pendientes">
         <item quantity="one">%1$d tarea pendiente</item>
@@ -1163,9 +1163,47 @@
     <string name="ia_accion_hecha">✓ Guardado</string>
     <string name="ia_accion_descartada">Descartado</string>
     <string name="ia_accion_fallo">No se pudo guardar</string>
+    <string name="ia_accion_editar_tarea">Cambiar la tarea: %1$s</string>
+    <string name="ia_accion_completar_tarea">Marcar como hecha: %1$s</string>
+    <string name="ia_accion_descompletar_tarea">Marcar como pendiente: %1$s</string>
+    <string name="ia_accion_borrar_tarea">Borrar la tarea: %1$s</string>
+    <string name="ia_accion_editar_evento">Cambiar: %1$s</string>
+    <string name="ia_accion_borrar_evento">Borrar del calendario: %1$s</string>
+    <string name="ia_accion_agregar_tema">Agregar al temario: %1$s</string>
+    <string name="ia_accion_crear_nota">Nueva nota: %1$s</string>
+    <string name="ia_accion_editar_nota">Cambiar la nota: %1$s</string>
+    <string name="ia_accion_borrar_nota">Borrar la nota: %1$s</string>
+    <string name="ia_accion_crear_materia">Nueva materia: %1$s</string>
+    <string name="ia_accion_editar_materia">Cambiar la materia: %1$s</string>
+    <string name="ia_accion_borrar_materia">Borrar la materia: %1$s</string>
+    <string name="ia_accion_borrar_materia_detalle">Con sus tareas, eventos y notas</string>
+    <string name="ia_accion_crear_tarjeta">Nueva tarjeta de repaso</string>
+    <string name="ia_accion_calificacion">Anotar %1$s en %2$s</string>
+    <string name="ia_accion_titulo_nuevo">nuevo título: %1$s</string>
+    <string name="ia_accion_nombre_nuevo">nuevo nombre: %1$s</string>
+    <string name="ia_accion_sin_fecha">sin fecha</string>
+    <string name="ia_accion_fecha_nueva">fecha: %1$s</string>
+    <string name="ia_accion_prioridad">prioridad %1$s</string>
+    <string name="ia_accion_horario_nuevo">de %1$s a %2$s</string>
+    <string name="ia_accion_desde">desde las %1$s</string>
+    <string name="ia_accion_hasta">hasta las %1$s</string>
+    <string name="ia_accion_lugar">lugar: %1$s</string>
+    <string name="ia_accion_texto_nuevo">reemplaza el texto</string>
+    <string name="ia_accion_texto_agregado">agrega texto al final</string>
+    <string name="ia_accion_archivar">archivarla</string>
+    <string name="ia_accion_desarchivar">desarchivarla</string>
+    <string name="ia_accion_borrar">Borrar</string>
+    <string name="ia_accion_borrado">✓ Borrado</string>
+    <string name="ia_accion_fallo_detalle">No se pudo: no lo encontré o hubo un error</string>
+    <string name="ia_confirmar_todas">Confirmar todas (%1$d)</string>
+    <string name="ia_buscando">Buscando en internet: %1$s</string>
+    <string name="ia_fuentes_web">Fuentes de internet</string>
     <string name="aviso_accion_ia_hecha">Listo, quedó guardado</string>
     <string name="aviso_accion_ia_sin_materia">No encontré la materia \"%1$s\". Cargala primero o pedíselo con el nombre exacto.</string>
-    <string name="aviso_accion_ia_error">No se pudo guardar (puede que el examen o el tema no estén cargados)</string>
+    <string name="aviso_accion_ia_error">No se pudo hacer: revisá los datos e intentá de nuevo</string>
+    <string name="aviso_accion_ia_no_encontrado">No encontré eso en la app: puede que tenga otro nombre o ya no esté</string>
+    <string name="aviso_accion_ia_borrada">Listo, quedó borrado</string>
+    <string name="aviso_acciones_ia_hechas">Listo: %1$d acciones hechas</string>
     <string name="ia_historial">Charlas guardadas</string>
     <string name="ia_historial_charlas">Charlas</string>
     <string name="ia_historial_simulacros">Últimos simulacros</string>
@@ -1208,4 +1246,56 @@
     <string name="ia_plan_todas_hechas">Las hice todas</string>
     <string name="aviso_plan_al_dia">¡Bien! Tu plan está al día</string>
     <string name="aviso_plan_reacomodado">Se reacomodaron %1$d sesiones (%2$d no entraron antes del examen)</string>
+    <!-- Nota abierta -->
+    <string name="nota_abrir">Abrir nota</string>
+    <string name="nota_texto_copiado">Texto copiado</string>
+    <string name="nota_copiar_texto">Copiar texto</string>
+    <string name="nota_compartir_texto">Compartir texto</string>
+    <string name="nota_minutos_lectura">%1$d min de lectura</string>
+    <string name="nota_sin_texto">Esta nota todavía no tiene texto. Tocá Editar para escribirlo.</string>
+    <string name="nota_adjuntos_titulo">Adjuntos</string>
+    <plurals name="nota_palabras">
+        <item quantity="one">%1$d palabra</item>
+        <item quantity="other">%1$d palabras</item>
+    </plurals>
+    <plurals name="nota_adjuntos">
+        <item quantity="one">%1$d adjunto</item>
+        <item quantity="other">%1$d adjuntos</item>
+    </plurals>
+    <!-- Widgets nuevos -->
+    <string name="widget_tareas_titulo">Tareas</string>
+    <string name="widget_completar">Completar tarea</string>
+    <string name="widget_panel_descripcion">Panel con accesos directos: nota, evento, materia, estudiar, Asistente y más</string>
+    <string name="widget_panel_hoy">Hoy: %1$s</string>
+    <string name="widget_panel_examen_hoy">Hoy rendís %1$s. ¡Éxitos!</string>
+    <plurals name="widget_panel_examen">
+        <item quantity="one">%1$s en %2$d día</item>
+        <item quantity="other">%1$s en %2$d días</item>
+    </plurals>
+    <string name="widget_boton_nota">Nota</string>
+    <string name="widget_boton_evento">Evento</string>
+    <string name="widget_boton_materia">Materia</string>
+    <string name="widget_boton_estudiar">Estudiar</string>
+    <string name="widget_boton_ia">IA</string>
+    <string name="widget_boton_horario">Horario</string>
+    <string name="widget_boton_calendario">Agenda</string>
+    <string name="widget_boton_buscar">Buscar</string>
+    <string name="widget_temporizador_descripcion">El temporizador de estudio: pausalo o terminalo desde la pantalla de inicio</string>
+    <string name="widget_temporizador_libre">¿Arrancamos una sesión de estudio?</string>
+    <string name="widget_temporizador_estudiando">Estudiando %1$s</string>
+    <string name="widget_temporizador_pausa">En pausa · %1$s</string>
+    <string name="widget_empezar">Empezar</string>
+    <string name="widget_pausar">Pausar</string>
+    <string name="widget_seguir">Seguir</string>
+    <string name="widget_terminar">Terminar</string>
+    <string name="widget_examen_descripcion">Cuántos días faltan para tu próximo examen y cuánto llevás del temario</string>
+    <string name="widget_examen_titulo">Próximo examen</string>
+    <string name="widget_examen_ninguno">No tenés exámenes cargados</string>
+    <string name="widget_examen_hoy">¡Hoy!</string>
+    <plurals name="widget_examen_dias">
+        <item quantity="one">día</item>
+        <item quantity="other">días</item>
+    </plurals>
+    <string name="widget_examen_temas">%1$d de %2$d temas estudiados</string>
+    <string name="widget_examen_sin_temario">Sin temario cargado</string>
 </resources>

@@ -15,4 +15,5 @@
     <color name="widget_texto_secundario">#FF6E6A7C</color>
     <color name="widget_acento">#FF6C5CE7</color>
     <color name="widget_fuego">#FFFF9F43</color>
+    <color name="widget_fila">#146C5CE7</color>
 </resources>

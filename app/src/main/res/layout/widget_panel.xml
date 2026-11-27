@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Panel" de Estudia+: un tablero con el degradado de la app.
+     Arriba la racha y lo próximo que hay; abajo ocho botones que abren la
+     app directo en una función (crear una nota, un evento o una materia,
+     estudiar, el Asistente, el horario, el calendario y buscar). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panel_raiz"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo_widget_degradado"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/app_name"
+            android:textColor="#FFFFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/panel_racha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/panel_proximo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:textColor="#D9FFFFFF"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/panel_nota"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_nota" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_nota"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_evento"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_evento" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_evento"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_materia"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_materia" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_materia"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_estudiar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_estudiar" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_estudiar"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/panel_ia"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_ia" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_ia"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_horario"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_horario" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_horario"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_calendario"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_calendario" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_calendario"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/panel_buscar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/fondo_widget_boton"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/wi_buscar" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_boton_buscar"
+                android:textColor="#FFFFFFFF"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

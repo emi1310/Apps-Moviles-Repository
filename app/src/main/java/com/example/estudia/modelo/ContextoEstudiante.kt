@@ -13,7 +13,7 @@ import java.time.LocalTime
 const val DIAS_DE_AGENDA = 14
 
 // Tope del resumen para no agrandar demasiado cada pedido.
-const val LARGO_MAXIMO_CONTEXTO = 8_000
+const val LARGO_MAXIMO_CONTEXTO = 12_000
 
 private val DIAS = mapOf(
     DayOfWeek.MONDAY to "lunes", DayOfWeek.TUESDAY to "martes", DayOfWeek.WEDNESDAY to "miércoles",
@@ -65,10 +65,27 @@ fun contextoDelEstudiante(usuario: Usuario, hoy: LocalDate): String {
             if (m.calificaciones.isNotEmpty()) {
                 texto.appendLine("  Notas: " + m.calificaciones.sortedBy { it.fecha }.joinToString("; ") { "${it.titulo.trim()} ${nota(it.nota)}" })
             }
+            if (m.tareas.any { it.completada }) {
+                texto.appendLine("  Tareas ya hechas: " + m.tareas.filter { it.completada }.takeLast(10).joinToString("; ") { it.titulo.trim() })
+            }
+            // Exámenes y entregas que vienen (con su temario), aunque falte mucho.
+            val proximos = m.eventos.filter { (it.tipo == TipoEvento.EXAMEN || it.tipo == TipoEvento.ENTREGA) && !it.fecha.isBefore(hoy) }.sortedBy { it.fecha }
+            if (proximos.isNotEmpty()) {
+                texto.appendLine("  Exámenes y entregas: " + proximos.take(8).joinToString("; ") { e ->
+                    "${tipo(e.tipo)} \"${e.titulo.trim()}\" el ${corto(e.fecha)}" +
+                        (if (e.temas.isEmpty()) "" else " (temario: " + e.temas.joinToString(", ") { t -> t.titulo.trim() + if (t.estudiado) " ✓" else "" } + ")")
+                })
+            }
             if (m.notas.isNotEmpty()) {
-                texto.appendLine("  Apuntes (títulos): " + m.notas.sortedByDescending { it.fechaCreacion }.take(10).joinToString("; ") { it.titulo.trim() })
+                texto.appendLine("  Apuntes (títulos): " + m.notas.sortedByDescending { it.fechaCreacion }.take(30).joinToString("; ") { it.titulo.trim() })
             }
         }
+    }
+
+    val archivadas = usuario.materias.filter { it.archivada }
+    if (archivadas.isNotEmpty()) {
+        texto.appendLine()
+        texto.appendLine("Materias archivadas: " + archivadas.joinToString("; ") { it.nombre })
     }
 
     // Lo que tiene en el calendario los próximos días (incluye cada clase).

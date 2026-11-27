@@ -1,5 +1,23 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.EditCalendar
+import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Style
+import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.outlined.Public
+import androidx.compose.material.icons.outlined.DoneAll
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.clickable
+import android.content.Intent
+import android.net.Uri
+import com.example.estudia.modelo.FuenteWeb
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.os.Build
@@ -255,7 +273,7 @@ fun AsistenteScreen(
             }
             itemsIndexed(estado.conversacion) { i, mensaje ->
                 // La burbuja de la respuesta aparece cuando llega lo primero.
-                if (mensaje.deUsuario || mensaje.texto.isNotEmpty() || mensaje.accion != null) {
+                if (mensaje.deUsuario || mensaje.texto.isNotEmpty() || mensaje.accion != null || mensaje.buscando != null) {
                     Burbuja(
                         mensaje,
                         escribiendo = estado.pensando && i == estado.conversacion.lastIndex,
@@ -263,6 +281,17 @@ fun AsistenteScreen(
                         onConfirmar = { viewModel.confirmarAccion(i) },
                         onDescartar = { viewModel.descartarAccion(i) }
                     )
+                }
+            }
+            // Varias acciones esperando (ej: "borrá todas las notas de Física"): todas de una.
+            val pendientes = estado.conversacion.count { it.accion != null && it.estadoAccion == EstadoAccion.PENDIENTE }
+            if (pendientes >= 2 && !estado.pensando) {
+                item {
+                    FilledTonalButton(onClick = viewModel::confirmarTodas, modifier = Modifier.padding(top = 4.dp)) {
+                        Icon(Icons.Outlined.DoneAll, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.ia_confirmar_todas, pendientes))
+                    }
                 }
             }
             if (estado.pensando && !estado.escribiendo) item { Pensando() }
@@ -658,6 +687,7 @@ private fun Burbuja(
                     TextoConFormato(mensaje.texto, MaterialTheme.typography.bodyLarge, Modifier.padding(end = 8.dp), escribiendo = escribiendo)
                 }
             }
+            mensaje.buscando?.let { BuscandoEnInternet(it) }
             // Las notas del estudiante que se usaron para responder.
             if (mensaje.fuentes.isNotEmpty() && !escribiendo && mensaje.texto.isNotEmpty()) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp, end = 8.dp)) {
@@ -670,6 +700,8 @@ private fun Burbuja(
                     )
                 }
             }
+            // Las páginas de internet que usó (si buscó).
+            if (mensaje.fuentesWeb.isNotEmpty() && !escribiendo) FuentesDeInternet(mensaje.fuentesWeb)
             mensaje.accion?.let { accion ->
                 TarjetaAccion(accion, mensaje.estadoAccion, onConfirmar, onDescartar, Modifier.padding(top = 8.dp, end = 8.dp, bottom = 8.dp))
             }
@@ -694,8 +726,8 @@ private fun Burbuja(
     }
 }
 
-// Lo que propone la IA (crear una tarea, agendar algo, marcar un tema), con
-// Confirmar y Descartar. Después muestra cómo quedó.
+// Lo que propone la IA (crear, cambiar o borrar algo en la app), con
+// Confirmar y Descartar. Las que borran van en rojo. Después muestra cómo quedó.
 @Composable
 private fun TarjetaAccion(accion: AccionPropuesta, estado: EstadoAccion, onConfirmar: () -> Unit, onDescartar: () -> Unit, modifier: Modifier) {
     val formato = remember { DateTimeFormatter.ofPattern("EEE d/M", Locale.forLanguageTag("es-AR")) }
@@ -705,55 +737,179 @@ private fun TarjetaAccion(accion: AccionPropuesta, estado: EstadoAccion, onConfi
         TipoEvento.CLASE to stringResource(R.string.ia_accion_clase),
         TipoEvento.BLOQUE_ESTUDIO to stringResource(R.string.ia_accion_bloque)
     )
-    val (icono, titulo, detalle) = when (accion) {
+    // El detalle: la materia y, en las que cambian algo, qué cambia.
+    @Composable
+    fun detalle(vararg cambios: String?): String = (listOf(accion.materia) + cambios.filterNotNull()).joinToString(" · ")
+    val textoNota = { n: Double -> if (n % 1.0 == 0.0) n.toInt().toString() else n.toString() }
+
+    val (icono, titulo, descripcion) = when (accion) {
         is AccionPropuesta.CrearTarea -> Triple(
             Icons.Outlined.TaskAlt,
             stringResource(R.string.ia_accion_tarea, accion.titulo),
-            accion.materia + (accion.fechaLimite?.let { " · " + stringResource(R.string.ia_accion_vence, it.format(formato)) } ?: "")
+            detalle(accion.fechaLimite?.let { stringResource(R.string.ia_accion_vence, it.format(formato)) })
         )
+        is AccionPropuesta.EditarTarea -> Triple(
+            Icons.Outlined.Edit,
+            stringResource(R.string.ia_accion_editar_tarea, accion.tarea),
+            detalle(
+                accion.nuevoTitulo?.let { stringResource(R.string.ia_accion_titulo_nuevo, it) },
+                if (accion.quitarFecha) stringResource(R.string.ia_accion_sin_fecha) else accion.nuevaFecha?.let { stringResource(R.string.ia_accion_vence, it.format(formato)) },
+                accion.nuevaPrioridad?.let { stringResource(R.string.ia_accion_prioridad, it.name.lowercase()) }
+            )
+        )
+        is AccionPropuesta.CompletarTarea -> Triple(
+            Icons.Outlined.CheckCircle,
+            stringResource(if (accion.hecha) R.string.ia_accion_completar_tarea else R.string.ia_accion_descompletar_tarea, accion.tarea),
+            detalle()
+        )
+        is AccionPropuesta.BorrarTarea -> Triple(Icons.Outlined.Delete, stringResource(R.string.ia_accion_borrar_tarea, accion.tarea), detalle())
         is AccionPropuesta.CrearEvento -> Triple(
             Icons.Outlined.Event,
             "${tipos[accion.tipo].orEmpty()}: ${accion.titulo}",
-            "${accion.materia} · ${accion.fecha.format(formato)}, ${accion.inicio} a ${accion.fin}"
+            detalle("${accion.fecha.format(formato)}, ${accion.inicio} a ${accion.fin}")
         )
-        is AccionPropuesta.MarcarTema -> Triple(
-            Icons.Outlined.CheckCircle,
-            stringResource(R.string.ia_accion_tema, accion.tema),
-            "${accion.materia} · ${accion.examen}"
+        is AccionPropuesta.EditarEvento -> Triple(
+            Icons.Outlined.EditCalendar,
+            stringResource(R.string.ia_accion_editar_evento, accion.evento),
+            detalle(
+                accion.nuevoTitulo?.let { stringResource(R.string.ia_accion_titulo_nuevo, it) },
+                accion.nuevaFecha?.let { stringResource(R.string.ia_accion_fecha_nueva, it.format(formato)) },
+                when {
+                    accion.nuevoInicio != null && accion.nuevoFin != null -> stringResource(R.string.ia_accion_horario_nuevo, accion.nuevoInicio.toString(), accion.nuevoFin.toString())
+                    accion.nuevoInicio != null -> stringResource(R.string.ia_accion_desde, accion.nuevoInicio.toString())
+                    accion.nuevoFin != null -> stringResource(R.string.ia_accion_hasta, accion.nuevoFin.toString())
+                    else -> null
+                },
+                accion.nuevoLugar?.let { stringResource(R.string.ia_accion_lugar, it) }
+            )
+        )
+        is AccionPropuesta.BorrarEvento -> Triple(Icons.Outlined.EventBusy, stringResource(R.string.ia_accion_borrar_evento, accion.evento), detalle())
+        is AccionPropuesta.MarcarTema -> Triple(Icons.Outlined.CheckCircle, stringResource(R.string.ia_accion_tema, accion.tema), detalle(accion.examen))
+        is AccionPropuesta.AgregarTema -> Triple(Icons.AutoMirrored.Outlined.PlaylistAdd, stringResource(R.string.ia_accion_agregar_tema, accion.tema), detalle(accion.examen))
+        is AccionPropuesta.CrearNota -> Triple(
+            Icons.Outlined.NoteAdd,
+            stringResource(R.string.ia_accion_crear_nota, accion.titulo),
+            detalle(accion.contenido.takeIf { it.isNotBlank() }?.let { textoPlano(it).replace('\n', ' ').take(80) })
+        )
+        is AccionPropuesta.EditarNota -> Triple(
+            Icons.Outlined.EditNote,
+            stringResource(R.string.ia_accion_editar_nota, accion.nota),
+            detalle(
+                accion.nuevoTitulo?.let { stringResource(R.string.ia_accion_titulo_nuevo, it) },
+                accion.nuevoContenido?.let { stringResource(R.string.ia_accion_texto_nuevo) },
+                accion.agregarTexto?.let { stringResource(R.string.ia_accion_texto_agregado) }
+            )
+        )
+        is AccionPropuesta.BorrarNota -> Triple(Icons.Outlined.Delete, stringResource(R.string.ia_accion_borrar_nota, accion.nota), detalle())
+        is AccionPropuesta.CrearMateria -> Triple(Icons.Outlined.School, stringResource(R.string.ia_accion_crear_materia, accion.materia), "")
+        is AccionPropuesta.EditarMateria -> Triple(
+            Icons.Outlined.Edit,
+            stringResource(R.string.ia_accion_editar_materia, accion.materia),
+            listOfNotNull(
+                accion.nuevoNombre?.let { stringResource(R.string.ia_accion_nombre_nuevo, it) },
+                accion.archivar?.let { stringResource(if (it) R.string.ia_accion_archivar else R.string.ia_accion_desarchivar) }
+            ).joinToString(" · ")
+        )
+        is AccionPropuesta.BorrarMateria -> Triple(
+            Icons.Outlined.Delete,
+            stringResource(R.string.ia_accion_borrar_materia, accion.materia),
+            stringResource(R.string.ia_accion_borrar_materia_detalle)
+        )
+        is AccionPropuesta.CrearTarjeta -> Triple(Icons.Outlined.Style, stringResource(R.string.ia_accion_crear_tarjeta), detalle(accion.pregunta))
+        is AccionPropuesta.AgregarCalificacion -> Triple(
+            Icons.Outlined.Grade,
+            stringResource(R.string.ia_accion_calificacion, textoNota(accion.nota), accion.titulo),
+            detalle(accion.fecha?.format(formato))
         )
     }
+    val peligro = accion.destructiva
+    val acento = if (peligro) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
+            .background(if (peligro) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(icono, contentDescription = null, tint = acento)
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(titulo, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                Text(detalle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (descripcion.isNotBlank()) {
+                    Text(descripcion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         when (estado) {
             EstadoAccion.PENDIENTE -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = onConfirmar) { Text(stringResource(R.string.ia_accion_confirmar)) }
+                FilledTonalButton(
+                    onClick = onConfirmar,
+                    colors = if (peligro) ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+                    else ButtonDefaults.filledTonalButtonColors()
+                ) { Text(stringResource(if (peligro) R.string.ia_accion_borrar else R.string.ia_accion_confirmar)) }
                 TextButton(onClick = onDescartar) { Text(stringResource(R.string.ia_accion_descartar)) }
             }
             else -> Text(
                 stringResource(
                     when (estado) {
-                        EstadoAccion.HECHA -> R.string.ia_accion_hecha
+                        EstadoAccion.HECHA -> if (peligro) R.string.ia_accion_borrado else R.string.ia_accion_hecha
                         EstadoAccion.DESCARTADA -> R.string.ia_accion_descartada
-                        else -> R.string.ia_accion_fallo
+                        else -> R.string.ia_accion_fallo_detalle
                     }
                 ),
                 style = MaterialTheme.typography.labelMedium,
-                color = if (estado == EstadoAccion.FALLO) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                color = if (estado == EstadoAccion.FALLO) MaterialTheme.colorScheme.error else acento
             )
+        }
+    }
+}
+
+// Lo que está buscando en internet (mientras busca).
+@Composable
+private fun BuscandoEnInternet(consulta: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp, bottom = 6.dp)) {
+        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            stringResource(R.string.ia_buscando, consulta),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+// Las páginas de internet que usó: cada una se abre en el navegador.
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FuentesDeInternet(fuentes: List<FuenteWeb>) {
+    val contexto = LocalContext.current
+    Column(modifier = Modifier.padding(top = 8.dp, end = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.Public, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(stringResource(R.string.ia_fuentes_web), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 4.dp)) {
+            fuentes.forEach { fuente ->
+                Text(
+                    fuente.titulo,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f))
+                        .clickable(role = androidx.compose.ui.semantics.Role.Button) {
+                            runCatching { contexto.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fuente.url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                        }
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
         }
     }
 }

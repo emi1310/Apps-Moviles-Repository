@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget de Estudia+: arriba el nombre y la racha; debajo las próximas
-     tareas pendientes (hasta 3). Tocarlo abre la app. RemoteViews solo
-     admite vistas simples (LinearLayout, TextView...), sin Compose. -->
+<!-- Widget "Tareas" de Estudia+: arriba el título, la racha y un + para
+     crear una nota; debajo las próximas tareas pendientes (hasta 3). El
+     círculo de cada tarea la completa sin abrir la app; tocar el texto abre
+     Materias. RemoteViews solo admite vistas simples, sin Compose. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_raiz"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/fondo_widget"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="14dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/app_name"
+            android:text="@string/widget_tareas_titulo"
             android:textColor="@color/widget_acento"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -29,9 +30,19 @@
             android:id="@+id/widget_racha"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
             android:textColor="@color/widget_fuego"
             android:textSize="15sp"
             android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/widget_agregar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/fondo_widget_fila"
+            android:contentDescription="@string/nueva_nota"
+            android:padding="6dp"
+            android:src="@drawable/wi_agregar" />
     </LinearLayout>
 
     <TextView
@@ -42,15 +53,91 @@
         android:textColor="@color/widget_texto_secundario"
         android:textSize="12sp" />
 
-    <TextView
-        android:id="@+id/widget_tarea_1"
-        style="@style/TareaWidget" />
+    <LinearLayout
+        android:id="@+id/widget_fila_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/fondo_widget_fila"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="12dp">
 
-    <TextView
-        android:id="@+id/widget_tarea_2"
-        style="@style/TareaWidget" />
+        <ImageView
+            android:id="@+id/widget_check_1"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/widget_completar"
+            android:padding="7dp"
+            android:src="@drawable/wi_check_vacio" />
 
-    <TextView
-        android:id="@+id/widget_tarea_3"
-        style="@style/TareaWidget" />
+        <TextView
+            android:id="@+id/widget_tarea_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_texto"
+            android:textSize="14sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/widget_fila_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/fondo_widget_fila"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/widget_check_2"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/widget_completar"
+            android:padding="7dp"
+            android:src="@drawable/wi_check_vacio" />
+
+        <TextView
+            android:id="@+id/widget_tarea_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_texto"
+            android:textSize="14sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/widget_fila_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/fondo_widget_fila"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/widget_check_3"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:contentDescription="@string/widget_completar"
+            android:padding="7dp"
+            android:src="@drawable/wi_check_vacio" />
+
+        <TextView
+            android:id="@+id/widget_tarea_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/widget_texto"
+            android:textSize="14sp" />
+    </LinearLayout>
 </LinearLayout>

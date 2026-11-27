@@ -27,6 +27,11 @@ sealed class Screen(val ruta: String) {
     object Mapa : Screen("mapa/{mapaId}") {
         fun de(mapaId: Int) = "mapa/$mapaId"
     }
+    // Una nota abierta, con todos sus datos y el texto completo.
+    object Nota : Screen("nota/{notaId}") {
+        const val ARGUMENTO = "notaId"
+        fun de(notaId: Int) = "nota/$notaId"
+    }
     object ResumenSemanal : Screen("resumen_semanal")
     object Busqueda : Screen("busqueda")
     // ¿Qué nota necesito?: el id de la materia (-1 = la primera).

@@ -47,7 +47,9 @@ fun NotasScreen(
     // Lo que se escribe en la lupa del dock: busca entre las notas.
     busqueda: String = "",
     // Acceso de arriba: los mapas mentales.
-    onAbrirMapas: () -> Unit = {}
+    onAbrirMapas: () -> Unit = {},
+    // Tocar una nota la abre completa.
+    onAbrirNota: (Int) -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
@@ -56,23 +58,7 @@ fun NotasScreen(
     val avisos = LocalAvisos.current
     val textoSinApp = stringResource(R.string.sin_app_para_abrir)
 
-    // Cuando el PDF está listo se abre "Compartir" (WhatsApp, mail, Drive...).
-    val pdf by viewModel.pdfParaCompartir.collectAsStateWithLifecycle()
-    val tituloCompartir = stringResource(R.string.exportar_pdf_compartir)
-    LaunchedEffect(pdf) {
-        val uri = pdf ?: return@LaunchedEffect
-        val enviar = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(android.content.Intent.EXTRA_STREAM, Uri.parse(uri))
-            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        try {
-            context.startActivity(android.content.Intent.createChooser(enviar, tituloCompartir))
-        } catch (e: android.content.ActivityNotFoundException) {
-            avisos.mostrarTexto(textoSinApp)
-        }
-        viewModel.pdfCompartido()
-    }
+    CompartirPdfDeNotas(viewModel)
 
     var crearNota by rememberSaveable { mutableStateOf(false) }
     var notaParaEditar by remember { mutableStateOf<NotaConMateria?>(null) }
@@ -162,7 +148,8 @@ fun NotasScreen(
                         },
                         alEliminarArchivo = { viewModel.eliminarArchivo(item, it) },
                         alPasarATexto = { viewModel.pasarATexto(item, it) },
-                        alExportarPdf = { viewModel.exportarPdf(item) }
+                        alExportarPdf = { viewModel.exportarPdf(item) },
+                        alAbrir = { onAbrirNota(item.nota.id) }
                     )
                 }
             }

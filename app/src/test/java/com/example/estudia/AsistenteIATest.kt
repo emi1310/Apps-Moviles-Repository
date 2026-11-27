@@ -314,7 +314,9 @@ class AsistenteIATest {
         assertTrue(texto.contains("lunes 30/11: 09:00-11:00 Examen de Análisis II: Parcial 2"))
         assertFalse(texto.contains("Parcial 1"))
         assertTrue(texto.contains("TP integrales (Análisis II), vence el sábado 28/11"))
-        assertFalse(texto.contains("Hecha"))
+        // Las hechas no van como pendientes, pero sí aparte (para poder desmarcarlas).
+        assertFalse(texto.contains("Hecha (Análisis II)"))
+        assertTrue(texto.contains("Tareas ya hechas: Hecha"))
         assertTrue(texto.contains("Física I el domingo 6/12 (la inscripción cierra el martes 1/12)"))
         // De las notas va solo el título.
         assertTrue(texto.contains("Guía 7"))
