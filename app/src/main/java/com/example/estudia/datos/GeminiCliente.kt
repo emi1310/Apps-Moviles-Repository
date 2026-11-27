@@ -2,6 +2,7 @@ package com.example.estudia.datos
 
 import com.example.estudia.modelo.ErrorIA
 import com.example.estudia.modelo.INSTRUCCION_ASISTENTE
+import com.example.estudia.modelo.instruccionConDatos
 import com.example.estudia.modelo.MensajeIA
 import com.example.estudia.modelo.ResultadoIA
 import com.example.estudia.modelo.TarjetaSugerida
@@ -21,7 +22,8 @@ import java.net.URL
 // está usando la app (o la de la app, si él no conectó la suya).
 interface AsistenteIA {
     // Responde al último mensaje de la conversación (que es del usuario).
-    suspend fun responder(clave: String, conversacion: List<MensajeIA>): ResultadoIA<String>
+    // contexto: los datos cargados del estudiante (vacío = no se mandan).
+    suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String = ""): ResultadoIA<String>
 
     // Pide tarjetas de estudio (pregunta y respuesta) en JSON.
     suspend fun crearTarjetas(clave: String, pedido: String): ResultadoIA<List<TarjetaSugerida>>
@@ -32,12 +34,12 @@ interface AsistenteIA {
 // encabezado x-goog-api-key (no en la URL).
 class GeminiCliente(private val modelo: String) : AsistenteIA {
 
-    override suspend fun responder(clave: String, conversacion: List<MensajeIA>): ResultadoIA<String> {
+    override suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String): ResultadoIA<String> {
         val contenidos = JSONArray()
         contextoParaEnviar(conversacion).forEach { m ->
             contenidos.put(JSONObject().put("role", if (m.deUsuario) "user" else "model").put("parts", JSONArray().put(JSONObject().put("text", m.texto))))
         }
-        return when (val r = pedir(clave, contenidos, null)) {
+        return when (val r = pedir(clave, contenidos, null, instruccionConDatos(contexto))) {
             is ResultadoIA.Ok -> ResultadoIA.Ok(limpiarRespuesta(r.valor))
             is ResultadoIA.Falla -> r
         }
@@ -61,14 +63,14 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
     }
 
     // esquemaJson != null pide la respuesta en JSON con ese esquema.
-    private suspend fun pedir(clave: String, contenidos: JSONArray, esquemaJson: String?): ResultadoIA<String> = withContext(Dispatchers.IO) {
+    private suspend fun pedir(clave: String, contenidos: JSONArray, esquemaJson: String?, instruccion: String = INSTRUCCION_ASISTENTE): ResultadoIA<String> = withContext(Dispatchers.IO) {
         if (clave.isBlank()) return@withContext ResultadoIA.Falla(ErrorIA.SIN_CLAVE)
         val configuracion = JSONObject()
         if (esquemaJson != null) {
             configuracion.put("responseMimeType", "application/json").put("responseJsonSchema", JSONObject(esquemaJson))
         }
         val cuerpo = JSONObject()
-            .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", INSTRUCCION_ASISTENTE))))
+            .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", instruccion))))
             .put("contents", contenidos)
             .put("generationConfig", configuracion)
         var conexion: HttpURLConnection? = null

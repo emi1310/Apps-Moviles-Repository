@@ -51,6 +51,7 @@ import com.example.estudia.modelo.citaApa
 import com.example.estudia.modelo.citaEnTexto
 import com.example.estudia.modelo.textoPlano
 import com.example.estudia.ui.componentes.BloqueOpcion
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.BotonSuave
 import com.example.estudia.ui.componentes.CampoTexto
 import com.example.estudia.ui.componentes.DialogoApp
@@ -184,9 +185,9 @@ private fun TarjetaFuente(
     val sinApp = stringResource(R.string.evento_enlace_error)
     Card(
         shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = bordeVidrio(),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest)
     ) {
         Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 14.dp, bottom = 14.dp)) {
             Row(verticalAlignment = Alignment.Top) {

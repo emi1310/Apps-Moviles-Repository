@@ -13,6 +13,13 @@ import com.example.estudia.modelo.ResultadoIA
 import com.example.estudia.modelo.TarjetaSugerida
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.modelo.contextoParaEnviar
+import com.example.estudia.modelo.contextoDelEstudiante
+import com.example.estudia.modelo.instruccionConDatos
+import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.TipoEvento
+import com.example.estudia.modelo.Tarea
+import com.example.estudia.modelo.MesaFinal
+import java.time.LocalTime
 import com.example.estudia.modelo.limpiarRespuesta
 import com.example.estudia.modelo.limpiarTarjetas
 import com.example.estudia.modelo.pedidoResumir
@@ -44,7 +51,9 @@ private class AsistenteFalso(
     val claves = mutableListOf<String>()
     // Si no es null, solo esa clave es válida.
     var claveValida: String? = null
-    override suspend fun responder(clave: String, conversacion: List<MensajeIA>): ResultadoIA<String> {
+    val contextos = mutableListOf<String>()
+    override suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String): ResultadoIA<String> {
+        contextos += contexto
         recibidas += conversacion
         claves += clave
         if (claveValida != null && clave != claveValida) return ResultadoIA.Falla(ErrorIA.CLAVE_INVALIDA)
@@ -237,5 +246,46 @@ class AsistenteIATest {
         advanceUntilIdle()
         assertTrue(claves.guardadas.value.isEmpty())
         assertFalse(vm.uiState.value.configurado)
+    }
+
+    // ---------- Datos del estudiante ----------
+
+    @Test
+    fun elResumenTieneClasesAgendaTareasYFinales() {
+        // 26/11/2026 es jueves.
+        val clase = Evento(1, "Teórico", TipoEvento.CLASE, LocalDate.of(2026, 3, 5), LocalTime.of(18, 0), LocalTime.of(20, 0), semanal = true, lugar = "Aula 5")
+        val parcial = Evento(2, "Parcial 2", TipoEvento.EXAMEN, hoy.plusDays(4), LocalTime.of(9, 0), LocalTime.of(11, 0))
+        val viejo = Evento(3, "Parcial 1", TipoEvento.EXAMEN, hoy.minusDays(30), LocalTime.of(9, 0), LocalTime.of(11, 0))
+        val m = materia.copy(
+            eventos = listOf(clase, parcial, viejo),
+            tareas = listOf(Tarea(1, "TP integrales", fechaLimite = hoy.plusDays(2)), Tarea(2, "Hecha", completada = true))
+        )
+        val u = usuario().copy(materias = listOf(m), finales = listOf(MesaFinal(1, "Física I", hoy.plusDays(10), cierreInscripcion = hoy.plusDays(5))))
+        val texto = contextoDelEstudiante(u, hoy)
+
+        assertTrue(texto.contains("Hoy es jueves 26/11/2026"))
+        assertTrue(texto.contains("Teórico los jueves de 18:00 a 20:00 (Aula 5)"))
+        // La clase aparece hoy y el jueves que viene; el parcial, el lunes.
+        assertTrue(texto.contains("jueves 26/11 (hoy): 18:00-20:00 Clase de Análisis II"))
+        assertTrue(texto.contains("jueves 3/12"))
+        assertTrue(texto.contains("lunes 30/11: 09:00-11:00 Examen de Análisis II: Parcial 2"))
+        assertFalse(texto.contains("Parcial 1"))
+        assertTrue(texto.contains("TP integrales (Análisis II), vence el sábado 28/11"))
+        assertFalse(texto.contains("Hecha"))
+        assertTrue(texto.contains("Física I el domingo 6/12 (la inscripción cierra el martes 1/12)"))
+        // De las notas va solo el título.
+        assertTrue(texto.contains("Guía 7"))
+        assertFalse(texto.contains("Integrales dobles"))
+    }
+
+    @Test
+    fun cadaPreguntaLlevaLosDatosDelEstudiante() = runTest {
+        val ia = AsistenteFalso()
+        val vm = AsistenteViewModel(RepositorioFalso(usuario()), ia, ClavesFalsas(), "clave-app", hoy = { hoy })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.enviar("¿Qué clases tengo esta semana?")
+        advanceUntilIdle()
+        assertTrue(ia.contextos.single().contains("Análisis II"))
+        assertTrue(instruccionConDatos(ia.contextos.single()).contains("no inventes"))
     }
 }

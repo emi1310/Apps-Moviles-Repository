@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.LocalAvisos
+import com.example.estudia.ui.componentes.superficieVidrio
 
 // Pantalla "Ayuda y soporte": preguntas frecuentes (se expanden al
 // tocarlas) y un botón para escribirle a soporte por mail.
@@ -53,7 +55,10 @@ fun AyudaScreen(onVolver: () -> Unit) {
         }
 
         itemsIndexed(preguntas.toList()) { indice, pregunta ->
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            ) {
                 Column(
                     modifier = Modifier
                         .clickable { abierta = if (abierta == indice) null else indice }

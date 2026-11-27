@@ -42,8 +42,7 @@ fun BloqueColor(color: Color, modifier: Modifier = Modifier, contenido: @Composa
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(MaterialTheme.shapes.large, borde = false)
     ) {
         CompositionLocalProvider(
             LocalContentColor provides MaterialTheme.colorScheme.onSurface,

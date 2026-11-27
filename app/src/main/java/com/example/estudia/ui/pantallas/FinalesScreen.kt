@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.ui.componentes.BotonSuave
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.CampoFecha
 import com.example.estudia.ui.componentes.CampoTexto
 import com.example.estudia.ui.componentes.DialogoApp
@@ -146,8 +147,9 @@ private fun TarjetaFinal(
     val dias = final.diasParaMesa(hoy)
     Card(
         shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest)
     ) {
         Column(modifier = Modifier.padding(start = 18.dp, end = 6.dp, top = 14.dp, bottom = 14.dp)) {
             Row(verticalAlignment = Alignment.Top) {

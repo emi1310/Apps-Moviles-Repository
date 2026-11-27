@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.colorAcentoTexto
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.fondoSuave
 import com.example.estudia.ui.componentes.BloqueColor
 import com.example.estudia.ui.componentes.CirculoBloque
@@ -138,8 +139,7 @@ private fun DiaDelHorario(dia: DiaHorario, nombre: String, esHoy: Boolean) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .superficieVidrio(RoundedCornerShape(18.dp), borde = false)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
             )
         }

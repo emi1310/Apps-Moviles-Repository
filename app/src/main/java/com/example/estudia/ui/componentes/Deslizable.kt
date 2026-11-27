@@ -16,11 +16,18 @@ import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
+import kotlin.math.abs
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +52,9 @@ import com.example.estudia.R
 // y las mismas esquinas que la tarjeta de adentro. fondoContenido se usa
 // cuando el contenido es transparente (una fila dentro de una tarjeta),
 // para que el color no se vea a través del texto.
+// Parte del ancho que hay que arrastrar (y mantener al soltar) para borrar o completar.
+const val RECORRIDO_MINIMO = 0.5f
+
 @Composable
 fun Deslizable(
     modifier: Modifier = Modifier,
@@ -60,23 +70,36 @@ fun Deslizable(
     // vez, pero tiene que llamar siempre a la versión más nueva de cada acción.
     val alEliminar by rememberUpdatedState(onEliminar)
     val alCompletar by rememberUpdatedState(onCompletar)
-    val estado = rememberSwipeToDismissBoxState(
+    // Para no borrar ni completar sin querer al navegar:
+    // - hay que arrastrar más de la mitad del ancho, y
+    // - un deslizamiento rápido pero corto no cuenta (si al soltar no se
+    //   llegó a RECORRIDO_MINIMO del ancho, la fila vuelve a su lugar).
+    var ancho by remember { mutableIntStateOf(0) }
+    lateinit var estado: SwipeToDismissBoxState
+    estado = rememberSwipeToDismissBoxState(
         confirmValueChange = { valor ->
+            val recorrido = runCatching { abs(estado.requireOffset()) }.getOrDefault(0f)
+            val suficiente = ancho > 0 && recorrido >= ancho * RECORRIDO_MINIMO
             when (valor) {
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    alCompletar?.invoke()
+                    if (suficiente) alCompletar?.invoke()
                     false            // no se va: vuelve a su lugar ya completada
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
-                    alEliminar?.invoke()
-                    alEliminar != null
+                    if (suficiente) alEliminar?.invoke()
+                    suficiente && alEliminar != null
                 }
                 SwipeToDismissBoxValue.Settled -> false
             }
         },
-        // Hay que deslizar al menos un 35 % del ancho (evita borrar sin querer).
-        positionalThreshold = { ancho -> ancho * 0.35f }
+        positionalThreshold = { total -> total * 0.5f }
     )
+    // El estado se guarda por fila (por su id). Si algo borrado vuelve con
+    // "Deshacer", vuelve con el mismo id y recuperaría el estado "deslizada
+    // para borrar" (corrida, con el fondo rojo). Al aparecer, vuelve a su lugar.
+    LaunchedEffect(Unit) {
+        if (estado.currentValue != SwipeToDismissBoxValue.Settled) estado.reset()
+    }
 
     val textoCompletar = stringResource(if (completada) R.string.deslizar_desmarcar else R.string.deslizar_completar)
     val textoEliminar = stringResource(R.string.deslizar_eliminar)
@@ -85,7 +108,7 @@ fun Deslizable(
         state = estado,
         enableDismissFromStartToEnd = onCompletar != null,
         enableDismissFromEndToStart = onEliminar != null,
-        modifier = modifier.semantics {
+        modifier = modifier.onSizeChanged { ancho = it.width }.semantics {
             customActions = listOfNotNull(
                 onCompletar?.let { CustomAccessibilityAction(textoCompletar) { it(); true } },
                 onEliminar?.let { CustomAccessibilityAction(textoEliminar) { it(); true } }

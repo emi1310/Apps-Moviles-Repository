@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.estudia.ui.componentes.DialogoApp
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.TextoDialogo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -234,8 +235,9 @@ fun CalendarioScreen(
 
                 // ---------- El mes, dentro de un bloque ----------
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest),
                     shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {

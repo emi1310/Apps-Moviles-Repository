@@ -35,6 +35,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.estudia.ui.componentes.AccionRapida
 import com.example.estudia.ui.componentes.abrirGemini
+import com.example.estudia.ui.componentes.LocalFondoLiquido
+import com.example.estudia.ui.componentes.guardarFondoLiquido
+import com.example.estudia.ui.componentes.rememberFondoLiquido
+import com.example.estudia.ui.componentes.rememberLuzDelTelefono
+import com.example.estudia.ui.componentes.deslizarEntreSecciones
+import com.example.estudia.ui.componentes.seccionVecina
+import com.example.estudia.ui.componentes.LocalLuz
+import androidx.compose.ui.graphics.graphicsLayer
 import com.example.estudia.R
 import kotlinx.coroutines.launch
 import com.example.estudia.ui.componentes.DockFlotante
@@ -167,7 +175,11 @@ fun AppNavegacion(
         onTemporizadorAbierto()
     }
 
-    CompositionLocalProvider(LocalAvisos provides avisos, LocalHaze provides haze) {
+    // La pantalla guardada para el vidrio líquido del dock (Android 13 o más).
+    val fondoLiquido = rememberFondoLiquido()
+    // De dónde viene la luz del vidrio (se corre al inclinar el teléfono).
+    val luz = rememberLuzDelTelefono()
+    CompositionLocalProvider(LocalAvisos provides avisos, LocalHaze provides haze, LocalFondoLiquido provides fondoLiquido, LocalLuz provides luz) {
         Scaffold(
             // Transparente: el fondo con manchas de color lo pinta el contenido
             // (así también se desenfoca detrás del dock).
@@ -216,7 +228,18 @@ fun AppNavegacion(
           // El contenido pasa por detrás del dock flotante: solo se respeta el
           // espacio de arriba y las listas suman LocalEspacioDock abajo.
           CompositionLocalProvider(LocalEspacioDock provides if (mostrarBarra) espacioInterno.calculateBottomPadding() else 0.dp) {
-          Box(modifier = Modifier.fillMaxSize().fondoAurora().hazeSource(haze)) {
+          // Deslizando a la izquierda o a la derecha se pasa a la sección de al
+          // lado del dock (no mientras se busca).
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .deslizarEntreSecciones(mostrarBarra && !buscando) { paso -> seccionVecina(rutaActual, paso)?.let(irA) }
+              .guardarFondoLiquido(fondoLiquido)
+              .hazeSource(haze)
+          ) {
+            // El fondo va en su propia capa: así, cuando se mueve, no se
+            // redibuja toda la pantalla.
+            Box(modifier = Modifier.matchParentSize().graphicsLayer().fondoAurora())
             NavHost(
                 navController = navController,
                 startDestination = destinoInicial,

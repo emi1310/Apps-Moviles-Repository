@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.BloqueColor
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.CirculoBloque
 import com.example.estudia.ui.componentes.Medalla
 import com.example.estudia.ui.componentes.aspecto
@@ -126,8 +127,7 @@ private fun BloqueLogro(logro: Logro) {
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 170.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .superficieVidrio(MaterialTheme.shapes.large, borde = false)
                 .semantics(mergeDescendants = true) {}
                 .padding(14.dp)
         ) {

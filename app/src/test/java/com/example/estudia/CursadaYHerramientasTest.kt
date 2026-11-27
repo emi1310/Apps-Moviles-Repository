@@ -30,7 +30,7 @@ import com.example.estudia.viewmodel.NotasViewModel
 import com.example.estudia.viewmodel.QuizViewModel
 import com.example.estudia.viewmodel.TipoResultado
 import com.example.estudia.viewmodel.armarQuiz
-import com.example.estudia.viewmodel.armarResumenSemanal
+import com.example.estudia.modelo.armarResumenSemanal
 import com.example.estudia.viewmodel.buscarEnTodo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first

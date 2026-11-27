@@ -165,9 +165,7 @@ fun FilaTarjeta(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, co
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(bordeVidrio(), RoundedCornerShape(22.dp))
+            .superficieVidrio(RoundedCornerShape(22.dp))
             .let { if (onClick != null) it.clickable(role = Role.Button, onClick = onClick) else it }
             .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

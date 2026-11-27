@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.outlined.DoNotDisturbOn
 import androidx.compose.material.icons.outlined.Headphones
 import com.example.estudia.ui.componentes.SelectorSonido
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.TipoSonido
 import com.example.estudia.ui.theme.BloqueAzul
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -237,8 +238,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -263,8 +263,7 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(22.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             IconoCircular(Icons.Outlined.DoNotDisturbOn, Color.White, fondo = BloqueVioleta)

@@ -5,7 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.estudia.EstudiaApp
 import com.example.estudia.R
-import com.example.estudia.viewmodel.armarResumenSemanal
+import com.example.estudia.modelo.armarResumenSemanal
 import kotlinx.coroutines.flow.first
 import java.time.DayOfWeek
 import java.time.LocalDate

@@ -10,7 +10,9 @@ import com.example.estudia.modelo.MensajeIA
 import com.example.estudia.modelo.ResultadoIA
 import com.example.estudia.modelo.TarjetaSugerida
 import com.example.estudia.modelo.PEDIDO_PRUEBA
+import com.example.estudia.modelo.contextoDelEstudiante
 import com.example.estudia.modelo.pedidoExplicar
+import java.time.LocalDate
 import com.example.estudia.modelo.pedidoPreguntas
 import com.example.estudia.modelo.pedidoResumir
 import com.example.estudia.modelo.pedidoTarjetas
@@ -64,7 +66,9 @@ class AsistenteViewModel(
     private val asistente: AsistenteIA,
     private val claves: ClavesIA,
     // La de gemini.properties (puede estar vacía).
-    private val claveDeLaApp: String = ""
+    private val claveDeLaApp: String = "",
+    // Para la agenda que se le manda a la IA (en los tests, una fecha fija).
+    private val hoy: () -> LocalDate = { LocalDate.now() }
 ) : ViewModelConAvisos() {
 
     private val charla = MutableStateFlow(Charla())
@@ -132,7 +136,10 @@ class AsistenteViewModel(
     private fun pedirRespuesta() {
         charla.update { it.copy(pensando = true, error = null) }
         viewModelScope.launch {
-            when (val r = asistente.responder(claveEnUso(), charla.value.conversacion)) {
+            // Con cada pregunta van los datos cargados del estudiante, para
+            // que pueda responder sobre sus clases, tareas, finales, etc.
+            val contexto = repositorio.usuarioActual.first()?.let { contextoDelEstudiante(it, hoy()) }.orEmpty()
+            when (val r = asistente.responder(claveEnUso(), charla.value.conversacion, contexto)) {
                 is ResultadoIA.Ok -> charla.update { it.copy(conversacion = it.conversacion + MensajeIA(false, r.valor), pensando = false) }
                 is ResultadoIA.Falla -> charla.update { it.copy(pensando = false, error = r.error) }
             }

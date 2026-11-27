@@ -59,7 +59,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -112,6 +119,15 @@ fun buscaEnLaPantalla(rutaActual: String?): Boolean =
 
 private data class ItemDock(val destino: Screen, val elegido: ImageVector, val normal: ImageVector, val etiqueta: Int)
 
+// Las secciones del dock en orden (para pasar de una a otra deslizando).
+val seccionesDock: List<Screen> get() = itemsDock.map { it.destino }
+
+// La sección de al lado: paso = 1 la siguiente, -1 la anterior (null si no hay).
+fun seccionVecina(rutaActual: String?, paso: Int): Screen? {
+    val i = seccionesDock.indexOfFirst { it.ruta == rutaActual }
+    return if (i < 0) null else seccionesDock.getOrNull(i + paso)
+}
+
 private val itemsDock = listOf(
     ItemDock(Screen.Inicio, Icons.Filled.Home, Icons.Outlined.Home, R.string.inicio),
     ItemDock(Screen.Materias, Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook, R.string.materias),
@@ -126,7 +142,8 @@ private val AltoDock = 60.dp
 private val TamanoCirculo = 48.dp
 private val Separacion = 8.dp
 
-// Dock de navegación de vidrio esmerilado:
+// Dock de navegación de vidrio líquido (refracción en los bordes, Android 13
+// o más; en los anteriores, vidrio esmerilado):
 // - una pastilla con las 5 secciones (la última, el Asistente IA) (la elegida con un círculo suave detrás),
 // - un círculo violeta con el "+" (su ícono cambia según la pantalla),
 // - un círculo de vidrio con la lupa.
@@ -194,13 +211,56 @@ fun DockFlotante(
     }
 }
 
-// Pastilla de vidrio con las cinco secciones.
+// Pastilla de vidrio con las cinco secciones. La sección elegida se marca con
+// una gota de vidrio que, al cambiar de sección, se estira hacia la nueva y
+// se vuelve a juntar con un rebote: el borde de adelante llega rápido y el de
+// atrás lo sigue más lento.
 @Composable
 private fun PastillaSecciones(rutaActual: String?, onSeleccionar: (Screen) -> Unit, modifier: Modifier = Modifier) {
+    val elegido = itemsDock.indexOfFirst { it.destino.ruta == rutaActual }
+    val oscuro = esTemaOscuro()
+    val inicial = elegido.coerceAtLeast(0).toFloat()
+    val adelante = remember { Animatable(inicial) }
+    val atras = remember { Animatable(inicial) }
+    val visible by animateFloatAsState(if (elegido >= 0) 1f else 0f, tween(200), label = "gota")
+    LaunchedEffect(elegido) {
+        if (elegido < 0) return@LaunchedEffect
+        val destino = elegido.toFloat()
+        launch { adelante.animateTo(destino, spring(dampingRatio = 0.68f, stiffness = 520f)) }
+        launch { atras.animateTo(destino, spring(dampingRatio = 0.72f, stiffness = 150f)) }
+    }
+    val relleno = if (oscuro) Color.White.copy(alpha = 0.13f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+    val brillo = Color.White.copy(alpha = if (oscuro) 0.20f else 0.65f)
+    val borde = Color.White.copy(alpha = if (oscuro) 0.32f else 0.95f)
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .vidrio(RoundedCornerShape(50))
+            .vidrioLiquido(RoundedCornerShape(50))
+            .drawBehind {
+                if (visible <= 0f) return@drawBehind
+                val margen = 6.dp.toPx()
+                val anchoItem = (size.width - 2 * margen) / itemsDock.size
+                val d = min(anchoItem, 46.dp.toPx())
+                fun centro(i: Float) = margen + anchoItem * (i + 0.5f)
+                val a = adelante.value
+                val b = atras.value
+                val izquierda = centro(min(a, b)) - d / 2
+                val derecha = centro(max(a, b)) + d / 2
+                // Mientras se estira se afina un poco, como una gota.
+                val alto = d * (1f - 0.14f * min(abs(a - b), 1f))
+                val arriba = size.height / 2 - alto / 2
+                val esquina = CornerRadius(alto / 2)
+                drawRoundRect(relleno, Offset(izquierda, arriba), Size(derecha - izquierda, alto), esquina, alpha = visible)
+                drawRoundRect(
+                    Brush.verticalGradient(listOf(brillo, Color.Transparent), startY = arriba, endY = arriba + alto * 0.6f),
+                    Offset(izquierda, arriba), Size(derecha - izquierda, alto), esquina, alpha = visible
+                )
+                drawRoundRect(
+                    Brush.verticalGradient(listOf(borde, borde.copy(alpha = borde.alpha * 0.15f)), startY = arriba, endY = arriba + alto),
+                    Offset(izquierda, arriba), Size(derecha - izquierda, alto), esquina,
+                    style = Stroke(1.dp.toPx()), alpha = visible
+                )
+            }
             .padding(horizontal = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -212,9 +272,8 @@ private fun PastillaSecciones(rutaActual: String?, onSeleccionar: (Screen) -> Un
 private fun RowScope.BotonDock(item: ItemDock, rutaActual: String?, onSeleccionar: (Screen) -> Unit) {
     val elegido = rutaActual == item.destino.ruta
     val nombre = stringResource(item.etiqueta)
-    val oscuro = esTemaOscuro()
-    // Al elegir una sección: el ícono se pinta de violeta, da un saltito
-    // (crece y vuelve con un rebote) y aparece el círculo suave detrás.
+    // Al elegir una sección: el ícono se pinta de violeta y da un saltito
+    // (crece y vuelve con un rebote); la gota de la pastilla llega detrás.
     val color by animateColorAsState(
         if (elegido) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         tween(250),
@@ -225,12 +284,6 @@ private fun RowScope.BotonDock(item: ItemDock, rutaActual: String?, onSelecciona
         spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "escalaIcono"
     )
-    val escalaFondo by animateFloatAsState(
-        if (elegido) 1f else 0f,
-        spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
-        label = "escalaFondo"
-    )
-    val fondoElegido = if (oscuro) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
         Box(
             // Con cinco secciones en un teléfono angosto no siempre entran 46 dp:
@@ -239,9 +292,6 @@ private fun RowScope.BotonDock(item: ItemDock, rutaActual: String?, onSelecciona
                 .widthIn(max = 46.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .drawBehind {
-                    drawCircle(fondoElegido, radius = size.minDimension / 2 * escalaFondo)
-                }
                 .clip(CircleShape)
                 .clickable(role = Role.Tab, onClickLabel = nombre) { onSeleccionar(item.destino) }
                 .semantics { selected = elegido },
@@ -273,7 +323,7 @@ private fun CirculoVidrio(icono: ImageVector, descripcion: String, tinte: Color,
         modifier = Modifier
             .graphicsLayer { scaleX = escala; scaleY = escala }
             .size(TamanoCirculo)
-            .vidrio(CircleShape)
+            .vidrioLiquido(CircleShape)
             .clickable(interactionSource = interaccion, indication = LocalIndication.current, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -296,7 +346,7 @@ private fun BarraBusqueda(
     Row(
         modifier = modifier
             .fillMaxHeight()
-            .vidrio(RoundedCornerShape(50))
+            .vidrioLiquido(RoundedCornerShape(50))
             .padding(start = 18.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

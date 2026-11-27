@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.estudia.ui.componentes.BloqueColor
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.Avatar
 import com.example.estudia.ui.componentes.colorAcentoTexto
@@ -601,8 +602,7 @@ private fun BloqueAjuste(icono: ImageVector, color: Color, contenido: @Composabl
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -619,8 +619,7 @@ private fun BloqueCuenta(texto: String, icono: ImageVector, color: Color, modifi
     Column(
         modifier = modifier
             .heightIn(min = 116.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
             .clickable(role = Role.Button, onClick = alTocar)
             .padding(14.dp),
         // El nombre va abajo; si ocupa dos renglones, el bloque crece.
@@ -648,8 +647,7 @@ private fun BloqueLogros(logros: List<Logro>, onAbrir: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
             .clickable(onClickLabel = stringResource(R.string.logros_ver_todos), role = Role.Button, onClick = onAbrir)
             .padding(16.dp)
     ) {

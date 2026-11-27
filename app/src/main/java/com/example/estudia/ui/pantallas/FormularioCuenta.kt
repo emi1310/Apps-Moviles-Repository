@@ -1,6 +1,7 @@
 package com.example.estudia.ui.pantallas
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -14,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.estudia.ui.componentes.IconoCircular
+import com.example.estudia.ui.componentes.superficieVidrio
 
 // Estructura común de Login y Registro: ícono, título, subtítulo y los
 // campos dentro de una tarjeta. imePadding + scroll: cuando aparece el
@@ -47,7 +49,8 @@ fun FormularioCuenta(
         )
         Spacer(modifier = Modifier.height(24.dp))
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(modifier = Modifier.padding(20.dp), content = campos)

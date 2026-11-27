@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.IconoCircular
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.PantallaDetalle
 import com.example.estudia.ui.componentes.TituloLista
 import com.example.estudia.ui.componentes.progresoAnimado
@@ -41,7 +42,7 @@ import com.example.estudia.ui.theme.BloqueVerde
 import com.example.estudia.ui.theme.BloqueVioleta
 import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.ui.theme.NaranjaRacha
-import com.example.estudia.viewmodel.ResumenSemanal
+import com.example.estudia.modelo.ResumenSemanal
 import com.example.estudia.viewmodel.ResumenSemanalViewModel
 
 // Pantalla "Tu semana": cuánto se estudió esta semana comparado con la
@@ -116,8 +117,7 @@ fun ResumenSemanalScreen(viewModel: ResumenSemanalViewModel, onVolver: () -> Uni
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
                     .padding(14.dp)
             ) {
                 IconoCircular(Icons.Outlined.Event, Color(evento.color))
@@ -192,8 +192,7 @@ private fun DatoSemana(icono: ImageVector, color: Color, etiqueta: String, valor
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
             .padding(14.dp)
             .semantics(mergeDescendants = true) {}
     ) {

@@ -50,7 +50,9 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MensajeIA
 import com.example.estudia.modelo.TarjetaSugerida
 import com.example.estudia.ui.componentes.CampoTexto
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.abrirGemini
+import com.example.estudia.ui.componentes.TecladoAjustable
 import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EtiquetaCampo
@@ -96,7 +98,8 @@ fun AsistenteScreen(viewModel: AsistenteViewModel) {
     LaunchedEffect(cantidad) { if (cantidad > 0) lista.animateScrollToItem(lista.layoutInfo.totalItemsCount.coerceAtLeast(1) - 1) }
 
     // Con el teclado abierto, la barra de escribir va arriba del teclado;
-    // si no, arriba del dock.
+    // si no, arriba del dock. (La ventana no se desplaza: lo acomoda la pantalla.)
+    TecladoAjustable()
     val teclado = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
     val abajo = maxOf(teclado, LocalEspacioDock.current) + 8.dp
 
@@ -248,9 +251,7 @@ private fun AvisoSinClave(onConectar: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(forma)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(bordeVidrio(), forma)
+            .superficieVidrio(forma)
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -397,9 +398,7 @@ private fun Burbuja(mensaje: MensajeIA, onGuardar: () -> Unit) {
         Column(
             modifier = Modifier
                 .padding(end = 24.dp)
-                .clip(forma)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .border(bordeVidrio(), forma)
+                .superficieVidrio(forma)
                 .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -476,9 +475,7 @@ private fun PastillaAccion(texto: String, icono: ImageVector, enabled: Boolean, 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .border(bordeVidrio(), RoundedCornerShape(50))
+            .superficieVidrio(RoundedCornerShape(50))
             .clickable(enabled = enabled, onClick = alTocar)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {

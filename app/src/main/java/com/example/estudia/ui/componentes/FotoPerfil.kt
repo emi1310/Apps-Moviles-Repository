@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import com.example.estudia.R
+import com.example.estudia.util.leerImagen
 
 // Avatar del usuario: su foto de perfil en un círculo o, si no tiene (o
 // mientras se carga), la inicial sobre el fondo que se le pase.

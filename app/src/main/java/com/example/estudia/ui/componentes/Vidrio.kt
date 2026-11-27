@@ -1,7 +1,16 @@
 package com.example.estudia.ui.componentes
 
 import android.os.Build
+import android.os.PowerManager
 import android.view.WindowManager
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +27,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -51,26 +62,58 @@ fun esTemaOscuro(): Boolean = MaterialTheme.colorScheme.background.luminance() <
 
 // Fondo con manchas de color difusas: violeta arriba a la izquierda, azul
 // arriba a la derecha, verde azulado y violeta más abajo.
+// Con vidrio líquido (Android 13 o más) las manchas son más marcadas, hay
+// una más en el medio y se mueven muy despacio, así la refracción del vidrio
+// se nota y se ve "viva". Con el ahorro de batería quedan quietas.
 @Composable
 fun Modifier.fondoAurora(): Modifier {
     val oscuro = esTemaOscuro()
     val base = MaterialTheme.colorScheme.background
     val intensidad = if (oscuro) 1.6f else 1f
+    // Con vidrio líquido, el fondo queda guardado aparte para las tarjetas.
+    val liquido = LocalFondoLiquido.current
+    val contexto = LocalContext.current
+    val mover = remember(liquido) {
+        liquido != null && (contexto.getSystemService(PowerManager::class.java)?.isPowerSaveMode != true)
+    }
+    val fase = if (mover) {
+        rememberInfiniteTransition(label = "aurora").animateFloat(
+            initialValue = 0f,
+            targetValue = (2 * PI).toFloat(),
+            animationSpec = infiniteRepeatable(tween(48_000, easing = LinearEasing)),
+            label = "fase"
+        )
+    } else null
     return this.drawBehind {
-        drawRect(base)
-        fun mancha(color: Color, alfa: Float, x: Float, y: Float, radio: Float) {
-            val centro = Offset(size.width * x, size.height * y)
-            val r = size.maxDimension * radio
-            drawCircle(
-                brush = Brush.radialGradient(listOf(color.copy(alpha = alfa * intensidad), Color.Transparent), centro, r),
-                radius = r,
-                center = centro
-            )
+        fun DrawScope.aurora() {
+            drawRect(base)
+            val f = fase?.value ?: 0f
+            val marcado = liquido != null
+            fun mancha(color: Color, alfa: Float, x: Float, y: Float, radio: Float) {
+                val centro = Offset(size.width * x, size.height * y)
+                val r = size.maxDimension * radio
+                val c = color.copy(alpha = (alfa * intensidad * (if (marcado) 1.45f else 1f)).coerceAtMost(1f))
+                // Marcada: el color se mantiene parejo hasta la mitad y después se
+                // apaga, así la mancha tiene una forma que el vidrio puede curvar.
+                val brocha = if (marcado) {
+                    Brush.radialGradient(0f to c, 0.55f to c.copy(alpha = c.alpha * 0.8f), 1f to Color.Transparent, center = centro, radius = r)
+                } else {
+                    Brush.radialGradient(listOf(c, Color.Transparent), centro, r)
+                }
+                drawCircle(brush = brocha, radius = r, center = centro)
+            }
+            mancha(DegradadoInicio, 0.20f, 0.05f + 0.05f * sin(f), 0.04f + 0.04f * cos(f), 0.55f)
+            mancha(BloqueAzul, 0.13f, 0.98f + 0.05f * cos(f), 0.18f + 0.05f * sin(f), 0.45f)
+            mancha(BloqueVerde, 0.08f, 0.10f + 0.06f * cos(f + 2f), 0.62f + 0.05f * sin(f + 2f), 0.40f)
+            mancha(DegradadoFin, 0.15f, 0.95f - 0.05f * sin(f), 0.92f - 0.05f * cos(f), 0.50f)
+            if (marcado) mancha(DegradadoFin, 0.10f, 0.55f + 0.10f * sin(f + 1f), 0.40f + 0.08f * cos(f + 1f), 0.20f)
         }
-        mancha(DegradadoInicio, 0.20f, 0.05f, 0.04f, 0.55f)
-        mancha(BloqueAzul, 0.13f, 0.98f, 0.18f, 0.45f)
-        mancha(BloqueVerde, 0.08f, 0.10f, 0.62f, 0.40f)
-        mancha(DegradadoFin, 0.15f, 0.95f, 0.92f, 0.50f)
+        if (liquido != null) {
+            liquido.capaAurora.record { aurora() }
+            drawLayer(liquido.capaAurora)
+        } else {
+            aurora()
+        }
     }
 }
 

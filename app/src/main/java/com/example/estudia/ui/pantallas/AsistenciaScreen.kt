@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.clickable
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.BloqueColor
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.PantallaDetalle
 import com.example.estudia.ui.componentes.TituloLista
@@ -169,8 +170,7 @@ private fun FilaClase(clase: ClaseParaMarcar, fecha: String, onMarcar: (Boolean)
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
             .padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp)
     ) {
         Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(clase.colorMateria)))

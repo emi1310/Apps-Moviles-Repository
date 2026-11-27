@@ -24,6 +24,7 @@ import com.example.estudia.modelo.resumenAsistencia
 import com.example.estudia.ui.componentes.AccionRapida
 import com.example.estudia.ui.componentes.accionDelBoton
 import com.example.estudia.ui.componentes.iconoAccion
+import com.example.estudia.ui.componentes.seccionVecina
 import com.example.estudia.ui.navegacion.Screen
 import com.example.estudia.viewmodel.Aviso
 import com.example.estudia.viewmodel.CalendarioViewModel
@@ -70,6 +71,16 @@ class ReglasArchivosYFeriadosTest {
         assertEquals(listOf(AccionRapida.MATERIA, AccionRapida.EVENTO, AccionRapida.NOTA, AccionRapida.GEMINI, AccionRapida.ESTUDIAR), acciones)
         // Los cinco íconos son distintos.
         assertEquals(5, AccionRapida.entries.map { iconoAccion(it) }.toSet().size)
+    }
+
+    @Test
+    fun deslizandoSePasaALaSeccionDeAlLado() {
+        assertEquals(Screen.Materias, seccionVecina(Screen.Inicio.ruta, 1))
+        assertEquals(Screen.Notas, seccionVecina(Screen.Asistente.ruta, -1))
+        // En los extremos y fuera del dock no hay a dónde ir.
+        assertNull(seccionVecina(Screen.Inicio.ruta, -1))
+        assertNull(seccionVecina(Screen.Asistente.ruta, 1))
+        assertNull(seccionVecina("perfil", 1))
     }
 
     // ---------- Reglas de la cursada ----------

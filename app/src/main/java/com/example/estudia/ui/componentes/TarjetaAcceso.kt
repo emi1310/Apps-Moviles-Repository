@@ -74,9 +74,7 @@ fun TarjetaAcceso(
 ) {
     val forma = RoundedCornerShape(22.dp)
     val fondo = modifier
-        .clip(forma)
-        .background(MaterialTheme.colorScheme.surfaceContainer)
-        .border(bordeVidrio(), forma)
+        .superficieVidrio(forma)
         .clickable(role = Role.Button, onClick = alTocar)
     if (apilada) {
         Column(modifier = fondo.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {

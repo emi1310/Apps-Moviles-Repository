@@ -7,10 +7,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.ExifInterface
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,8 +25,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.estudia.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -145,30 +139,3 @@ private fun debeExplicarCamara(context: Context): Boolean {
     return false
 }
 
-// Lee una imagen de la app (content://) achicada a "ladoMaximo" píxeles y
-// derecha: las fotos de la cámara guardan la rotación en los datos EXIF.
-// Se llama desde una corrutina: trabaja en Dispatchers.IO.
-suspend fun leerImagen(context: Context, uri: Uri, ladoMaximo: Int): Bitmap? = withContext(Dispatchers.IO) {
-    try {
-        val resolver = context.contentResolver
-        val medidas = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, medidas) }
-        var muestra = 1
-        while (medidas.outWidth / (muestra * 2) >= ladoMaximo && medidas.outHeight / (muestra * 2) >= ladoMaximo) muestra *= 2
-        val imagen = resolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = muestra })
-        } ?: return@withContext null
-        val grados = resolver.openInputStream(uri)?.use {
-            when (ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                else -> 0f
-            }
-        } ?: 0f
-        if (grados == 0f) imagen
-        else Bitmap.createBitmap(imagen, 0, 0, imagen.width, imagen.height, Matrix().apply { postRotate(grados) }, true)
-    } catch (e: Exception) {
-        null
-    }
-}

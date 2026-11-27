@@ -56,14 +56,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.util.guardarImagenParaCompartir
 import com.example.estudia.modelo.COLORES_MAPA
 import com.example.estudia.modelo.MapaMental
 import com.example.estudia.modelo.NodoMapa
 import com.example.estudia.modelo.colorDe
 import com.example.estudia.ui.componentes.CampoTexto
+import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.EtiquetaCampo
@@ -86,10 +87,7 @@ import com.example.estudia.util.aTexto
 import com.example.estudia.viewmodel.MapaViewModel
 import com.example.estudia.viewmodel.MapasViewModel
 import com.example.estudia.viewmodel.Mensaje
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.math.max
 import kotlin.math.min
 
@@ -158,9 +156,9 @@ fun MapasScreen(viewModel: MapasViewModel, onVolver: () -> Unit, onAbrir: (Int) 
 private fun TarjetaMapa(mapa: MapaMental, colorMateria: Color?, onAbrir: () -> Unit, onRenombrar: () -> Unit, onEliminar: () -> Unit) {
     Card(
         shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = bordeVidrio(),
-        modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onAbrir)
+        modifier = Modifier.fillMaxWidth().superficieVidrio(MaterialTheme.shapes.large, MaterialTheme.colorScheme.surfaceContainerHighest).clickable(role = Role.Button, onClick = onAbrir)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp)) {
             MiniaturaMapa(mapa, Modifier.size(width = 104.dp, height = 84.dp))
@@ -642,16 +640,9 @@ private fun DialogoColorIdea(actual: Int?, onElegir: (Int?) -> Unit, onCancelar:
     }
 }
 
-// Guarda la imagen en cacheDir/mapas y abre "Compartir" (WhatsApp, Drive...).
+// Guarda la imagen (util/Imagenes.kt) y abre "Compartir" (WhatsApp, Drive...).
 private suspend fun compartirImagen(contexto: Context, imagen: Bitmap, titulo: String, tituloCompartir: String) {
-    val uri = withContext(Dispatchers.IO) {
-        val carpeta = File(contexto.cacheDir, "mapas").apply { mkdirs() }
-        carpeta.listFiles()?.forEach { it.delete() }
-        val nombre = titulo.replace(Regex("[^\\p{L}\\p{N} _-]"), "").trim().ifEmpty { "mapa" }.take(40)
-        val archivo = File(carpeta, "$nombre.png")
-        archivo.outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
-        FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
-    }
+    val uri = guardarImagenParaCompartir(contexto, imagen, titulo)
     val enviar = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"
         putExtra(Intent.EXTRA_STREAM, uri)
