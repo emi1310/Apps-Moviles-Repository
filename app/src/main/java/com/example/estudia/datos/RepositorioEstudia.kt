@@ -22,6 +22,7 @@ import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tema
 import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.modelo.ResultadoCalendario
 import com.example.estudia.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -232,9 +233,18 @@ interface RepositorioEstudia {
 
     // Pasa las clases, exámenes y entregas de las materias activas al
     // calendario "Estudia+" del teléfono (necesita el permiso de calendario).
-    // Devuelve cuántos eventos quedaron, o null si no se pudo.
-    // Si sale bien, queda activado: la app lo mantiene al día sola (EstudiaApp).
-    suspend fun sincronizarCalendario(nombreCalendario: String): Int?
+    // Sincroniza en los dos sentidos con el calendario elegido (el local
+    // "Estudia+" o uno de Google): devuelve cuántos eventos quedaron y los
+    // eventos de Estudia+ que se cambiaron con lo editado en el calendario,
+    // o null si no se pudo. Si sale bien, queda activado: la app lo mantiene
+    // al día sola (EstudiaApp y SincronizarCalendarioWorker).
+    suspend fun sincronizarCalendario(nombreCalendario: String): ResultadoCalendario?
+
+    // El calendario de Google elegido (id), o null = el local "Estudia+".
+    val calendarioDestino: Flow<Long?>
+    suspend fun calendariosDeGoogle(): List<com.example.estudia.modelo.CalendarioDisponible>
+    // Pasa los eventos al otro calendario (y los saca del anterior).
+    suspend fun cambiarCalendarioDestino(destino: Long?, nombreCalendario: String): ResultadoCalendario?
 
     // ---------- Plan de estudio: sesiones que pasaron ----------
 

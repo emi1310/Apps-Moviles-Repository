@@ -431,10 +431,18 @@ class RepositorioFalso(
 
     val calendarioAuto = MutableStateFlow(false)
     var icsGuardado: String? = null
-    override suspend fun sincronizarCalendario(nombreCalendario: String): Int? {
+    override suspend fun sincronizarCalendario(nombreCalendario: String): com.example.estudia.modelo.ResultadoCalendario? {
         val u = usuario.value ?: return null
         calendarioAuto.value = true
-        return eventosParaCalendario(u, LocalDate.now()).size
+        return com.example.estudia.modelo.ResultadoCalendario(eventosParaCalendario(u, LocalDate.now()).size, emptyList())
+    }
+    val destinoCalendario = MutableStateFlow<Long?>(null)
+    override val calendarioDestino: Flow<Long?> = destinoCalendario
+    var calendariosGoogle: List<com.example.estudia.modelo.CalendarioDisponible> = emptyList()
+    override suspend fun calendariosDeGoogle() = calendariosGoogle
+    override suspend fun cambiarCalendarioDestino(destino: Long?, nombreCalendario: String): com.example.estudia.modelo.ResultadoCalendario? {
+        destinoCalendario.value = destino
+        return sincronizarCalendario(nombreCalendario)
     }
     override val calendarioAutomatico: Flow<Boolean> = calendarioAuto
     override suspend fun dejarDeSincronizarCalendario(): Boolean {

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copia automática y pase a otro teléfono (Android 12 o más nuevo). Se
-     copia todo menos las claves de IA de los usuarios (ver backup_rules). -->
+<!-- Copia en la cuenta de Google (Android 12 o más nuevo): Android la sube
+     sola a Google Drive una vez por día y la restaura al instalar la app en
+     otro teléfono con la misma cuenta. Tiene un límite de 25 MB: si se pasa,
+     no se copia nada. Por eso quedan afuera los archivos adjuntos (PDFs y
+     fotos, que pueden pesar mucho; van en la copia .zip) y las claves de IA
+     (cifradas con una llave que no sale del teléfono). El pase directo a otro
+     teléfono (cable o wifi) no tiene límite: ahí sí van los adjuntos. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/claves_ia.preferences_pb" />
+        <exclude domain="file" path="archivos/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/claves_ia.preferences_pb" />

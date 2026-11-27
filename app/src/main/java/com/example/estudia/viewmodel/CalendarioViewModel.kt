@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.estudia.modelo.CalendarioDisponible
+import com.example.estudia.modelo.ResultadoCalendario
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -42,6 +44,8 @@ data class CalendarioUiState(
     val recesos: List<Receso> = emptyList(),
     // El calendario del teléfono se mantiene al día solo.
     val calendarioAutomatico: Boolean = false,
+    // El calendario de Google elegido (null = el local "Estudia+").
+    val calendarioDestino: Long? = null,
     // Búsqueda desde la lupa del dock: con texto, en lugar del mes se muestran
     // los eventos que coinciden.
     val busqueda: String = "",
@@ -100,7 +104,7 @@ class CalendarioViewModel(
         }.combine(busqueda) { estado, texto -> estado to texto }
         .combine(repositorio.calendarioAutomatico) { (estado, texto), automatico ->
             estado.copy(calendarioAutomatico = automatico, busqueda = texto, resultadosBusqueda = buscarEventos(estado.todosLosEventos, texto, estado.hoy))
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarioUiState(semanas = semanasDelMes(YearMonth.now())))
+        }.combine(repositorio.calendarioDestino) { estado, destino -> estado.copy(calendarioDestino = destino) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarioUiState(semanas = semanasDelMes(YearMonth.now())))
 
     fun mesAnterior() = cambiarMes(mes.value.minusMonths(1))
 
@@ -186,13 +190,25 @@ class CalendarioViewModel(
 
     // La UI lo llama cuando ya tiene el permiso de calendario.
     fun sincronizarConTelefono(nombreCalendario: String) {
-        viewModelScope.launch {
-            val cantidad = repositorio.sincronizarCalendario(nombreCalendario)
-            avisar(
-                if (cantidad != null) Aviso(Mensaje.AVISO_CALENDARIO_SINCRONIZADO, listOf(cantidad))
-                else Aviso(Mensaje.AVISO_CALENDARIO_ERROR)
-            )
+        viewModelScope.launch { avisarResultado(repositorio.sincronizarCalendario(nombreCalendario)) }
+    }
+
+    // Los calendarios de Google del teléfono (para elegir dónde pasar los eventos).
+    suspend fun calendariosDeGoogle(): List<CalendarioDisponible> = repositorio.calendariosDeGoogle()
+
+    // destino: id de un calendario de Google, o null para el local "Estudia+".
+    fun elegirCalendario(destino: Long?, nombreCalendario: String) {
+        viewModelScope.launch { avisarResultado(repositorio.cambiarCalendarioDestino(destino, nombreCalendario)) }
+    }
+
+    private suspend fun avisarResultado(resultado: ResultadoCalendario?) {
+        if (resultado == null) {
+            avisar(Aviso(Mensaje.AVISO_CALENDARIO_ERROR))
+            return
         }
+        if (resultado.cambiados.isNotEmpty()) avisosSistema.programarEventos(resultado.cambiados)
+        avisar(Aviso(Mensaje.AVISO_CALENDARIO_SINCRONIZADO, listOf(resultado.cantidad)))
+        if (resultado.cambiados.isNotEmpty()) avisar(Aviso(Mensaje.AVISO_CALENDARIO_CAMBIOS_TRAIDOS, listOf(resultado.cambiados.size)))
     }
 
     fun dejarDeSincronizar() {

@@ -31,6 +31,9 @@ import com.example.estudia.datos.local.TemaDao
 import com.example.estudia.datos.local.TarjetaDao
 import com.example.estudia.datos.local.TarjetaEntity
 import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.modelo.CalendarioDisponible
+import com.example.estudia.modelo.ResultadoCalendario
+import com.example.estudia.modelo.aplicarCambioDeCalendario
 import com.example.estudia.datos.local.TemaEntity
 import com.example.estudia.modelo.Tema
 import com.example.estudia.datos.local.UsuarioDao
@@ -768,11 +771,31 @@ class RepositorioEstudiaImpl(
 
     // ---------- Calendario del teléfono ----------
 
-    override suspend fun sincronizarCalendario(nombreCalendario: String): Int? {
+    override suspend fun sincronizarCalendario(nombreCalendario: String): ResultadoCalendario? {
         val usuario = usuarioActual.first() ?: return null
-        val cantidad = calendarioTelefono.sincronizar(eventosParaCalendario(usuario, LocalDate.now()), nombreCalendario)
-        if (cantidad != null) preferencias.guardarCalendarioAutomatico(true)
-        return cantidad
+        val destino = preferencias.calendarioDestino.first()
+        val resultado = calendarioTelefono.sincronizar(eventosParaCalendario(usuario, LocalDate.now()), nombreCalendario, destino)
+            ?: return null
+        preferencias.guardarCalendarioAutomatico(true)
+        // Lo que el usuario cambió en el calendario vuelve a Estudia+.
+        val zona = ZoneId.systemDefault()
+        val cambiados = resultado.cambios.mapNotNull { cambio ->
+            val materia = usuario.materias.firstOrNull { m -> m.eventos.any { it.id == cambio.eventoId } } ?: return@mapNotNull null
+            val evento = materia.eventos.first { it.id == cambio.eventoId }
+            aplicarCambioDeCalendario(evento, materia.nombre, cambio.fila, zona)?.also { actualizarEvento(materia.id, it) }
+        }
+        return ResultadoCalendario(resultado.cantidad, cambiados)
+    }
+
+    override val calendarioDestino: Flow<Long?> = preferencias.calendarioDestino
+
+    override suspend fun calendariosDeGoogle(): List<CalendarioDisponible> = calendarioTelefono.calendariosDeGoogle()
+
+    override suspend fun cambiarCalendarioDestino(destino: Long?, nombreCalendario: String): ResultadoCalendario? {
+        val anterior = preferencias.calendarioDestino.first()
+        if (anterior != destino) calendarioTelefono.quitarDe(anterior)
+        preferencias.guardarCalendarioDestino(destino)
+        return sincronizarCalendario(nombreCalendario)
     }
 
     override val calendarioAutomatico: Flow<Boolean> = preferencias.calendarioAutomatico
@@ -784,7 +807,7 @@ class RepositorioEstudiaImpl(
 
     override suspend fun dejarDeSincronizarCalendario(): Boolean {
         preferencias.guardarCalendarioAutomatico(false)
-        return calendarioTelefono.borrarCalendario()
+        return calendarioTelefono.dejarDeSincronizar(preferencias.calendarioDestino.first())
     }
 
     override suspend fun exportarCalendarioIcs(uri: String, nombreCalendario: String): Int? {

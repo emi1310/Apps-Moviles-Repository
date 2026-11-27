@@ -35,6 +35,9 @@ import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.TextoAjustable
 import androidx.compose.ui.text.style.TextAlign
 import com.example.estudia.ui.theme.BloqueAzul
+import com.example.estudia.notificaciones.SilencioEnClase
+import androidx.compose.material.icons.outlined.CloudDone
+import androidx.compose.material.icons.outlined.DoNotDisturbOn
 import com.example.estudia.ui.theme.BloqueNaranja
 import com.example.estudia.ui.theme.BloqueVerde
 import com.example.estudia.ui.theme.BloqueVioleta
@@ -375,6 +378,8 @@ fun PerfilScreen(
         Spacer(modifier = Modifier.height(8.dp))
         // ---------- Aviso al llegar a la facultad ----------
         AjusteAvisoLlegada()
+        Spacer(modifier = Modifier.height(10.dp))
+        AjusteSilencioClase()
         Spacer(modifier = Modifier.height(8.dp))
 
         // ---------- Tema: sol (claro) o luna (oscuro) ----------
@@ -430,6 +435,8 @@ fun PerfilScreen(
             onCopiarAhora = viewModel::copiarAhora,
             onDesactivar = viewModel::desactivarCopiaAutomatica
         )
+        Spacer(modifier = Modifier.height(10.dp))
+        BloqueCopiaGoogle()
         Spacer(modifier = Modifier.height(10.dp))
         val rojo = MaterialTheme.colorScheme.error
         Row(
@@ -854,5 +861,100 @@ private fun AjusteAvisoLlegada() {
         ) {
             TextoDialogo(stringResource(R.string.llegada_segundo_plano))
         }
+    }
+}
+
+// Silenciar en clase: No molestar automático durante las clases y exámenes
+// del horario. Necesita el acceso a No molestar (se da en Ajustes): antes se
+// explica, y al volver a la app, si lo dio, se activa solo.
+@Composable
+private fun AjusteSilencioClase() {
+    val context = LocalContext.current
+    var activo by remember { mutableStateOf(SilencioEnClase.activo(context) && SilencioEnClase.accesoConcedido(context)) }
+    var explicando by rememberSaveable { mutableStateOf(false) }
+    var esperandoAcceso by rememberSaveable { mutableStateOf(false) }
+    LifecycleResumeEffect(Unit) {
+        val acceso = SilencioEnClase.accesoConcedido(context)
+        if (esperandoAcceso && acceso) SilencioEnClase.cambiar(context, true)
+        esperandoAcceso = false
+        activo = SilencioEnClase.activo(context) && acceso
+        onPauseOrDispose { }
+    }
+
+    BloqueAjuste(Icons.Outlined.DoNotDisturbOn, BloqueAzul) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.silencio_clase_titulo), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.silencio_clase_descripcion),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = activo,
+            onCheckedChange = { activar ->
+                when {
+                    !activar -> { SilencioEnClase.cambiar(context, false); activo = false }
+                    SilencioEnClase.accesoConcedido(context) -> { SilencioEnClase.cambiar(context, true); activo = true }
+                    else -> explicando = true
+                }
+            }
+        )
+    }
+
+    if (explicando) {
+        DialogoApp(
+            titulo = stringResource(R.string.silencio_clase_titulo),
+            icono = Icons.Outlined.DoNotDisturbOn,
+            textoConfirmar = stringResource(R.string.ir_a_ajustes),
+            onConfirmar = {
+                explicando = false
+                esperandoAcceso = true
+                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+            },
+            textoCancelar = stringResource(R.string.ahora_no),
+            onCancelar = { explicando = false }
+        ) {
+            TextoDialogo(stringResource(R.string.silencio_clase_explicacion))
+        }
+    }
+}
+
+// Copia en la cuenta de Google: la hace Android solo (una vez por día, con
+// wifi y cargando) y la guarda en Google Drive sin ocupar el espacio del
+// usuario. Al instalar la app en otro teléfono con la misma cuenta, se
+// restaura. Acá solo se explica y se abre el ajuste del sistema.
+@Composable
+private fun BloqueCopiaGoogle() {
+    val context = LocalContext.current
+    val avisos = LocalAvisos.current
+    val textoSinAjuste = stringResource(R.string.copia_google_sin_ajuste)
+    BloqueAjuste(Icons.Outlined.CloudDone, BloqueVerde) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.copia_google_titulo), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.copia_google_descripcion),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            TextButton(
+                onClick = { if (!abrirAjusteCopiaGoogle(context)) avisos.mostrarTexto(textoSinAjuste) },
+                contentPadding = PaddingValues(0.dp)
+            ) { Text(stringResource(R.string.copia_google_ver)) }
+        }
+    }
+}
+
+// La pantalla de "Copia de seguridad" de Google; si el teléfono no la tiene
+// (sin Google Play Services), los Ajustes generales.
+private fun abrirAjusteCopiaGoogle(context: android.content.Context): Boolean {
+    val intentos = listOf(
+        Intent().setClassName("com.google.android.gms", "com.google.android.gms.backup.component.BackupSettingsActivity"),
+        Intent("android.settings.BACKUP_AND_RESET_SETTINGS"),
+        Intent(Settings.ACTION_SETTINGS)
+    )
+    return intentos.any { intent ->
+        runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
     }
 }

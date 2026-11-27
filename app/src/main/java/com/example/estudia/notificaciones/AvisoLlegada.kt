@@ -164,10 +164,12 @@ class LlegadaReceiver : BroadcastReceiver() {
     }
 }
 
-// Al reiniciar el teléfono se borran las geovallas: se vuelve a armar.
+// Al reiniciar el teléfono se borran las geovallas y las alarmas: se
+// vuelven a armar (el aviso al llegar y el silencio en clase).
 class ArranqueReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        SilencioEnClase.actualizar(context)
         if (AvisoLlegada.lugarGuardado(context) == null) return
         val pendiente = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

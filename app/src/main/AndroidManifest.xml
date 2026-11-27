@@ -155,6 +155,10 @@
         <receiver
             android:name=".notificaciones.LlegadaReceiver"
             android:exported="false" />
+        <!-- Silenciar en clase: la alarma de cada comienzo y fin de clase. -->
+        <receiver
+            android:name=".notificaciones.SilencioClaseReceiver"
+            android:exported="false" />
         <receiver
             android:name=".notificaciones.ArranqueReceiver"
             android:exported="true">

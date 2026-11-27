@@ -146,8 +146,27 @@ class EstudiaApp : Application() {
                 .collect { sincronizar ->
                     val permiso = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
                         .all { ContextCompat.checkSelfPermission(this@EstudiaApp, it) == PackageManager.PERMISSION_GRANTED }
-                    if (sincronizar && permiso) repositorio.sincronizarCalendario(getString(R.string.calendario_estudia))
+                    if (sincronizar && permiso) {
+                        val resultado = repositorio.sincronizarCalendario(getString(R.string.calendario_estudia))
+                        // Los eventos que se cambiaron desde el calendario: sus avisos se reprograman.
+                        if (resultado != null && resultado.cambiados.isNotEmpty()) avisos.programarEventos(resultado.cambiados)
+                    }
                 }
+        }
+        // Y cada una hora, para traer lo que se cambió en Google Calendar.
+        scope.launch {
+            repositorio.calendarioAutomatico.distinctUntilChanged().collect { activo ->
+                com.example.estudia.datos.SincronizarCalendarioWorker.programar(this@EstudiaApp, activo)
+            }
+        }
+        // Silenciar en clase: cada cambio en el horario, los feriados o los
+        // recesos vuelve a calcular el próximo comienzo o fin de clase.
+        scope.launch {
+            combine(repositorio.usuarioActual, repositorio.feriados) { usuario, feriados ->
+                usuario?.let { u -> u.materias.map { it.archivada to it.eventos } to (u.recesos to feriados) }
+            }.distinctUntilChanged().debounce(2_000).collect {
+                com.example.estudia.notificaciones.SilencioEnClase.actualizar(this@EstudiaApp)
+            }
         }
         scope.launch {
             val sesion = repositorio.sesionEstudio.first() ?: return@launch

@@ -50,6 +50,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
+import com.example.estudia.modelo.CalendarioDisponible
+import androidx.compose.material.icons.outlined.SyncAlt
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.RadioButton
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.Role
+import kotlinx.coroutines.launch
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
@@ -133,13 +140,36 @@ fun CalendarioScreen(
     val guardarIcs = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/calendar")) { uri ->
         if (uri != null) viewModel.exportarIcs(uri.toString(), nombreCalendario)
     }
+    // Elegir a qué calendario se pasan los eventos (el local o uno de Google).
+    val alcanceCalendario = rememberCoroutineScope()
+    var calendariosParaElegir by remember { mutableStateOf<List<CalendarioDisponible>?>(null) }
     if (opcionesCalendario) {
         DialogoOpcionesCalendario(
             automatico = estado.calendarioAutomatico,
+            onElegir = {
+                opcionesCalendario = false
+                if (PERMISOS_CALENDARIO.all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }) {
+                    alcanceCalendario.launch { calendariosParaElegir = viewModel.calendariosDeGoogle() }
+                } else {
+                    explicarCalendario = true
+                }
+            },
             onPasar = { opcionesCalendario = false; pasarAlTelefono() },
             onExportar = { opcionesCalendario = false; guardarIcs.launch(nombreArchivoIcs) },
             onDejar = { opcionesCalendario = false; viewModel.dejarDeSincronizar() },
             onCancelar = { opcionesCalendario = false }
+        )
+    }
+    calendariosParaElegir?.let { calendarios ->
+        DialogoElegirCalendario(
+            calendarios = calendarios,
+            elegido = estado.calendarioDestino?.takeIf { id -> calendarios.any { it.id == id } },
+            nombreLocal = nombreCalendario,
+            onElegir = { destino ->
+                calendariosParaElegir = null
+                viewModel.elegirCalendario(destino, nombreCalendario)
+            },
+            onCancelar = { calendariosParaElegir = null }
         )
     }
     if (explicarCalendario) {
@@ -525,8 +555,52 @@ private fun FilaEventoEncontrado(encontrado: EventoEncontrado, hoy: LocalDate, m
 // Opciones del calendario fuera de la app. Cada una es un bloque con ícono,
 // título y una línea que explica qué hace.
 @Composable
+private fun DialogoElegirCalendario(
+    calendarios: List<CalendarioDisponible>,
+    elegido: Long?,
+    nombreLocal: String,
+    onElegir: (Long?) -> Unit,
+    onCancelar: () -> Unit
+) {
+    var marcado by remember { mutableStateOf(elegido) }
+    DialogoApp(
+        titulo = stringResource(R.string.calendario_elegir),
+        icono = Icons.Outlined.SyncAlt,
+        textoConfirmar = stringResource(R.string.guardar),
+        onConfirmar = { onElegir(marcado) },
+        onCancelar = onCancelar
+    ) {
+        TextoDialogo(stringResource(R.string.calendario_elegir_explicacion))
+        val opciones = listOf<Triple<Long?, String, String>>(Triple(null, nombreLocal, stringResource(R.string.calendario_local_detalle))) +
+            calendarios.map { Triple(it.id, it.nombre, it.cuenta) }
+        opciones.forEach { (id, nombre, detalle) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .selectable(selected = marcado == id, role = Role.RadioButton) { marcado = id }
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                RadioButton(selected = marcado == id, onClick = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(nombre, style = MaterialTheme.typography.bodyLarge)
+                    Text(detalle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        if (calendarios.isEmpty()) {
+            Text(stringResource(R.string.calendario_sin_google), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 private fun DialogoOpcionesCalendario(
     automatico: Boolean,
+    onElegir: () -> Unit,
     onPasar: () -> Unit,
     onExportar: () -> Unit,
     onDejar: () -> Unit,
@@ -548,6 +622,7 @@ private fun DialogoOpcionesCalendario(
                     onPasar
                 )
             )
+            add(Triple(Icons.Outlined.SyncAlt, stringResource(R.string.calendario_elegir) to stringResource(R.string.calendario_elegir_detalle), onElegir))
             add(Triple(Icons.Outlined.FileDownload, stringResource(R.string.calendario_exportar_ics) to stringResource(R.string.calendario_exportar_ics_detalle), onExportar))
             if (automatico) {
                 add(Triple(Icons.Outlined.EventBusy, stringResource(R.string.calendario_dejar) to stringResource(R.string.calendario_dejar_detalle), onDejar))

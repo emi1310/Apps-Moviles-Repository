@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copia automática de Android (hasta Android 11). Se copia todo menos las
-     claves de IA de los usuarios: están cifradas con una llave que no sale
-     del teléfono, así que en otro no servirían. -->
+<!-- Copia en la cuenta de Google (hasta Android 11). Quedan afuera las claves
+     de IA (cifradas con una llave que no sale del teléfono) y los archivos
+     adjuntos, para no pasar el límite de 25 MB (ver data_extraction_rules). -->
 <full-backup-content>
     <exclude domain="file" path="datastore/claves_ia.preferences_pb" />
+    <exclude domain="file" path="archivos/" />
 </full-backup-content>

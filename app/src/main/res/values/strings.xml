@@ -292,6 +292,9 @@
         <item>¿Qué es \"Unir pares\"?</item>
         <item>¿Puedo fijar una meta de estudio por día?</item>
         <item>¿Cómo hago para no distraerme con el celular mientras estudio?</item>
+        <item>¿El teléfono se puede silenciar solo en clase?</item>
+        <item>¿Se sincroniza con Google Calendar?</item>
+        <item>¿Mis datos se guardan en Google Drive?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -349,6 +352,9 @@
         <item>Un juego con tus tarjetas (hacen falta 3 o más): se mezclan las preguntas y respuestas de hasta 6 tarjetas y tenés que unir cada pregunta con su respuesta lo más rápido posible. Cada error suma 1 segundo y se guarda tu récord de cada materia. Está en \"Tarjetas de estudio\", en cada materia.</item>
         <item>Sí: en el temporizador, abajo, tocá \"Meta del día\" y elegí cuánto querés estudiar (de 30 minutos a 4 horas). El anillo se llena con las sesiones y bloques de estudio de hoy y te avisa cuando la cumplís.</item>
         <item>En el temporizador dejá activado \"Avisarme si salgo de la app\": si te vas a otra app mientras corre el tiempo te llega una notificación para volver. Durante la sesión también podés tocar \"Fijar la app\", que deja la pantalla fija en Estudia+ hasta que pauses o termines. Y \"Silenciar el teléfono\" pone No molestar.</item>
+        <item>Sí: en el Perfil activá \"Silenciar en clase\". Al empezar cada clase o examen de tu horario el teléfono pasa a No molestar y vuelve a sonar al terminar, aunque la app esté cerrada. En feriados y recesos no se activa. La primera vez te lleva a Ajustes para dar el acceso a No molestar.</item>
+        <item>Sí, en los dos sentidos: en el Calendario tocá el botón del calendario con las flechas, \"Elegir calendario\" y elegí uno de tus calendarios de Google. Tus eventos aparecen en Google Calendar y, si ahí les cambiás el título, el día o el horario, el cambio vuelve a Estudia+ (al abrir la app y una vez por hora). Para borrar un evento, borralo en Estudia+.</item>
+        <item>Sí: Android hace sola, una vez por día, una copia de tus materias, notas, tarjetas y ajustes en tu cuenta de Google (sin ocupar tu espacio de Drive), y la restaura si instalás Estudia+ en otro teléfono con la misma cuenta. Los adjuntos no entran: para eso usá \"Guardar copia\" o la copia automática semanal. En el Perfil, \"Ver en Ajustes\" te muestra si está activada.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -1060,6 +1066,20 @@
     <string name="fijar_app_quitar">Dejar de fijar la app</string>
     <string name="salida_titulo">¡Volvé a concentrarte!</string>
     <string name="salida_texto">Tu sesión de %2$s sigue corriendo: faltan %1$d min.</string>
+    <!-- Comodidad: silencio en clase, Google Calendar en dos sentidos, copia en la cuenta de Google -->
+    <string name="silencio_clase_titulo">Silenciar en clase</string>
+    <string name="silencio_clase_descripcion">No molestar automático durante tus clases y exámenes (según el horario). En feriados y recesos no se activa.</string>
+    <string name="silencio_clase_explicacion">Al empezar cada clase o examen de tu horario, el teléfono pasa a No molestar, y vuelve a sonar al terminar. Si ya tenías No molestar puesto, la app no lo toca. Para esto Estudia+ necesita el acceso a No molestar, que se da en Ajustes: buscá Estudia+ en la lista y activalo.</string>
+    <string name="calendario_elegir">Elegir calendario</string>
+    <string name="calendario_elegir_detalle">El de Estudia+ en el teléfono o uno de Google Calendar</string>
+    <string name="calendario_elegir_explicacion">Si elegís un calendario de Google, tus eventos se ven también en Google Calendar (web y otros dispositivos). Funciona en los dos sentidos: si cambiás el título, el día o el horario de un evento en Google Calendar, se cambia en Estudia+. Para borrar un evento, borralo en Estudia+.</string>
+    <string name="calendario_local_detalle">Solo en este teléfono</string>
+    <string name="calendario_sin_google">No hay calendarios de Google en el teléfono. Agregá tu cuenta de Google en Ajustes → Cuentas y activá la sincronización del Calendario.</string>
+    <string name="aviso_calendario_cambios_traidos">Se trajeron %1$d cambios desde el calendario</string>
+    <string name="copia_google_titulo">Copia en tu cuenta de Google</string>
+    <string name="copia_google_descripcion">Android guarda solo, una vez por día (con wifi y cargando), tus materias, notas, tarjetas y ajustes en tu Google Drive, sin ocupar tu espacio. Al instalar Estudia+ en otro teléfono con la misma cuenta, se restaura. Los archivos adjuntos no entran (van en la copia .zip).</string>
+    <string name="copia_google_ver">Ver en Ajustes</string>
+    <string name="copia_google_sin_ajuste">No se encontró el ajuste de copia de seguridad en este teléfono</string>
     <string name="error_nombre_receso">Ponele un nombre al receso</string>
     <string name="error_fechas_receso">La fecha de fin no puede ser antes de la de inicio</string>
     <!-- Matriz de prioridades (urgente / importante) -->

@@ -25,6 +25,7 @@ private val CLAVE_PERMISO_ARCHIVOS = booleanPreferencesKey("permiso_archivos_ped
 private val CLAVE_SILENCIAR = booleanPreferencesKey("silenciar_al_estudiar")
 private val CLAVE_META_DIARIA = intPreferencesKey("meta_diaria_minutos")
 private val CLAVE_AVISAR_SALIR = booleanPreferencesKey("avisar_al_salir")
+private val CLAVE_CALENDARIO_DESTINO = longPreferencesKey("calendario_destino")
 private val CLAVE_CARPETA_COPIA = stringPreferencesKey("carpeta_copia_automatica")
 private val CLAVE_ULTIMA_COPIA = stringPreferencesKey("ultima_copia_automatica")
 private val CLAVE_CALENDARIO_AUTO = booleanPreferencesKey("calendario_telefono_automatico")
@@ -106,6 +107,16 @@ class PreferenciasDataStore(private val context: Context) {
     suspend fun guardarUltimaCopia(fecha: LocalDate) {
         context.preferenciasDataStore.edit { preferencias ->
             preferencias[CLAVE_ULTIMA_COPIA] = fecha.toString()
+        }
+    }
+
+    // El calendario de Google elegido para los eventos (null = el local "Estudia+").
+    val calendarioDestino: Flow<Long?> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[CLAVE_CALENDARIO_DESTINO] }
+
+    suspend fun guardarCalendarioDestino(id: Long?) {
+        context.preferenciasDataStore.edit { preferencias ->
+            if (id == null) preferencias.remove(CLAVE_CALENDARIO_DESTINO) else preferencias[CLAVE_CALENDARIO_DESTINO] = id
         }
     }
 
