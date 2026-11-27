@@ -91,6 +91,17 @@ class PreferenciasDataStore(private val context: Context) {
         }
     }
 
+    // Hasta qué día el usuario ya revisó las sesiones del plan que pasaron
+    // (para no volver a preguntarle por las mismas).
+    fun planRevisadoHasta(usuarioId: Int): Flow<LocalDate?> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[stringPreferencesKey("plan_revisado_$usuarioId")]?.let { runCatching { LocalDate.parse(it) }.getOrNull() } }
+
+    suspend fun marcarPlanRevisado(usuarioId: Int, fecha: LocalDate) {
+        context.preferenciasDataStore.edit { preferencias ->
+            preferencias[stringPreferencesKey("plan_revisado_$usuarioId")] = fecha.toString()
+        }
+    }
+
     // Usuarios (id) que ya vieron la guía de primera vez.
     val guiasVistas: Flow<Set<Int>> = context.preferenciasDataStore.data
         .map { preferencias -> preferencias[CLAVE_GUIAS_VISTAS].orEmpty().mapNotNull { it.toIntOrNull() }.toSet() }

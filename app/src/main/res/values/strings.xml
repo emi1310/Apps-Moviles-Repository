@@ -322,7 +322,7 @@
         <item>En Materias, arriba, tocá \"Bibliografía\" y después \"Nueva fuente\". Elegí si es libro, artículo, web o apunte y cargá título, autores (Apellido, Inicial.; separados con punto y coma), año y editorial: mientras escribís ves la cita en normas APA 7. \"Copiar cita\" la deja lista para pegar en tu trabajo, y en el menú ⋮ está la versión corta para el texto, como (Cormen et al., 2009).</item>
         <item>Sí: al crear una nota elegí una plantilla: Resumen Cornell, Esquema, Cuadro comparativo o Línea de tiempo. El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
         <item>En Notas, arriba, tocá \"Mapas mentales\" y \"Nuevo mapa\", y escribí el tema central. Tocá una idea y elegí \"Nueva idea\" para sumarle una rama (se ubica sola). Arrastrá las ideas para acomodarlas, mové el mapa con un dedo y acercalo con dos. Cada rama tiene su color. Con \"Compartir como imagen\" lo mandás por WhatsApp o lo guardás en Drive.</item>
-        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen y, con una foto de tu horario de cursada, carga tus clases semanales (crea las materias que falten). Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
+        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen (al terminarlo te da la nota, guarda los temas flojos y los pasa a tarjetas), lee PDFs y fotos de varias hojas, y con una foto de tu horario carga tus clases semanales. La respuesta se va escribiendo en vivo (podés cortarla), muestra negritas, listas y fórmulas, y si le pedís \"anotame el TP para el viernes\" te propone crear la tarea y la guarda cuando confirmás. Busca en el contenido de tus notas y te dice de cuál sacó la respuesta. Las charlas se guardan solas (botón del reloj, arriba) y, si pasaron sesiones del plan de estudio, te ofrece reacomodarlas. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -1071,7 +1071,7 @@
     <string name="ia_simulacro_detalle">Te toma preguntas de tus notas y te corrige</string>
     <string name="ia_foto_etiqueta">📷 Foto de un apunte</string>
     <string name="ia_foto_como">Foto de un apunte</string>
-    <string name="ia_foto_explicacion">La IA pasa a texto lo que dice la foto. Después, con \"Guardar como nota\", la guardás en una materia.</string>
+    <string name="ia_foto_explicacion">Sacá una foto por hoja (hasta 10) o elegí varias de la galería: la IA las pasa a un solo texto y podés seguir preguntándole sobre el apunte. Después, con \"Guardar como nota\", la guardás en una materia.</string>
     <string name="ia_foto_camara">Sacar foto</string>
     <string name="ia_foto_galeria">Elegir de la galería</string>
     <string name="ia_elegir_examen">Elegí el examen o la entrega</string>
@@ -1143,4 +1143,69 @@
     <string name="guia_recordatorios_titulo">Que no se te pase nada</string>
     <string name="guia_recordatorios_texto">Activá los recordatorios y te avisamos antes de cada clase, la noche antes de un examen y cuando vence una tarea.</string>
     <string name="guia_recordatorios_boton">Activar en Perfil</string>
+    <!-- Asistente: charla en vivo, acciones, historial, PDF, simulacro y plan -->
+    <string name="ia_detener">Detener la respuesta</string>
+    <string name="ia_error_archivo_grande">El archivo es muy grande para la IA (máximo 15 MB). Probá con uno más chico o con algunas páginas.</string>
+    <plurals name="ia_adjuntos">
+        <item quantity="one">%1$d archivo</item>
+        <item quantity="other">%1$d archivos</item>
+    </plurals>
+    <string name="ia_fuentes">Usé tus notas: %1$s</string>
+    <string name="ia_accion_tarea">Nueva tarea: %1$s</string>
+    <string name="ia_accion_vence">vence el %1$s</string>
+    <string name="ia_accion_tema">Marcar como estudiado: %1$s</string>
+    <string name="ia_accion_examen">Examen</string>
+    <string name="ia_accion_entrega">Entrega</string>
+    <string name="ia_accion_clase">Clase</string>
+    <string name="ia_accion_bloque">Bloque de estudio</string>
+    <string name="ia_accion_confirmar">Confirmar</string>
+    <string name="ia_accion_descartar">Descartar</string>
+    <string name="ia_accion_hecha">✓ Guardado</string>
+    <string name="ia_accion_descartada">Descartado</string>
+    <string name="ia_accion_fallo">No se pudo guardar</string>
+    <string name="aviso_accion_ia_hecha">Listo, quedó guardado</string>
+    <string name="aviso_accion_ia_sin_materia">No encontré la materia \"%1$s\". Cargala primero o pedíselo con el nombre exacto.</string>
+    <string name="aviso_accion_ia_error">No se pudo guardar (puede que el examen o el tema no estén cargados)</string>
+    <string name="ia_historial">Charlas guardadas</string>
+    <string name="ia_historial_charlas">Charlas</string>
+    <string name="ia_historial_simulacros">Últimos simulacros</string>
+    <string name="ia_historial_todas">Todas</string>
+    <string name="ia_historial_vacio">Todavía no hay charlas guardadas. Se guardan solas después de cada respuesta.</string>
+    <string name="ia_historial_borrar">Borrar charla</string>
+    <string name="ia_cerrar">Cerrar</string>
+    <string name="ia_pdf">Preguntar a un PDF</string>
+    <string name="ia_pdf_detalle">Resume la bibliografía y responde sobre ella</string>
+    <string name="ia_pdf_etiqueta">📄 PDF</string>
+    <string name="ia_pdf_elegir">Elegí el PDF</string>
+    <string name="ia_pdf_explicacion">La IA lo lee entero, te dice de qué trata y después podés hacerle preguntas sobre él en la charla (hasta 15 MB).</string>
+    <string name="ia_pdf_telefono">Elegir un PDF del teléfono</string>
+    <string name="ia_pdf_sin_adjuntos">No tenés PDFs adjuntos en tus materias. Podés elegir uno del teléfono.</string>
+    <string name="ia_foto_listo">Pasar a texto (%1$d)</string>
+    <string name="ia_foto_otra">Sacar otra foto</string>
+    <string name="ia_foto_galeria_varias">Elegir de la galería (podés marcar varias)</string>
+    <plurals name="ia_foto_hojas">
+        <item quantity="one">%1$d hoja lista (hasta %2$d)</item>
+        <item quantity="other">%1$d hojas listas (hasta %2$d)</item>
+    </plurals>
+    <string name="ia_simulacro_en_curso">Simulacro en curso</string>
+    <string name="ia_simulacro_terminar">Terminar y ver nota</string>
+    <string name="ia_simulacro_resultado">Resultado del simulacro</string>
+    <string name="ia_simulacro_listo">Listo</string>
+    <string name="ia_simulacro_repasar">Repasar: %1$s</string>
+    <plurals name="ia_simulacro_tarjetas">
+        <item quantity="one">Se agregó %1$d tarjeta de repaso con lo que te costó.</item>
+        <item quantity="other">Se agregaron %1$d tarjetas de repaso con lo que te costó.</item>
+    </plurals>
+    <plurals name="ia_plan_atrasado">
+        <item quantity="one">Pasó %1$d sesión de tu plan de estudio. ¿La hiciste?</item>
+        <item quantity="other">Pasaron %1$d sesiones de tu plan de estudio. ¿Las hiciste?</item>
+    </plurals>
+    <string name="ia_plan_revisar">Revisar</string>
+    <string name="ia_plan_atrasado_titulo">Sesiones que pasaron</string>
+    <string name="ia_plan_atrasado_explicacion">Dejá marcadas las que no hiciste: se pasan a un horario libre antes del examen. Las desmarcadas quedan como hechas.</string>
+    <string name="ia_plan_atrasado_fila">%1$s %2$s · para %3$s (%4$s)</string>
+    <string name="ia_plan_reacomodar">Reacomodar (%1$d)</string>
+    <string name="ia_plan_todas_hechas">Las hice todas</string>
+    <string name="aviso_plan_al_dia">¡Bien! Tu plan está al día</string>
+    <string name="aviso_plan_reacomodado">Se reacomodaron %1$d sesiones (%2$d no entraron antes del examen)</string>
 </resources>

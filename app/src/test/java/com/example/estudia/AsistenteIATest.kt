@@ -61,11 +61,37 @@ class AsistenteFalso(
         if (claveValida != null && clave != claveValida) return ResultadoIA.Falla(ErrorIA.CLAVE_INVALIDA)
         return respuesta
     }
+    // La charla en vivo: manda la respuesta en dos pedazos (y las acciones que
+    // se le indiquen), o el error.
+    var acciones: List<com.example.estudia.modelo.AccionPropuesta> = emptyList()
+    override fun conversar(clave: String, conversacion: List<MensajeIA>, contexto: String): kotlinx.coroutines.flow.Flow<com.example.estudia.modelo.PiezaRespuesta> =
+        kotlinx.coroutines.flow.flow {
+            contextos += contexto
+            recibidas += conversacion
+            claves += clave
+            if (claveValida != null && clave != claveValida) {
+                emit(com.example.estudia.modelo.PiezaRespuesta.Error(ErrorIA.CLAVE_INVALIDA))
+                return@flow
+            }
+            when (val r = respuesta) {
+                is ResultadoIA.Ok -> {
+                    val mitad = r.valor.length / 2
+                    emit(com.example.estudia.modelo.PiezaRespuesta.Texto(r.valor.take(mitad)))
+                    emit(com.example.estudia.modelo.PiezaRespuesta.Texto(r.valor.drop(mitad)))
+                    acciones.forEach { emit(com.example.estudia.modelo.PiezaRespuesta.Accion(it)) }
+                }
+                is ResultadoIA.Falla -> emit(com.example.estudia.modelo.PiezaRespuesta.Error(r.error))
+            }
+        }
     override suspend fun crearTarjetas(clave: String, pedido: String) = tarjetas
     var plan: ResultadoIA<List<SesionPlanTexto>> = ResultadoIA.Ok(emptyList())
     var mapa: ResultadoIA<Pair<String, List<RamaIA>>> = ResultadoIA.Falla(ErrorIA.OTRO)
-    var textoImagen: ResultadoIA<String> = ResultadoIA.Ok("Texto del apunte")
-    val imagenes = mutableListOf<ByteArray>()
+    var evaluacion: ResultadoIA<com.example.estudia.modelo.EvaluacionSimulacro> = ResultadoIA.Falla(ErrorIA.OTRO)
+    val pedidosEvaluacion = mutableListOf<String>()
+    override suspend fun evaluarSimulacro(clave: String, pedido: String): ResultadoIA<com.example.estudia.modelo.EvaluacionSimulacro> {
+        pedidosEvaluacion += pedido
+        return evaluacion
+    }
     override suspend fun planEstudio(clave: String, pedido: String, contexto: String) = plan
     override suspend fun mapaMental(clave: String, pedido: String) = mapa
     var horario: ResultadoIA<List<com.example.estudia.modelo.ClaseHorarioTexto>> = ResultadoIA.Ok(emptyList())
@@ -73,10 +99,6 @@ class AsistenteFalso(
     override suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<com.example.estudia.modelo.ClaseHorarioTexto>> {
         pedidosHorario += pedido
         return horario
-    }
-    override suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String> {
-        imagenes += jpeg
-        return textoImagen
     }
 }
 
@@ -121,8 +143,11 @@ class AsistenteIATest {
     }
 
     @Test
-    fun seLimpiaElMarkdownDeLaRespuesta() {
-        assertEquals("Título\n• Una idea clave", limpiarRespuesta("## Título\n* Una idea **clave**"))
+    fun laRespuestaSeOrdenaYElTextoPlanoNoTieneMarkdown() {
+        // La respuesta conserva el formato (se dibuja en la pantalla)...
+        assertEquals("## Título\n\n* Una idea **clave**", limpiarRespuesta("## Título\r\n\n\n\n* Una idea **clave**  "))
+        // ...y al copiarla o guardarla como nota queda en texto plano.
+        assertEquals("Título\n• Una idea clave: x²", com.example.estudia.modelo.textoPlano("## Título\n* Una idea **clave**: \$x^2\$"))
     }
 
     @Test
@@ -353,19 +378,22 @@ class AsistenteIATest {
     }
 
     @Test
-    fun laFotoDeUnApunteQuedaEnLaCharla() = runTest {
-        val ia = AsistenteFalso()
+    fun lasFotosDeUnApunteQuedanEnLaCharla() = runTest {
+        val ia = AsistenteFalso(respuesta = ResultadoIA.Ok("Texto del apunte"))
         val vm = AsistenteViewModel(RepositorioFalso(usuario()), ia, ClavesFalsas(), "clave-app", hoy = { hoy }, leerFoto = { byteArrayOf(1, 2, 3) })
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
-        vm.leerApunte("content://foto", "Foto de un apunte")
+        vm.leerApunte(listOf("content://hoja1", "content://hoja2"), "Foto de un apunte (2)")
         advanceUntilIdle()
-        assertEquals(listOf("Foto de un apunte", "Texto del apunte"), vm.uiState.value.conversacion.map { it.mostrado })
-        assertEquals(3, ia.imagenes.single().size)
+        assertEquals(listOf("Foto de un apunte (2)", "Texto del apunte"), vm.uiState.value.conversacion.map { it.mostrado })
+        // Las dos hojas van juntas, en un mismo mensaje.
+        val enviado = ia.recibidas.single().single()
+        assertEquals(2, enviado.adjuntos.size)
+        assertTrue(enviado.texto.contains("2 fotos"))
 
         // Si la foto no se puede leer, queda el error para reintentar.
         val sinFoto = AsistenteViewModel(RepositorioFalso(usuario()), AsistenteFalso(), ClavesFalsas(), "clave-app", hoy = { hoy })
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { sinFoto.uiState.collect {} }
-        sinFoto.leerApunte("content://rota", "Foto")
+        sinFoto.leerApunte(listOf("content://rota"), "Foto")
         advanceUntilIdle()
         assertEquals(ErrorIA.OTRO, sinFoto.uiState.value.error)
     }

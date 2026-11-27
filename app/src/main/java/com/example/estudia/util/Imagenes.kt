@@ -60,3 +60,23 @@ suspend fun leerJpeg(context: Context, uri: Uri, ladoMaximo: Int = 1600, calidad
         java.io.ByteArrayOutputStream().also { imagen.compress(Bitmap.CompressFormat.JPEG, calidad, it) }.toByteArray()
     }
 }
+
+// Lee un archivo (content://) entero, hasta "maximo" bytes. Si es más grande,
+// devuelve maximo + 1 bytes (así quien llama sabe que se pasó sin cargarlo
+// todo en memoria). null si no se pudo leer.
+suspend fun leerBytes(context: Context, uri: Uri, maximo: Int): ByteArray? = withContext(Dispatchers.IO) {
+    try {
+        context.contentResolver.openInputStream(uri)?.use { entrada ->
+            val salida = java.io.ByteArrayOutputStream()
+            val buffer = ByteArray(64 * 1024)
+            while (salida.size() <= maximo) {
+                val leidos = entrada.read(buffer)
+                if (leidos < 0) break
+                salida.write(buffer, 0, leidos)
+            }
+            salida.toByteArray().let { if (it.size > maximo) it.copyOf(maximo + 1) else it }
+        }
+    } catch (e: Exception) {
+        null
+    }
+}

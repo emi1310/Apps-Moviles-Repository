@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.estudia.BuildConfig
 import com.example.estudia.util.leerJpeg
+import com.example.estudia.util.leerBytes
 import com.example.estudia.EstudiaApp
 
 // Factory de todos los ViewModels de la app: le dice a Android cómo crear
@@ -37,7 +38,10 @@ object AppViewModelProvider {
             AsistenteViewModel(
                 app.repositorio, app.asistente, app.clavesIA, BuildConfig.GEMINI_API_KEY,
                 avisosSistema = app.avisos,
-                leerFoto = { uri -> leerJpeg(app, android.net.Uri.parse(uri)) }
+                leerFoto = { uri -> leerJpeg(app, android.net.Uri.parse(uri)) },
+                leerArchivo = { uri -> leerBytes(app, android.net.Uri.parse(uri), com.example.estudia.modelo.TAMANO_MAXIMO_PDF) },
+                historial = app.historialIA,
+                prefijoPlan = app.getString(com.example.estudia.R.string.ia_plan_prefijo)
             )
         }
         initializer { MapaViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("mapaId") ?: 0) }

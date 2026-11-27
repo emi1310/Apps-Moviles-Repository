@@ -35,6 +35,30 @@ import com.example.estudia.modelo.SesionPlan
 import com.example.estudia.ui.componentes.camaraDeFotos
 import com.example.estudia.viewmodel.PlanPropuesto
 import com.example.estudia.viewmodel.ClaseDelHorario
+import com.example.estudia.viewmodel.PdfDisponible
+import com.example.estudia.modelo.AccionPropuesta
+import com.example.estudia.modelo.EstadoAccion
+import com.example.estudia.modelo.TipoEvento
+import com.example.estudia.modelo.ConversacionGuardada
+import com.example.estudia.modelo.ResultadoSimulacro
+import com.example.estudia.modelo.EvaluacionSimulacro
+import com.example.estudia.modelo.SesionAtrasada
+import com.example.estudia.modelo.MAXIMO_FOTOS_APUNTE
+import com.example.estudia.modelo.textoPlano
+import com.example.estudia.ui.componentes.TextoConFormato
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.CalendarViewWeek
 import androidx.compose.ui.res.stringArrayResource
 import java.time.format.DateTimeFormatter
@@ -117,26 +141,54 @@ fun AsistenteScreen(
     // rememberSaveable: la cámara puede cerrar la app mientras está abierta.
     var fotoPara by rememberSaveable { mutableStateOf(AccionIA.FOTO) }
     var eligiendoSimulacro by remember { mutableStateOf(false) }
+    var viendoHistorial by remember { mutableStateOf(false) }
+    var eligiendoPdf by remember { mutableStateOf(false) }
+    var revisandoPlan by remember { mutableStateOf(false) }
+    // Las hojas del apunte que se van juntando (fotos de la cámara o de la galería).
+    var hojas by rememberSaveable { mutableStateOf(listOf<String>()) }
 
+    val contexto = LocalContext.current
     val textoResumir = stringResource(R.string.ia_resumir)
     val textoPreguntas = stringResource(R.string.ia_preguntas)
     val textoFoto = stringResource(R.string.ia_foto_etiqueta)
+    val textoPdf = stringResource(R.string.ia_pdf_etiqueta)
     val prefijoPlan = stringResource(R.string.ia_plan_prefijo)
     fun accion(a: AccionIA) {
         when (a) {
             AccionIA.EXPLICAR -> explicando = true
             AccionIA.PLAN -> eligiendoExamen = true
-            AccionIA.FOTO, AccionIA.HORARIO -> { fotoPara = a; eligiendoFoto = true }
+            AccionIA.FOTO, AccionIA.HORARIO -> { fotoPara = a; hojas = emptyList(); eligiendoFoto = true }
             AccionIA.SIMULACRO -> eligiendoSimulacro = true
+            AccionIA.PDF -> eligiendoPdf = true
             else -> eligiendoNota = a
         }
     }
 
-    // Foto de un apunte: con la cámara o de la galería.
-    fun usarFoto(uri: String) = if (fotoPara == AccionIA.HORARIO) viewModel.leerHorario(uri) else viewModel.leerApunte(uri, textoFoto)
+    // Fotos: el horario se lee apenas llega; las hojas de un apunte se juntan
+    // hasta tocar "Pasar a texto".
+    fun usarFoto(uri: String) {
+        if (fotoPara == AccionIA.HORARIO) viewModel.leerHorario(uri)
+        else {
+            hojas = (hojas + uri).take(MAXIMO_FOTOS_APUNTE)
+            eligiendoFoto = true
+        }
+    }
     val sacarFoto = camaraDeFotos { uri -> usarFoto(uri) }
     val galeria = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) usarFoto(uri.toString())
+    }
+    val galeriaVarias = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAXIMO_FOTOS_APUNTE)) { uris ->
+        if (uris.isNotEmpty()) {
+            hojas = (hojas + uris.map { it.toString() }).take(MAXIMO_FOTOS_APUNTE)
+        }
+        eligiendoFoto = true
+    }
+    // Un PDF del teléfono (los de las materias se eligen de la lista).
+    val pdfDelTelefono = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            val nombre = nombreDeArchivo(contexto, uri) ?: "documento.pdf"
+            viewModel.preguntarPdf(uri.toString(), nombre, null, "$textoPdf: $nombre")
+        }
     }
     LaunchedEffect(abrirHorario) {
         if (abrirHorario) {
@@ -153,9 +205,10 @@ fun AsistenteScreen(
         }
     }
 
-    // Siempre se ve lo último de la charla.
+    // Siempre se ve lo último de la charla (también mientras la respuesta se escribe).
     val cantidad = estado.conversacion.size + (if (estado.pensando) 1 else 0) + (if (estado.error != null) 1 else 0)
-    LaunchedEffect(cantidad) { if (cantidad > 0) lista.animateScrollToItem(lista.layoutInfo.totalItemsCount.coerceAtLeast(1) - 1) }
+    val largoUltima = (estado.conversacion.lastOrNull()?.texto?.length ?: 0) / 80
+    LaunchedEffect(cantidad, largoUltima) { if (cantidad > 0) lista.animateScrollToItem(lista.layoutInfo.totalItemsCount.coerceAtLeast(1) - 1) }
 
     // Con el teclado abierto, la barra de escribir va arriba del teclado;
     // si no, arriba del dock. (La ventana no se desplaza: lo acomoda la pantalla.)
@@ -172,6 +225,10 @@ fun AsistenteScreen(
         ) {
             item {
                 EncabezadoPantalla(stringResource(R.string.ia_titulo), stringResource(R.string.ia_subtitulo)) {
+                    // Charlas guardadas y simulacros.
+                    IconButton(onClick = { viendoHistorial = true }, enabled = !estado.pensando) {
+                        Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.ia_historial))
+                    }
                     if (estado.conversacion.isNotEmpty()) {
                         IconButton(onClick = viewModel::nuevaConversacion, enabled = !estado.pensando) {
                             Icon(Icons.Outlined.RestartAlt, contentDescription = stringResource(R.string.ia_nueva_charla))
@@ -189,16 +246,33 @@ fun AsistenteScreen(
                 }
             }
             if (!estado.configurado) item { AvisoSinClave(onConectar = { conectando = true }) }
+            // Sesiones del plan que ya pasaron: ¿se hicieron?
+            if (estado.sesionesAtrasadas.isNotEmpty() && !estado.pensando) {
+                item { TarjetaPlanAtrasado(estado.sesionesAtrasadas.size, onRevisar = { revisandoPlan = true }) }
+            }
             if (estado.conversacion.isEmpty()) {
                 item { Bienvenida(onAccion = ::accion) }
             }
-            items(estado.conversacion) { mensaje ->
-                Burbuja(mensaje, onGuardar = { guardandoRespuesta = mensaje.texto })
+            itemsIndexed(estado.conversacion) { i, mensaje ->
+                // La burbuja de la respuesta aparece cuando llega lo primero.
+                if (mensaje.deUsuario || mensaje.texto.isNotEmpty() || mensaje.accion != null) {
+                    Burbuja(
+                        mensaje,
+                        escribiendo = estado.pensando && i == estado.conversacion.lastIndex,
+                        onGuardar = { guardandoRespuesta = mensaje.texto },
+                        onConfirmar = { viewModel.confirmarAccion(i) },
+                        onDescartar = { viewModel.descartarAccion(i) }
+                    )
+                }
             }
-            if (estado.pensando) item { Pensando() }
+            if (estado.pensando && !estado.escribiendo) item { Pensando() }
             estado.error?.let { error -> item { TarjetaError(error, onReintentar = viewModel::reintentar) } }
         }
 
+        // Simulacro en curso: terminarlo para ver la nota y guardar lo que costó.
+        if (estado.simulacroEnCurso) {
+            BarraSimulacro(habilitado = !estado.pensando, onTerminar = viewModel::terminarSimulacro)
+        }
         // Acciones rápidas (cuando ya hay charla, arriba de donde se escribe).
         if (estado.conversacion.isNotEmpty()) {
             Row(
@@ -212,6 +286,8 @@ fun AsistenteScreen(
             texto = texto,
             onCambiar = { texto = it },
             habilitado = !estado.pensando,
+            respondiendo = estado.escribiendo,
+            onDetener = viewModel::detener,
             onEnviar = {
                 viewModel.enviar(texto)
                 texto = ""
@@ -258,14 +334,56 @@ fun AsistenteScreen(
         DialogoHorario(clases, onGuardar = viewModel::guardarHorario, onCancelar = viewModel::descartarHorario)
     }
     if (eligiendoFoto) {
+        val horario = fotoPara == AccionIA.HORARIO
         DialogoFoto(
-            horario = fotoPara == AccionIA.HORARIO,
+            horario = horario,
+            hojas = hojas.size,
             onCamara = { eligiendoFoto = false; sacarFoto() },
             onGaleria = {
                 eligiendoFoto = false
-                galeria.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                val soloImagenes = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                if (horario) galeria.launch(soloImagenes) else galeriaVarias.launch(soloImagenes)
             },
-            onCancelar = { eligiendoFoto = false }
+            onListo = {
+                eligiendoFoto = false
+                viewModel.leerApunte(hojas, if (hojas.size > 1) "$textoFoto (${hojas.size})" else textoFoto)
+                hojas = emptyList()
+            },
+            onCancelar = { eligiendoFoto = false; hojas = emptyList() }
+        )
+    }
+    if (eligiendoPdf) {
+        DialogoPdf(
+            pdfs = estado.pdfs,
+            onElegir = { pdf ->
+                eligiendoPdf = false
+                viewModel.preguntarPdf(pdf.uri, pdf.archivo.nombre, pdf.nombreMateria, "$textoPdf: ${pdf.archivo.nombre}")
+            },
+            onDelTelefono = {
+                eligiendoPdf = false
+                pdfDelTelefono.launch(arrayOf("application/pdf"))
+            },
+            onCancelar = { eligiendoPdf = false }
+        )
+    }
+    if (viendoHistorial) {
+        DialogoHistorial(
+            conversaciones = estado.historial,
+            simulacros = estado.simulacros,
+            actual = estado.conversacionId,
+            onAbrir = { viewModel.abrirConversacion(it); viendoHistorial = false },
+            onBorrar = { viewModel.borrarConversacion(it.id) },
+            onCerrar = { viendoHistorial = false }
+        )
+    }
+    estado.resultadoSimulacro?.let { resultado ->
+        DialogoResultadoSimulacro(resultado, onCerrar = viewModel::cerrarResultadoSimulacro)
+    }
+    if (revisandoPlan && estado.sesionesAtrasadas.isNotEmpty()) {
+        DialogoReacomodar(
+            sesiones = estado.sesionesAtrasadas,
+            onReacomodar = { noHechas -> viewModel.reacomodarPlan(noHechas); revisandoPlan = false },
+            onCancelar = { revisandoPlan = false }
         )
     }
     if (eligiendoSimulacro) {
@@ -318,17 +436,18 @@ private fun accionesIA(): List<Triple<AccionIA, String, ImageVector>> = listOf(
     Triple(AccionIA.MAPA, stringResource(R.string.ia_mapa), Icons.Outlined.AccountTree),
     Triple(AccionIA.FOTO, stringResource(R.string.ia_foto), Icons.Outlined.DocumentScanner),
     Triple(AccionIA.SIMULACRO, stringResource(R.string.ia_simulacro), Icons.Outlined.Assignment),
-    Triple(AccionIA.HORARIO, stringResource(R.string.ia_horario), Icons.Outlined.CalendarViewWeek)
+    Triple(AccionIA.HORARIO, stringResource(R.string.ia_horario), Icons.Outlined.CalendarViewWeek),
+    Triple(AccionIA.PDF, stringResource(R.string.ia_pdf), Icons.Outlined.PictureAsPdf)
 )
 
 // Primera vez: las acciones como tarjetas y el aviso de privacidad.
 @Composable
 private fun Bienvenida(onAccion: (AccionIA) -> Unit) {
-    val colores = listOf(BloqueVioleta, BloqueNaranja, BloqueAzul, BloqueVerde, BloqueNaranja, BloqueVioleta, BloqueVerde, BloqueAzul, BloqueVioleta)
+    val colores = listOf(BloqueVioleta, BloqueNaranja, BloqueAzul, BloqueVerde, BloqueNaranja, BloqueVioleta, BloqueVerde, BloqueAzul, BloqueVioleta, BloqueNaranja)
     val detalles = listOf(
         R.string.ia_resumir_detalle, R.string.ia_explicar_detalle, R.string.ia_preguntas_detalle, R.string.ia_tarjetas_detalle,
         R.string.ia_plan_detalle, R.string.ia_mapa_detalle, R.string.ia_foto_detalle, R.string.ia_simulacro_detalle,
-        R.string.ia_horario_detalle
+        R.string.ia_horario_detalle, R.string.ia_pdf_detalle
     )
     val acciones = accionesIA()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -480,23 +599,41 @@ private const val URL_CLAVE_GEMINI = "https://aistudio.google.com/apikey"
 // Un mensaje: los tuyos a la derecha con el degradado violeta; los de la
 // IA a la izquierda, en vidrio, con "Copiar" y "Guardar como nota".
 @Composable
-private fun Burbuja(mensaje: MensajeIA, onGuardar: () -> Unit) {
+private fun Burbuja(
+    mensaje: MensajeIA,
+    escribiendo: Boolean,
+    onGuardar: () -> Unit,
+    onConfirmar: () -> Unit,
+    onDescartar: () -> Unit
+) {
     val contexto = LocalContext.current
     val copiada = stringResource(R.string.ia_copiada)
     if (mensaje.deUsuario) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            Text(
-                mensaje.mostrado,
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 8,
-                overflow = TextOverflow.Ellipsis,
+            Column(
+                horizontalAlignment = Alignment.End,
                 modifier = Modifier
                     .padding(start = 48.dp)
                     .clip(RoundedCornerShape(22.dp, 22.dp, 6.dp, 22.dp))
                     .background(LocalDegradado.current)
                     .padding(horizontal = 16.dp, vertical = 10.dp)
-            )
+            ) {
+                Text(mensaje.mostrado, color = Color.White, style = MaterialTheme.typography.bodyLarge, maxLines = 8, overflow = TextOverflow.Ellipsis)
+                // Las fotos o el PDF que van con el mensaje.
+                if (mensaje.adjuntos.isNotEmpty()) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                        Icon(
+                            if (mensaje.adjuntos.first().tipoMime == "application/pdf") Icons.Outlined.PictureAsPdf else Icons.Outlined.Image,
+                            contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            pluralStringResource(R.plurals.ia_adjuntos, mensaje.adjuntos.size, mensaje.adjuntos.size),
+                            style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
         }
     } else {
         val forma = RoundedCornerShape(22.dp, 22.dp, 22.dp, 6.dp)
@@ -512,24 +649,107 @@ private fun Burbuja(mensaje: MensajeIA, onGuardar: () -> Unit) {
                 Text(stringResource(R.string.ia_firma), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(6.dp))
-            SelectionContainer {
-                Text(mensaje.texto, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(end = 8.dp))
-            }
-            Row {
-                TextButton(onClick = {
-                    contexto.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("respuesta", mensaje.texto))
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) Toast.makeText(contexto, copiada, Toast.LENGTH_SHORT).show()
-                }) {
-                    Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.ia_copiar))
-                }
-                TextButton(onClick = onGuardar) {
-                    Icon(Icons.Outlined.NoteAdd, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.ia_guardar_nota))
+            if (mensaje.texto.isNotEmpty()) {
+                SelectionContainer {
+                    TextoConFormato(mensaje.texto, MaterialTheme.typography.bodyLarge, Modifier.padding(end = 8.dp), escribiendo = escribiendo)
                 }
             }
+            // Las notas del estudiante que se usaron para responder.
+            if (mensaje.fuentes.isNotEmpty() && !escribiendo && mensaje.texto.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp, end = 8.dp)) {
+                    Icon(Icons.Outlined.Description, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        stringResource(R.string.ia_fuentes, mensaje.fuentes.joinToString(", ")),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            mensaje.accion?.let { accion ->
+                TarjetaAccion(accion, mensaje.estadoAccion, onConfirmar, onDescartar, Modifier.padding(top = 8.dp, end = 8.dp, bottom = 8.dp))
+            }
+            if (mensaje.texto.isNotEmpty() && !escribiendo) {
+                Row {
+                    TextButton(onClick = {
+                        contexto.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("respuesta", textoPlano(mensaje.texto)))
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) Toast.makeText(contexto, copiada, Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(Icons.Outlined.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.ia_copiar))
+                    }
+                    TextButton(onClick = onGuardar) {
+                        Icon(Icons.Outlined.NoteAdd, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.ia_guardar_nota))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Lo que propone la IA (crear una tarea, agendar algo, marcar un tema), con
+// Confirmar y Descartar. Después muestra cómo quedó.
+@Composable
+private fun TarjetaAccion(accion: AccionPropuesta, estado: EstadoAccion, onConfirmar: () -> Unit, onDescartar: () -> Unit, modifier: Modifier) {
+    val formato = remember { DateTimeFormatter.ofPattern("EEE d/M", Locale.forLanguageTag("es-AR")) }
+    val tipos = mapOf(
+        TipoEvento.EXAMEN to stringResource(R.string.ia_accion_examen),
+        TipoEvento.ENTREGA to stringResource(R.string.ia_accion_entrega),
+        TipoEvento.CLASE to stringResource(R.string.ia_accion_clase),
+        TipoEvento.BLOQUE_ESTUDIO to stringResource(R.string.ia_accion_bloque)
+    )
+    val (icono, titulo, detalle) = when (accion) {
+        is AccionPropuesta.CrearTarea -> Triple(
+            Icons.Outlined.TaskAlt,
+            stringResource(R.string.ia_accion_tarea, accion.titulo),
+            accion.materia + (accion.fechaLimite?.let { " · " + stringResource(R.string.ia_accion_vence, it.format(formato)) } ?: "")
+        )
+        is AccionPropuesta.CrearEvento -> Triple(
+            Icons.Outlined.Event,
+            "${tipos[accion.tipo].orEmpty()}: ${accion.titulo}",
+            "${accion.materia} · ${accion.fecha.format(formato)}, ${accion.inicio} a ${accion.fin}"
+        )
+        is AccionPropuesta.MarcarTema -> Triple(
+            Icons.Outlined.CheckCircle,
+            stringResource(R.string.ia_accion_tema, accion.tema),
+            "${accion.materia} · ${accion.examen}"
+        )
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(titulo, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                Text(detalle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        when (estado) {
+            EstadoAccion.PENDIENTE -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = onConfirmar) { Text(stringResource(R.string.ia_accion_confirmar)) }
+                TextButton(onClick = onDescartar) { Text(stringResource(R.string.ia_accion_descartar)) }
+            }
+            else -> Text(
+                stringResource(
+                    when (estado) {
+                        EstadoAccion.HECHA -> R.string.ia_accion_hecha
+                        EstadoAccion.DESCARTADA -> R.string.ia_accion_descartada
+                        else -> R.string.ia_accion_fallo
+                    }
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (estado == EstadoAccion.FALLO) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -558,6 +778,7 @@ private fun TarjetaError(error: ErrorIA, onReintentar: () -> Unit) {
             ErrorIA.SIN_INTERNET -> R.string.ia_error_internet
             ErrorIA.LIMITE -> R.string.ia_error_limite
             ErrorIA.BLOQUEADO -> R.string.ia_error_bloqueado
+            ErrorIA.ARCHIVO_GRANDE -> R.string.ia_error_archivo_grande
             ErrorIA.OTRO -> R.string.ia_error_otro
         }
     )
@@ -591,7 +812,15 @@ private fun PastillaAccion(texto: String, icono: ImageVector, enabled: Boolean, 
 }
 
 @Composable
-private fun BarraEscribir(texto: String, onCambiar: (String) -> Unit, habilitado: Boolean, onEnviar: () -> Unit, modifier: Modifier) {
+private fun BarraEscribir(
+    texto: String,
+    onCambiar: (String) -> Unit,
+    habilitado: Boolean,
+    respondiendo: Boolean,
+    onDetener: () -> Unit,
+    onEnviar: () -> Unit,
+    modifier: Modifier
+) {
     Row(verticalAlignment = Alignment.Bottom, modifier = modifier.fillMaxWidth()) {
         TextField(
             value = texto,
@@ -609,18 +838,19 @@ private fun BarraEscribir(texto: String, onCambiar: (String) -> Unit, habilitado
             modifier = Modifier.weight(1f).border(bordeVidrio(), RoundedCornerShape(26.dp))
         )
         Spacer(modifier = Modifier.width(8.dp))
-        val puede = habilitado && texto.isNotBlank()
+        // Mientras la respuesta se escribe, el botón la corta.
+        val puede = respondiendo || (habilitado && texto.isNotBlank())
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(54.dp)
                 .clip(CircleShape)
                 .background(if (puede) LocalDegradado.current else androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.surfaceContainer))
-                .clickable(enabled = puede, onClick = onEnviar)
+                .clickable(enabled = puede, onClick = if (respondiendo) onDetener else onEnviar)
         ) {
             Icon(
-                Icons.AutoMirrored.Outlined.Send,
-                contentDescription = stringResource(R.string.ia_enviar),
+                if (respondiendo) Icons.Outlined.Stop else Icons.AutoMirrored.Outlined.Send,
+                contentDescription = stringResource(if (respondiendo) R.string.ia_detener else R.string.ia_enviar),
                 tint = if (puede) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -830,18 +1060,31 @@ private fun DialogoPlan(plan: PlanPropuesto, onGuardar: (List<SesionPlan>) -> Un
 
 // Foto de un apunte: sacarla con la cámara o elegirla de la galería.
 @Composable
-private fun DialogoFoto(horario: Boolean, onCamara: () -> Unit, onGaleria: () -> Unit, onCancelar: () -> Unit) {
+private fun DialogoFoto(horario: Boolean, hojas: Int, onCamara: () -> Unit, onGaleria: () -> Unit, onListo: () -> Unit, onCancelar: () -> Unit) {
     DialogoApp(
         titulo = stringResource(if (horario) R.string.ia_horario_como else R.string.ia_foto_como),
         icono = if (horario) Icons.Outlined.CalendarViewWeek else Icons.Outlined.DocumentScanner,
-        textoConfirmar = null,
-        onConfirmar = {},
+        // Un apunte puede tener varias hojas: se van sumando y después se pasan juntas.
+        textoConfirmar = if (!horario && hojas > 0) stringResource(R.string.ia_foto_listo, hojas) else null,
+        onConfirmar = onListo,
         onCancelar = onCancelar
     ) {
-        Text(stringResource(if (horario) R.string.ia_horario_explicacion else R.string.ia_foto_explicacion), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            stringResource(if (horario) R.string.ia_horario_explicacion else R.string.ia_foto_explicacion),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (!horario && hojas > 0) {
+            Text(
+                pluralStringResource(R.plurals.ia_foto_hojas, hojas, hojas, MAXIMO_FOTOS_APUNTE),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        val puedeMas = horario || hojas < MAXIMO_FOTOS_APUNTE
         listOf(
-            Triple(R.string.ia_foto_camara, Icons.Outlined.PhotoCamera, onCamara),
-            Triple(R.string.ia_foto_galeria, Icons.Outlined.Image, onGaleria)
+            Triple(if (hojas > 0) R.string.ia_foto_otra else R.string.ia_foto_camara, Icons.Outlined.PhotoCamera, onCamara),
+            Triple(if (horario) R.string.ia_foto_galeria else R.string.ia_foto_galeria_varias, Icons.Outlined.Image, onGaleria)
         ).forEach { (texto, icono, alTocar) ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -849,7 +1092,7 @@ private fun DialogoFoto(horario: Boolean, onCamara: () -> Unit, onGaleria: () ->
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable(onClick = alTocar)
+                    .clickable(enabled = puedeMas, onClick = alTocar)
                     .padding(horizontal = 14.dp, vertical = 14.dp)
             ) {
                 Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -955,6 +1198,240 @@ private fun DialogoHorario(clases: List<ClaseDelHorario>, onGuardar: (List<Clase
                             clase.inicio.toString(),
                             clase.fin.toString()
                         ) + (clase.lugar?.let { " · $it" } ?: ""),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+// El nombre de un archivo elegido con el selector del sistema (ej: "Guía 3.pdf").
+private fun nombreDeArchivo(contexto: android.content.Context, uri: android.net.Uri): String? =
+    runCatching {
+        contexto.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+    }.getOrNull()
+
+// Aviso arriba de la charla: hay sesiones del plan que ya pasaron.
+@Composable
+private fun TarjetaPlanAtrasado(cantidad: Int, onRevisar: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .superficieVidrio(RoundedCornerShape(22.dp))
+            .padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp)
+    ) {
+        IconoDegradado(Icons.Outlined.EventRepeat, BloqueNaranja, tamano = 36.dp)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            pluralStringResource(R.plurals.ia_plan_atrasado, cantidad, cantidad),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = onRevisar) { Text(stringResource(R.string.ia_plan_revisar)) }
+    }
+}
+
+// Barra del simulacro en curso, arriba de donde se escribe.
+@Composable
+private fun BarraSimulacro(habilitado: Boolean, onTerminar: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+            .padding(start = 14.dp, end = 6.dp)
+    ) {
+        Icon(Icons.Outlined.Assignment, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(stringResource(R.string.ia_simulacro_en_curso), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.weight(1f))
+        TextButton(onClick = onTerminar, enabled = habilitado) { Text(stringResource(R.string.ia_simulacro_terminar)) }
+    }
+}
+
+// Elegir un PDF: los adjuntos de las materias o uno del teléfono.
+@Composable
+private fun DialogoPdf(pdfs: List<PdfDisponible>, onElegir: (PdfDisponible) -> Unit, onDelTelefono: () -> Unit, onCancelar: () -> Unit) {
+    DialogoApp(
+        titulo = stringResource(R.string.ia_pdf_elegir),
+        icono = Icons.Outlined.PictureAsPdf,
+        textoConfirmar = null,
+        onConfirmar = {},
+        onCancelar = onCancelar
+    ) {
+        Text(stringResource(R.string.ia_pdf_explicacion), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+                .clickable(onClick = onDelTelefono)
+                .padding(horizontal = 14.dp, vertical = 14.dp)
+        ) {
+            Icon(Icons.Outlined.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(stringResource(R.string.ia_pdf_telefono), style = MaterialTheme.typography.bodyLarge)
+        }
+        if (pdfs.isEmpty()) {
+            Text(stringResource(R.string.ia_pdf_sin_adjuntos), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        pdfs.take(40).forEach { pdf ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onElegir(pdf) }
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Icon(Icons.Outlined.PictureAsPdf, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(pdf.archivo.nombre, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${pdf.nombreMateria} · ${pdf.archivo.tamanoLegible()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+// Charlas guardadas (se tocan para seguirlas) y los últimos simulacros.
+@Composable
+private fun DialogoHistorial(
+    conversaciones: List<ConversacionGuardada>,
+    simulacros: List<ResultadoSimulacro>,
+    actual: Long?,
+    onAbrir: (ConversacionGuardada) -> Unit,
+    onBorrar: (ConversacionGuardada) -> Unit,
+    onCerrar: () -> Unit
+) {
+    val formato = remember { DateTimeFormatter.ofPattern("d/M HH:mm") }
+    val formatoDia = remember { DateTimeFormatter.ofPattern("d/M") }
+    // Filtro por materia (las charlas con una nota o un PDF quedan con su materia).
+    val materias = remember(conversaciones) { conversaciones.mapNotNull { it.materia }.distinct() }
+    var filtro by remember { mutableStateOf<String?>(null) }
+    DialogoApp(
+        titulo = stringResource(R.string.ia_historial),
+        icono = Icons.Outlined.History,
+        textoConfirmar = null,
+        onConfirmar = {},
+        onCancelar = onCerrar,
+        textoCancelar = stringResource(R.string.ia_cerrar)
+    ) {
+        if (simulacros.isNotEmpty()) {
+            Text(stringResource(R.string.ia_historial_simulacros), style = MaterialTheme.typography.titleSmall)
+            simulacros.take(5).forEach { s ->
+                val nota = if (s.nota % 1.0 == 0.0) s.nota.toInt().toString() else s.nota.toString()
+                Text(
+                    "${s.fecha.format(formatoDia)} · ${s.materia} · $nota/10" + if (s.temasFlojos.isEmpty()) "" else "\n" + stringResource(R.string.ia_simulacro_repasar, s.temasFlojos.joinToString(", ")),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+        Text(stringResource(R.string.ia_historial_charlas), style = MaterialTheme.typography.titleSmall)
+        if (materias.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                FilterChip(selected = filtro == null, onClick = { filtro = null }, label = { Text(stringResource(R.string.ia_historial_todas)) })
+                materias.forEach { m -> FilterChip(selected = filtro == m, onClick = { filtro = if (filtro == m) null else m }, label = { Text(m) }) }
+            }
+        }
+        val visibles = conversaciones.filter { filtro == null || it.materia == filtro }
+        if (visibles.isEmpty()) {
+            Text(stringResource(R.string.ia_historial_vacio), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        visibles.forEach { c ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (c.id == actual) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onAbrir(c) }
+                    .padding(start = 14.dp, top = 8.dp, bottom = 8.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(c.titulo, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        listOfNotNull(c.actualizada.format(formato), c.materia).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = { onBorrar(c) }) {
+                    Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.ia_historial_borrar))
+                }
+            }
+        }
+    }
+}
+
+// Cómo le fue en el simulacro: nota, resumen, temas a repasar y tarjetas creadas.
+@Composable
+private fun DialogoResultadoSimulacro(resultado: EvaluacionSimulacro, onCerrar: () -> Unit) {
+    val nota = if (resultado.nota % 1.0 == 0.0) resultado.nota.toInt().toString() else resultado.nota.toString()
+    DialogoApp(
+        titulo = stringResource(R.string.ia_simulacro_resultado),
+        icono = Icons.Outlined.Assignment,
+        textoConfirmar = null,
+        onConfirmar = {},
+        onCancelar = onCerrar,
+        textoCancelar = stringResource(R.string.ia_simulacro_listo)
+    ) {
+        Text("$nota/10", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+        if (resultado.resumen.isNotBlank()) Text(resultado.resumen, style = MaterialTheme.typography.bodyMedium)
+        if (resultado.temasFlojos.isNotEmpty()) {
+            Text(stringResource(R.string.ia_simulacro_repasar, resultado.temasFlojos.joinToString(", ")), style = MaterialTheme.typography.bodyMedium)
+        }
+        if (resultado.tarjetas.isNotEmpty()) {
+            Text(
+                pluralStringResource(R.plurals.ia_simulacro_tarjetas, resultado.tarjetas.size, resultado.tarjetas.size),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// Las sesiones del plan que pasaron: se marcan las que no se hicieron y se
+// reacomodan antes del examen.
+@Composable
+private fun DialogoReacomodar(sesiones: List<SesionAtrasada>, onReacomodar: (List<SesionAtrasada>) -> Unit, onCancelar: () -> Unit) {
+    val noHechas = remember(sesiones) { mutableStateListOf(*sesiones.map { true }.toTypedArray()) }
+    val formato = remember { DateTimeFormatter.ofPattern("EEE d/M", Locale.forLanguageTag("es-AR")) }
+    val cantidad = noHechas.count { it }
+    DialogoApp(
+        titulo = stringResource(R.string.ia_plan_atrasado_titulo),
+        icono = Icons.Outlined.EventRepeat,
+        textoConfirmar = if (cantidad == 0) stringResource(R.string.ia_plan_todas_hechas) else stringResource(R.string.ia_plan_reacomodar, cantidad),
+        onConfirmar = { onReacomodar(sesiones.filterIndexed { i, _ -> noHechas[i] }) },
+        onCancelar = onCancelar
+    ) {
+        Text(stringResource(R.string.ia_plan_atrasado_explicacion), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        sesiones.forEachIndexed { i, s ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { noHechas[i] = !noHechas[i] }
+                    .padding(end = 12.dp)
+            ) {
+                Checkbox(checked = noHechas[i], onCheckedChange = { noHechas[i] = it })
+                Column {
+                    Text(s.evento.titulo, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        stringResource(R.string.ia_plan_atrasado_fila, s.evento.fecha.format(formato), s.evento.horaInicio.toString(), s.examen.titulo, s.examen.fecha.format(formato)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -213,6 +213,11 @@ interface RepositorioEstudia {
     // Si sale bien, queda activado: la app lo mantiene al día sola (EstudiaApp).
     suspend fun sincronizarCalendario(nombreCalendario: String): Int?
 
+    // ---------- Plan de estudio: sesiones que pasaron ----------
+
+    fun planRevisadoHasta(usuarioId: Int): Flow<java.time.LocalDate?>
+    suspend fun marcarPlanRevisado(usuarioId: Int, fecha: java.time.LocalDate)
+
     // ---------- Guía de primera vez ----------
 
     // Ids de los usuarios que ya vieron (o saltearon) la guía.

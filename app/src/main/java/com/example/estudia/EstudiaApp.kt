@@ -60,6 +60,8 @@ class EstudiaApp : Application() {
     // la de la app y se usa cuando el usuario no conectó la suya.
     val asistente: AsistenteIA by lazy { GeminiCliente(BuildConfig.GEMINI_MODELO) }
     val clavesIA: ClavesIA by lazy { ClavesIACifradas(this) }
+    // Charlas guardadas y simulacros del Asistente (un archivo por usuario).
+    val historialIA: com.example.estudia.datos.HistorialIA by lazy { com.example.estudia.datos.HistorialIAEnArchivo(this) }
 
     val repositorio: RepositorioEstudia by lazy {
         val db = AppDatabase.obtenerInstancia(this)

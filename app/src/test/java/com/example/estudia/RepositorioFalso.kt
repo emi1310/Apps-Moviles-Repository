@@ -409,6 +409,12 @@ class RepositorioFalso(
 
     // ---------- Guía de primera vez ----------
 
+    val planRevisado = MutableStateFlow<LocalDate?>(null)
+    override fun planRevisadoHasta(usuarioId: Int): Flow<LocalDate?> = planRevisado
+    override suspend fun marcarPlanRevisado(usuarioId: Int, fecha: LocalDate) {
+        planRevisado.value = fecha
+    }
+
     val guias = MutableStateFlow<Set<Int>>(emptySet())
     override val guiasVistas: Flow<Set<Int>> = guias
     override suspend fun marcarGuiaVista(usuarioId: Int) {

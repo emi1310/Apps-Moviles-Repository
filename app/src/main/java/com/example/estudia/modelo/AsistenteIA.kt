@@ -7,16 +7,31 @@ package com.example.estudia.modelo
 // Un mensaje de la conversación. "texto" es lo que se manda a la IA y
 // "mostrado" lo que se ve en la pantalla (ej: se muestra "Resumir: Guía 7"
 // pero se manda la nota entera).
+// adjuntos: fotos o un PDF que van con el mensaje (se mandan a la IA mientras
+// dure la charla, para poder seguir preguntando). accion: lo que la IA propuso
+// hacer en la app (crear una tarea...), esperando que el usuario lo confirme.
+// fuentes: las notas del estudiante que se le pasaron para esta respuesta.
 data class MensajeIA(
     val deUsuario: Boolean,
     val texto: String,
-    val mostrado: String = texto
+    val mostrado: String = texto,
+    val adjuntos: List<AdjuntoIA> = emptyList(),
+    val accion: AccionPropuesta? = null,
+    val estadoAccion: EstadoAccion = EstadoAccion.PENDIENTE,
+    val fuentes: List<String> = emptyList()
 )
+
+// Un archivo que va con un mensaje: una foto (JPEG) o un PDF. No es data class
+// porque compara un ByteArray (se compara por identidad).
+class AdjuntoIA(val tipoMime: String, val bytes: ByteArray, val nombre: String)
+
+// Tope de un PDF: los pedidos a Gemini con archivos adentro tienen un límite de tamaño.
+const val TAMANO_MAXIMO_PDF = 15 * 1024 * 1024
 
 data class TarjetaSugerida(val pregunta: String, val respuesta: String)
 
 // Por qué no se pudo responder.
-enum class ErrorIA { SIN_CLAVE, CLAVE_INVALIDA, SIN_INTERNET, LIMITE, BLOQUEADO, OTRO }
+enum class ErrorIA { SIN_CLAVE, CLAVE_INVALIDA, SIN_INTERNET, LIMITE, BLOQUEADO, ARCHIVO_GRANDE, OTRO }
 
 sealed class ResultadoIA<out T> {
     data class Ok<T>(val valor: T) : ResultadoIA<T>()
@@ -24,10 +39,10 @@ sealed class ResultadoIA<out T> {
 }
 
 // Las acciones rápidas de la pantalla.
-enum class AccionIA { RESUMIR, EXPLICAR, PREGUNTAS, TARJETAS, PLAN, MAPA, FOTO, SIMULACRO, HORARIO }
+enum class AccionIA { RESUMIR, EXPLICAR, PREGUNTAS, TARJETAS, PLAN, MAPA, FOTO, SIMULACRO, HORARIO, PDF }
 
 // Instrucción fija para la IA: que ayude a aprender sin hacer el trabajo
-// por el estudiante, y que responda en texto plano (la app no muestra Markdown).
+// por el estudiante. La app muestra Markdown simple y las fórmulas entre $...$.
 const val INSTRUCCION_ASISTENTE =
     "Sos el asistente de estudio de Estudia+, una app para estudiantes universitarios de Argentina. " +
         "Respondé en español rioplatense (usá \"vos\"), claro y breve. " +
@@ -35,7 +50,11 @@ const val INSTRUCCION_ASISTENTE =
         "hacé preguntas que lo hagan pensar y, si te pide resolver un trabajo práctico, un examen o una tarea completa, " +
         "guialo paso a paso y proponé que intente cada paso él mismo en vez de darle la solución final entera. " +
         "Si no estás seguro de algo, decilo y sugerí revisarlo en la bibliografía de la materia. " +
-        "Escribí en texto plano: usá viñetas con \"•\" y números \"1.\", sin asteriscos, numerales ni otro formato Markdown."
+        "Podés usar Markdown simple: **negrita**, listas con \"-\" o \"1.\" y títulos cortos con \"##\" (sin tablas). " +
+        "Escribí las fórmulas entre signos \$, con notación LaTeX simple (por ejemplo \$x^2 + \\frac{1}{2}\$). " +
+        "Si el estudiante te pide crear una tarea, agendar un examen, una clase o un bloque de estudio, o marcar un tema " +
+        "como estudiado, usá las funciones que tenés: la app le pide que lo confirme antes de guardarlo. " +
+        "Si te pasan fragmentos de sus notas y usás algo de ellos, decí de qué nota sale, con el título entre « »."
 
 // Las notas largas se recortan para no pasarse del tamaño de un pedido.
 const val LARGO_MAXIMO_NOTA = 12_000
@@ -69,15 +88,16 @@ const val ESQUEMA_TARJETAS =
     """{"type":"object","properties":{"tarjetas":{"type":"array","items":{"type":"object","properties":{"pregunta":{"type":"string"},"respuesta":{"type":"string"}},"required":["pregunta","respuesta"]}}},"required":["tarjetas"]}"""
 
 // Los últimos mensajes, empezando siempre por uno del usuario (la IA lo exige).
-fun contextoParaEnviar(conversacion: List<MensajeIA>): List<MensajeIA> =
-    conversacion.takeLast(MENSAJES_DE_CONTEXTO).dropWhile { !it.deUsuario }
+// Si el último mensaje con fotos o un PDF quedó más atrás, va igual adelante:
+// así se puede seguir preguntando sobre el archivo en una charla larga.
+fun contextoParaEnviar(conversacion: List<MensajeIA>): List<MensajeIA> {
+    val ultimos = conversacion.takeLast(MENSAJES_DE_CONTEXTO).dropWhile { !it.deUsuario }
+    val conArchivo = conversacion.lastOrNull { it.adjuntos.isNotEmpty() }
+    return if (conArchivo == null || ultimos.any { it === conArchivo }) ultimos else listOf(conArchivo) + ultimos
+}
 
-// Limpia lo que pueda quedar de Markdown si la IA no hizo caso.
-fun limpiarRespuesta(texto: String): String = texto
-    .replace(Regex("\\*\\*(.+?)\\*\\*"), "$1")
-    .replace(Regex("(?m)^#{1,6}\\s*"), "")
-    .replace(Regex("(?m)^\\s*[*-]\\s+"), "• ")
-    .trim()
+// Ordena la respuesta: saltos de línea comunes y sin espacios de más al final.
+fun limpiarRespuesta(texto: String): String = texto.replace("\r\n", "\n").replace(Regex("""\n{3,}"""), "\n\n").trim()
 
 // Saca las tarjetas repetidas o vacías.
 fun limpiarTarjetas(tarjetas: List<TarjetaSugerida>): List<TarjetaSugerida> = tarjetas
@@ -87,3 +107,11 @@ fun limpiarTarjetas(tarjetas: List<TarjetaSugerida>): List<TarjetaSugerida> = ta
 
 // Pedido mínimo para probar que una clave anda (gasta lo menos posible).
 const val PEDIDO_PRUEBA = "Respondé solamente: OK"
+
+// Lo que va llegando de una respuesta en vivo: un pedazo de texto, una acción
+// que propone la IA o el error que cortó la respuesta.
+sealed interface PiezaRespuesta {
+    data class Texto(val texto: String) : PiezaRespuesta
+    data class Accion(val accion: AccionPropuesta) : PiezaRespuesta
+    data class Error(val error: ErrorIA) : PiezaRespuesta
+}

@@ -105,9 +105,13 @@ fun mapaDesdeIA(central: String, ramas: List<RamaIA>, materia: String, hoy: Loca
 
 // ---------- Foto de un apunte ----------
 
-const val PEDIDO_FOTO_APUNTE =
-    "Esta es la foto de un apunte (pizarrón, cuaderno o fotocopia). Pasalo a texto, tal cual lo que dice, ordenado y prolijo: " +
-        "respetá títulos, listas y fórmulas (escribí las fórmulas en una línea, por ejemplo x^2 + 1). " +
+// hojas: cuántas fotos van (un apunte de varias hojas queda en un solo texto).
+const val MAXIMO_FOTOS_APUNTE = 10
+
+fun pedidoFotoApunte(hojas: Int): String =
+    (if (hojas <= 1) "Esta es la foto de un apunte (pizarrón, cuaderno o fotocopia). Pasalo a texto, tal cual lo que dice, ordenado y prolijo: "
+    else "Estas son $hojas fotos de un mismo apunte (pizarrón, cuaderno o fotocopia), en orden. Pasalo a un solo texto, tal cual lo que dice, ordenado y prolijo (sin repetir lo que se superpone entre fotos): ") +
+        "respetá títulos, listas y fórmulas (las fórmulas entre signos $, como en LaTeX). " +
         "Si hay partes que no se leen, marcá [no se lee]. No agregues explicaciones ni nada que no esté en la foto."
 
 // ---------- Simulacro de examen ----------
@@ -210,3 +214,10 @@ fun eventoDeClase(clase: ClaseHorario, desde: LocalDate): Evento =
         semanal = true,
         lugar = clase.lugar
     )
+
+// ---------- Preguntar sobre un PDF ----------
+
+fun pedidoPdf(nombre: String): String =
+    "Te paso el PDF «${nombre.trim()}». Contame en 5 a 8 viñetas de qué trata y qué temas cubre. " +
+        "Después te voy a hacer preguntas: respondé con lo que dice el PDF y, si podés, decime en qué parte o página está. " +
+        "Si algo no está en el PDF, aclaralo."

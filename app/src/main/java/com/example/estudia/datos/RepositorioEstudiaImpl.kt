@@ -731,6 +731,8 @@ class RepositorioEstudiaImpl(
     override val calendarioAutomatico: Flow<Boolean> = preferencias.calendarioAutomatico
 
     override val guiasVistas: Flow<Set<Int>> = preferencias.guiasVistas
+    override fun planRevisadoHasta(usuarioId: Int): Flow<LocalDate?> = preferencias.planRevisadoHasta(usuarioId)
+    override suspend fun marcarPlanRevisado(usuarioId: Int, fecha: LocalDate) = preferencias.marcarPlanRevisado(usuarioId, fecha)
     override suspend fun marcarGuiaVista(usuarioId: Int) = preferencias.marcarGuiaVista(usuarioId)
 
     override suspend fun dejarDeSincronizarCalendario(): Boolean {

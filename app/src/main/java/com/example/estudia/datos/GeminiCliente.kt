@@ -2,21 +2,31 @@ package com.example.estudia.datos
 
 import android.util.Base64
 import com.example.estudia.modelo.ClaseHorarioTexto
+import com.example.estudia.modelo.DECLARACION_FUNCIONES
+import com.example.estudia.modelo.ESQUEMA_EVALUACION
 import com.example.estudia.modelo.ESQUEMA_HORARIO
 import com.example.estudia.modelo.ESQUEMA_MAPA
 import com.example.estudia.modelo.ESQUEMA_PLAN
+import com.example.estudia.modelo.ESQUEMA_TARJETAS
 import com.example.estudia.modelo.ErrorIA
-import com.example.estudia.modelo.RamaIA
-import com.example.estudia.modelo.SesionPlanTexto
+import com.example.estudia.modelo.EvaluacionSimulacro
 import com.example.estudia.modelo.INSTRUCCION_ASISTENTE
-import com.example.estudia.modelo.instruccionConDatos
 import com.example.estudia.modelo.MensajeIA
+import com.example.estudia.modelo.PiezaRespuesta
+import com.example.estudia.modelo.RamaIA
 import com.example.estudia.modelo.ResultadoIA
+import com.example.estudia.modelo.SesionPlanTexto
 import com.example.estudia.modelo.TarjetaSugerida
+import com.example.estudia.modelo.accionDesdeLlamada
 import com.example.estudia.modelo.contextoParaEnviar
+import com.example.estudia.modelo.instruccionConDatos
 import com.example.estudia.modelo.limpiarRespuesta
 import com.example.estudia.modelo.limpiarTarjetas
+import com.example.estudia.modelo.textoParaIA
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -28,9 +38,13 @@ import java.net.URL
 // falso sin internet. La clave llega en cada pedido: es la del usuario que
 // está usando la app (o la de la app, si él no conectó la suya).
 interface AsistenteIA {
-    // Responde al último mensaje de la conversación (que es del usuario).
-    // contexto: los datos cargados del estudiante (vacío = no se mandan).
+    // Responde de una vez al último mensaje (se usa para probar una clave).
     suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String = ""): ResultadoIA<String>
+
+    // La charla: la respuesta llega en vivo, de a pedazos. Con las fotos o el
+    // PDF de los mensajes, y con las funciones para proponer acciones.
+    // contexto: los datos cargados del estudiante (y fragmentos de sus notas).
+    fun conversar(clave: String, conversacion: List<MensajeIA>, contexto: String): Flow<PiezaRespuesta>
 
     // Pide tarjetas de estudio (pregunta y respuesta) en JSON.
     suspend fun crearTarjetas(clave: String, pedido: String): ResultadoIA<List<TarjetaSugerida>>
@@ -42,11 +56,11 @@ interface AsistenteIA {
     // Mapa mental: la idea central y sus ramas.
     suspend fun mapaMental(clave: String, pedido: String): ResultadoIA<Pair<String, List<RamaIA>>>
 
-    // Lee una imagen (JPEG) y responde el pedido (por ejemplo, pasar un apunte a texto).
-    suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String>
-
     // Lee la foto de un horario de cursada y devuelve sus clases.
     suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<ClaseHorarioTexto>>
+
+    // Evalúa un simulacro terminado: nota, temas flojos y tarjetas.
+    suspend fun evaluarSimulacro(clave: String, pedido: String): ResultadoIA<EvaluacionSimulacro>
 }
 
 // Asistente con la API de Gemini (plan gratis de cada usuario). Usa generateContent por
@@ -54,33 +68,83 @@ interface AsistenteIA {
 // encabezado x-goog-api-key (no en la URL).
 class GeminiCliente(private val modelo: String) : AsistenteIA {
 
-    override suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String): ResultadoIA<String> {
-        val contenidos = JSONArray()
-        contextoParaEnviar(conversacion).forEach { m ->
-            contenidos.put(JSONObject().put("role", if (m.deUsuario) "user" else "model").put("parts", JSONArray().put(JSONObject().put("text", m.texto))))
-        }
-        return when (val r = pedir(clave, contenidos, null, instruccionConDatos(contexto))) {
+    override suspend fun responder(clave: String, conversacion: List<MensajeIA>, contexto: String): ResultadoIA<String> =
+        when (val r = pedir(clave, contenidos(conversacion), null, instruccionConDatos(contexto))) {
             is ResultadoIA.Ok -> ResultadoIA.Ok(limpiarRespuesta(r.valor))
             is ResultadoIA.Falla -> r
         }
+
+    // Con streamGenerateContent (alt=sse) Gemini manda la respuesta en eventos
+    // "data: {...}" a medida que la escribe.
+    override fun conversar(clave: String, conversacion: List<MensajeIA>, contexto: String): Flow<PiezaRespuesta> = channelFlow {
+        if (clave.isBlank()) {
+            send(PiezaRespuesta.Error(ErrorIA.SIN_CLAVE))
+            return@channelFlow
+        }
+        val cuerpo = cuerpo(contenidos(conversacion), null, instruccionConDatos(contexto)).put("tools", JSONArray(DECLARACION_FUNCIONES))
+        withContext(Dispatchers.IO) {
+            var conexion: HttpURLConnection? = null
+            try {
+                conexion = abrir(clave, "streamGenerateContent?alt=sse")
+                conexion.outputStream.use { it.write(cuerpo.toString().toByteArray(Charsets.UTF_8)) }
+                val codigo = conexion.responseCode
+                if (codigo != HttpURLConnection.HTTP_OK) {
+                    send(PiezaRespuesta.Error(errorDeCodigo(codigo, conexion)))
+                    return@withContext
+                }
+                var llegoAlgo = false
+                var bloqueado = false
+                conexion.inputStream.bufferedReader(Charsets.UTF_8).use { lector ->
+                    while (true) {
+                        val linea = lector.readLine() ?: break
+                        if (!linea.startsWith("data:")) continue
+                        val evento = JSONObject(linea.removePrefix("data:").trim())
+                        val candidato = evento.optJSONArray("candidates")?.optJSONObject(0) ?: continue
+                        if (candidato.optString("finishReason") == "SAFETY") bloqueado = true
+                        val partes = candidato.optJSONObject("content")?.optJSONArray("parts") ?: continue
+                        for (i in 0 until partes.length()) {
+                            val parte = partes.optJSONObject(i) ?: continue
+                            if (parte.optBoolean("thought")) continue
+                            val llamada = parte.optJSONObject("functionCall")
+                            if (llamada != null) {
+                                val args = llamada.optJSONObject("args") ?: JSONObject()
+                                val mapa = args.keys().asSequence().associateWith { args.opt(it)?.toString().orEmpty() }
+                                accionDesdeLlamada(llamada.optString("name"), mapa)?.let {
+                                    llegoAlgo = true
+                                    send(PiezaRespuesta.Accion(it))
+                                }
+                            } else {
+                                val texto = parte.optString("text")
+                                if (texto.isNotEmpty()) {
+                                    llegoAlgo = true
+                                    send(PiezaRespuesta.Texto(texto))
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!llegoAlgo) send(PiezaRespuesta.Error(if (bloqueado) ErrorIA.BLOQUEADO else ErrorIA.OTRO))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IOException) {
+                send(PiezaRespuesta.Error(ErrorIA.SIN_INTERNET))
+            } catch (e: Exception) {
+                send(PiezaRespuesta.Error(ErrorIA.OTRO))
+            } finally {
+                conexion?.disconnect()
+            }
+        }
     }
 
-    override suspend fun crearTarjetas(clave: String, pedido: String): ResultadoIA<List<TarjetaSugerida>> {
-        val contenidos = JSONArray().put(JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", pedido))))
-        return when (val r = pedir(clave, contenidos, com.example.estudia.modelo.ESQUEMA_TARJETAS)) {
+    override suspend fun crearTarjetas(clave: String, pedido: String): ResultadoIA<List<TarjetaSugerida>> =
+        when (val r = pedir(clave, pedidoUsuario(pedido), ESQUEMA_TARJETAS)) {
             is ResultadoIA.Falla -> r
             is ResultadoIA.Ok -> try {
-                val lista = JSONObject(r.valor).getJSONArray("tarjetas")
-                val tarjetas = (0 until lista.length()).map { i ->
-                    val t = lista.getJSONObject(i)
-                    TarjetaSugerida(t.optString("pregunta"), t.optString("respuesta"))
-                }
-                ResultadoIA.Ok(limpiarTarjetas(tarjetas))
+                ResultadoIA.Ok(limpiarTarjetas(tarjetasDe(JSONObject(r.valor).getJSONArray("tarjetas"))))
             } catch (e: Exception) {
                 ResultadoIA.Falla(ErrorIA.OTRO)
             }
         }
-    }
 
     override suspend fun planEstudio(clave: String, pedido: String, contexto: String): ResultadoIA<List<SesionPlanTexto>> =
         when (val r = pedir(clave, pedidoUsuario(pedido), ESQUEMA_PLAN, instruccionConDatos(contexto))) {
@@ -112,15 +176,11 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
             }
         }
 
-    override suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String> {
-        return when (val r = pedir(clave, conImagen(jpeg, pedido), null)) {
-            is ResultadoIA.Ok -> ResultadoIA.Ok(limpiarRespuesta(r.valor))
-            is ResultadoIA.Falla -> r
-        }
-    }
-
-    override suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<ClaseHorarioTexto>> =
-        when (val r = pedir(clave, conImagen(jpeg, pedido), ESQUEMA_HORARIO)) {
+    override suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<ClaseHorarioTexto>> {
+        val contenidos = JSONArray().put(
+            JSONObject().put("role", "user").put("parts", JSONArray().put(datosEnLinea("image/jpeg", jpeg)).put(JSONObject().put("text", pedido)))
+        )
+        return when (val r = pedir(clave, contenidos, ESQUEMA_HORARIO)) {
             is ResultadoIA.Falla -> r
             is ResultadoIA.Ok -> try {
                 val lista = JSONObject(r.valor).getJSONArray("clases")
@@ -132,48 +192,83 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
                 ResultadoIA.Falla(ErrorIA.OTRO)
             }
         }
-
-    // La foto (JPEG) y el pedido en un mismo mensaje.
-    private fun conImagen(jpeg: ByteArray, pedido: String): JSONArray {
-        val imagen = JSONObject().put("inlineData", JSONObject().put("mimeType", "image/jpeg").put("data", Base64.encodeToString(jpeg, Base64.NO_WRAP)))
-        return JSONArray().put(JSONObject().put("role", "user").put("parts", JSONArray().put(imagen).put(JSONObject().put("text", pedido))))
     }
+
+    override suspend fun evaluarSimulacro(clave: String, pedido: String): ResultadoIA<EvaluacionSimulacro> =
+        when (val r = pedir(clave, pedidoUsuario(pedido), ESQUEMA_EVALUACION)) {
+            is ResultadoIA.Falla -> r
+            is ResultadoIA.Ok -> try {
+                val json = JSONObject(r.valor)
+                val temas = json.optJSONArray("temas_flojos") ?: JSONArray()
+                ResultadoIA.Ok(
+                    EvaluacionSimulacro(
+                        nota = json.optDouble("nota", 1.0),
+                        resumen = json.optString("resumen"),
+                        temasFlojos = (0 until temas.length()).map { temas.optString(it) },
+                        tarjetas = tarjetasDe(json.optJSONArray("tarjetas") ?: JSONArray())
+                    )
+                )
+            } catch (e: Exception) {
+                ResultadoIA.Falla(ErrorIA.OTRO)
+            }
+        }
+
+    // ---------- Armado de los pedidos ----------
+
+    // La charla como la pide Gemini: cada mensaje con sus archivos y su texto.
+    private fun contenidos(conversacion: List<MensajeIA>): JSONArray {
+        val contenidos = JSONArray()
+        contextoParaEnviar(conversacion).forEach { m ->
+            val partes = JSONArray()
+            m.adjuntos.forEach { partes.put(datosEnLinea(it.tipoMime, it.bytes)) }
+            partes.put(JSONObject().put("text", textoParaIA(m)))
+            contenidos.put(JSONObject().put("role", if (m.deUsuario) "user" else "model").put("parts", partes))
+        }
+        return contenidos
+    }
+
+    private fun datosEnLinea(tipoMime: String, bytes: ByteArray) =
+        JSONObject().put("inlineData", JSONObject().put("mimeType", tipoMime).put("data", Base64.encodeToString(bytes, Base64.NO_WRAP)))
 
     private fun pedidoUsuario(pedido: String) =
         JSONArray().put(JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", pedido))))
 
+    private fun tarjetasDe(lista: JSONArray): List<TarjetaSugerida> = (0 until lista.length()).map { i ->
+        val t = lista.getJSONObject(i)
+        TarjetaSugerida(t.optString("pregunta"), t.optString("respuesta"))
+    }
+
     // esquemaJson != null pide la respuesta en JSON con ese esquema.
-    private suspend fun pedir(clave: String, contenidos: JSONArray, esquemaJson: String?, instruccion: String = INSTRUCCION_ASISTENTE): ResultadoIA<String> = withContext(Dispatchers.IO) {
-        if (clave.isBlank()) return@withContext ResultadoIA.Falla(ErrorIA.SIN_CLAVE)
+    private fun cuerpo(contenidos: JSONArray, esquemaJson: String?, instruccion: String): JSONObject {
         val configuracion = JSONObject()
         if (esquemaJson != null) {
             configuracion.put("responseMimeType", "application/json").put("responseJsonSchema", JSONObject(esquemaJson))
         }
-        val cuerpo = JSONObject()
+        return JSONObject()
             .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", instruccion))))
             .put("contents", contenidos)
             .put("generationConfig", configuracion)
+    }
+
+    private fun abrir(clave: String, metodo: String): HttpURLConnection =
+        (URL("https://generativelanguage.googleapis.com/v1beta/models/$modelo:$metodo").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 15_000
+            readTimeout = 60_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            setRequestProperty("x-goog-api-key", clave)
+        }
+
+    private suspend fun pedir(clave: String, contenidos: JSONArray, esquemaJson: String?, instruccion: String = INSTRUCCION_ASISTENTE): ResultadoIA<String> = withContext(Dispatchers.IO) {
+        if (clave.isBlank()) return@withContext ResultadoIA.Falla(ErrorIA.SIN_CLAVE)
+        val cuerpo = cuerpo(contenidos, esquemaJson, instruccion)
         var conexion: HttpURLConnection? = null
         try {
-            conexion = (URL("https://generativelanguage.googleapis.com/v1beta/models/$modelo:generateContent").openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 15_000
-                readTimeout = 60_000
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                setRequestProperty("x-goog-api-key", clave)
-            }
+            conexion = abrir(clave, "generateContent")
             conexion.outputStream.use { it.write(cuerpo.toString().toByteArray(Charsets.UTF_8)) }
             val codigo = conexion.responseCode
-            if (codigo != HttpURLConnection.HTTP_OK) {
-                return@withContext ResultadoIA.Falla(
-                    when (codigo) {
-                        400, 401, 403 -> if (codigo == 400 && !errorDeClave(conexion)) ErrorIA.OTRO else ErrorIA.CLAVE_INVALIDA
-                        429 -> ErrorIA.LIMITE
-                        else -> ErrorIA.OTRO
-                    }
-                )
-            }
+            if (codigo != HttpURLConnection.HTTP_OK) return@withContext ResultadoIA.Falla(errorDeCodigo(codigo, conexion))
             val respuesta = JSONObject(conexion.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
             val candidato = respuesta.optJSONArray("candidates")?.optJSONObject(0)
                 ?: return@withContext ResultadoIA.Falla(ErrorIA.BLOQUEADO)
@@ -191,6 +286,13 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
         } finally {
             conexion?.disconnect()
         }
+    }
+
+    private fun errorDeCodigo(codigo: Int, conexion: HttpURLConnection): ErrorIA = when (codigo) {
+        400, 401, 403 -> if (codigo == 400 && !errorDeClave(conexion)) ErrorIA.OTRO else ErrorIA.CLAVE_INVALIDA
+        413 -> ErrorIA.ARCHIVO_GRANDE
+        429 -> ErrorIA.LIMITE
+        else -> ErrorIA.OTRO
     }
 
     // Un 400 por clave mal copiada dice "API key" en el mensaje de error.
