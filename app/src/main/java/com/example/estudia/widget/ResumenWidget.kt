@@ -34,3 +34,21 @@ fun armarResumenWidget(usuario: Usuario, hoy: LocalDate): ResumenWidget {
         proximas = pendientes.take(TAREAS_EN_WIDGET).map { (tarea, materia) -> "${tarea.titulo} · $materia" }
     )
 }
+
+// ---------- Widget "Hoy" ----------
+
+// Lo que muestra el widget "Hoy": las clases, exámenes, entregas y bloques
+// de estudio de hoy (por hora) y las tareas que vencen hoy.
+data class ResumenHoy(val lineas: List<String>, val mas: Int)
+
+const val LINEAS_WIDGET_HOY = 5
+
+fun armarResumenHoy(usuario: Usuario, hoy: LocalDate): ResumenHoy {
+    val activas = usuario.materias.filter { !it.archivada }
+    val eventos = activas.flatMap { m -> m.eventos.filter { it.ocurreEl(hoy) }.map { m to it } }
+        .sortedBy { it.second.horaInicio }
+        .map { (m, e) -> "%02d:%02d  %s · %s".format(e.horaInicio.hour, e.horaInicio.minute, e.titulo.trim(), m.nombre) }
+    val tareas = activas.flatMap { m -> m.tareas.filter { !it.completada && it.fechaLimite == hoy }.map { "☐  ${it.titulo.trim()} · ${m.nombre}" } }
+    val todas = eventos + tareas
+    return ResumenHoy(todas.take(LINEAS_WIDGET_HOY), (todas.size - LINEAS_WIDGET_HOY).coerceAtLeast(0))
+}

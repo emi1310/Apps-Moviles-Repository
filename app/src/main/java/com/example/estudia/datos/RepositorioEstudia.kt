@@ -1,5 +1,6 @@
 package com.example.estudia.datos
 
+import com.example.estudia.modelo.EstadoCopiaAutomatica
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.CategoriaArchivo
 import com.example.estudia.modelo.Feriado
@@ -209,7 +210,24 @@ interface RepositorioEstudia {
     // Pasa las clases, exámenes y entregas de las materias activas al
     // calendario "Estudia+" del teléfono (necesita el permiso de calendario).
     // Devuelve cuántos eventos quedaron, o null si no se pudo.
+    // Si sale bien, queda activado: la app lo mantiene al día sola (EstudiaApp).
     suspend fun sincronizarCalendario(nombreCalendario: String): Int?
+
+    // ---------- Guía de primera vez ----------
+
+    // Ids de los usuarios que ya vieron (o saltearon) la guía.
+    val guiasVistas: Flow<Set<Int>>
+    suspend fun marcarGuiaVista(usuarioId: Int)
+
+    // true mientras el calendario del teléfono se mantiene al día solo.
+    val calendarioAutomatico: Flow<Boolean>
+
+    // Apaga la sincronización y borra el calendario "Estudia+" del teléfono.
+    suspend fun dejarDeSincronizarCalendario(): Boolean
+
+    // Guarda los mismos eventos en un archivo .ics (uri del selector del
+    // sistema). Devuelve cuántos eventos tiene, o null si no se pudo.
+    suspend fun exportarCalendarioIcs(uri: String, nombreCalendario: String): Int?
 
     // ---------- Feriados ----------
 
@@ -225,6 +243,14 @@ interface RepositorioEstudia {
     suspend fun exportarCopia(uri: String): Boolean
     // Reemplaza las materias y el perfil del usuario por los de la copia.
     suspend fun importarCopia(uri: String): Boolean
+
+    // Copia automática semanal en una carpeta elegida (CopiaAutomaticaWorker).
+    val copiaAutomatica: Flow<EstadoCopiaAutomatica>
+    // Guarda la carpeta (y su permiso) y hace la primera copia. false si no se pudo.
+    suspend fun activarCopiaAutomatica(carpeta: String): Boolean
+    suspend fun desactivarCopiaAutomatica()
+    // Hace la copia ahora en la carpeta elegida. false si está apagada o falló.
+    suspend fun hacerCopiaAutomatica(): Boolean
 
     // ---------- Preferencias y recordatorios ----------
 

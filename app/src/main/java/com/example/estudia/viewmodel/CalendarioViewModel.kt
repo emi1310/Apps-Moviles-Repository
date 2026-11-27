@@ -34,8 +34,9 @@ data class CalendarioUiState(
     val feriadosDelMes: Map<LocalDate, String> = emptyMap(),
     val feriadoDelDia: String? = null,
     val hayFeriados: Boolean = false,
-    val actualizandoFeriados: Boolean = false
-,
+    val actualizandoFeriados: Boolean = false,
+    // El calendario del teléfono se mantiene al día solo.
+    val calendarioAutomatico: Boolean = false,
     // Búsqueda desde la lupa del dock: con texto, en lugar del mes se muestran
     // los eventos que coinciden.
     val busqueda: String = "",
@@ -89,8 +90,9 @@ class CalendarioViewModel(
                 actualizandoFeriados = actualizando,
                 todosLosEventos = eventos
             )
-        }.combine(busqueda) { estado, texto ->
-            estado.copy(busqueda = texto, resultadosBusqueda = buscarEventos(estado.todosLosEventos, texto, estado.hoy))
+        }.combine(busqueda) { estado, texto -> estado to texto }
+        .combine(repositorio.calendarioAutomatico) { (estado, texto), automatico ->
+            estado.copy(calendarioAutomatico = automatico, busqueda = texto, resultadosBusqueda = buscarEventos(estado.todosLosEventos, texto, estado.hoy))
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarioUiState(semanas = semanasDelMes(YearMonth.now())))
 
     fun mesAnterior() = cambiarMes(mes.value.minusMonths(1))
@@ -178,6 +180,24 @@ class CalendarioViewModel(
             val cantidad = repositorio.sincronizarCalendario(nombreCalendario)
             avisar(
                 if (cantidad != null) Aviso(Mensaje.AVISO_CALENDARIO_SINCRONIZADO, listOf(cantidad))
+                else Aviso(Mensaje.AVISO_CALENDARIO_ERROR)
+            )
+        }
+    }
+
+    fun dejarDeSincronizar() {
+        viewModelScope.launch {
+            repositorio.dejarDeSincronizarCalendario()
+            avisar(Aviso(Mensaje.AVISO_CALENDARIO_DESACTIVADO))
+        }
+    }
+
+    // uri: el archivo .ics que eligió el usuario con el selector del sistema.
+    fun exportarIcs(uri: String, nombreCalendario: String) {
+        viewModelScope.launch {
+            val cantidad = repositorio.exportarCalendarioIcs(uri, nombreCalendario)
+            avisar(
+                if (cantidad != null) Aviso(Mensaje.AVISO_CALENDARIO_ICS_GUARDADO, listOf(cantidad))
                 else Aviso(Mensaje.AVISO_CALENDARIO_ERROR)
             )
         }

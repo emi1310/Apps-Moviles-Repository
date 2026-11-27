@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -56,6 +57,19 @@ class SesionViewModel(
 
     val tema: StateFlow<PreferenciaTema> = repositorio.tema
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PreferenciaTema.SISTEMA)
+
+    // La guía de primera vez: se muestra a quien todavía no la vio y no tiene
+    // materias cargadas (un usuario nuevo). Al cerrarla no vuelve a salir.
+    val mostrarGuia: StateFlow<Boolean> = combine(repositorio.usuarioActual, repositorio.guiasVistas) { usuario, vistas ->
+        usuario != null && usuario.id !in vistas && usuario.materias.isEmpty()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun cerrarGuia() {
+        viewModelScope.launch {
+            val usuario = repositorio.usuarioActual.first() ?: return@launch
+            repositorio.marcarGuiaVista(usuario.id)
+        }
+    }
 
     private val _authUiState = MutableStateFlow(AuthUiState())
     val authUiState: StateFlow<AuthUiState> = _authUiState.asStateFlow()

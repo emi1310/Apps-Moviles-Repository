@@ -5,7 +5,7 @@ import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.provider.CalendarContract
-import com.example.estudia.modelo.Evento
+import com.example.estudia.modelo.EventoDeCalendario
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.ZoneId
@@ -23,12 +23,9 @@ class CalendarioTelefono(context: Context) {
 
     private val resolver = context.applicationContext.contentResolver
 
-    // Un evento a pasar, con el nombre de su materia para el título.
-    data class EventoAPasar(val evento: Evento, val nombreMateria: String)
-
     // Devuelve cuántos eventos quedaron en el calendario, o null si falló
     // (por ejemplo, si se quitó el permiso).
-    suspend fun sincronizar(eventos: List<EventoAPasar>, nombreCalendario: String): Int? = withContext(Dispatchers.IO) {
+    suspend fun sincronizar(eventos: List<EventoDeCalendario>, nombreCalendario: String): Int? = withContext(Dispatchers.IO) {
         try {
             val calendarioId = buscarOCrearCalendario(nombreCalendario) ?: return@withContext null
             resolver.delete(
@@ -44,7 +41,37 @@ class CalendarioTelefono(context: Context) {
         }
     }
 
-    private fun insertar(calendarioId: Long, item: EventoAPasar): Boolean {
+    // Deja de usar el calendario del teléfono: borra el calendario "Estudia+"
+    // (con sus eventos). Devuelve false si no se pudo.
+    suspend fun borrarCalendario(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val uri = CalendarContract.Calendars.CONTENT_URI.buildUpon()
+                .appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true")
+                .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, CUENTA)
+                .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, CalendarContract.ACCOUNT_TYPE_LOCAL)
+                .build()
+            resolver.delete(
+                uri,
+                "${CalendarContract.Calendars.ACCOUNT_NAME} = ? AND ${CalendarContract.Calendars.ACCOUNT_TYPE} = ?",
+                arrayOf(CUENTA, CalendarContract.ACCOUNT_TYPE_LOCAL)
+            )
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // Guarda el texto del archivo .ics en el archivo que eligió el usuario
+    // (content:// del selector del sistema).
+    suspend fun guardarIcs(uri: String, texto: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            resolver.openOutputStream(Uri.parse(uri), "wt")?.use { it.write(texto.toByteArray(Charsets.UTF_8)) } != null
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun insertar(calendarioId: Long, item: EventoDeCalendario): Boolean {
         val evento = item.evento
         val zona = ZoneId.systemDefault()
         val inicio = evento.inicio.atZone(zona).toInstant().toEpochMilli()

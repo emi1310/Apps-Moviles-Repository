@@ -78,6 +78,8 @@ import com.example.estudia.ui.pantallas.FinalesScreen
 import com.example.estudia.ui.pantallas.BibliografiaScreen
 import com.example.estudia.ui.pantallas.MapasScreen
 import com.example.estudia.ui.pantallas.AsistenteScreen
+import com.example.estudia.ui.pantallas.GuiaPrimeraVez
+import com.example.estudia.ui.pantallas.PasoGuia
 import com.example.estudia.ui.pantallas.MapaEditorScreen
 import com.example.estudia.ui.pantallas.NotaNecesariaScreen
 import com.example.estudia.ui.pantallas.QuizScreen
@@ -173,6 +175,24 @@ fun AppNavegacion(
             navController.navigate(Screen.Temporizador.ruta) { launchSingleTop = true }
         }
         onTemporizadorAbierto()
+    }
+
+    // Guía de primera vez (usuario nuevo, sin materias). Sus botones cierran la
+    // guía y llevan a cargar materias, al horario desde una foto o a Perfil.
+    val mostrarGuia by sesionViewModel.mostrarGuia.collectAsStateWithLifecycle()
+    var abrirHorarioIA by rememberSaveable { mutableStateOf(false) }
+    if (mostrarGuia && mostrarBarra) {
+        GuiaPrimeraVez(
+            onPaso = { paso ->
+                sesionViewModel.cerrarGuia()
+                when (paso) {
+                    PasoGuia.MATERIAS -> { accionPendiente = AccionRapida.MATERIA; irA(Screen.Materias) }
+                    PasoGuia.HORARIO -> { abrirHorarioIA = true; irA(Screen.Asistente) }
+                    PasoGuia.RECORDATORIOS -> irA(Screen.Perfil)
+                }
+            },
+            onCerrar = sesionViewModel::cerrarGuia
+        )
     }
 
     // La pantalla guardada para el vidrio líquido del dock (Android 13 o más).
@@ -319,7 +339,12 @@ fun AppNavegacion(
                 }
 
                 composable(Screen.Asistente.ruta) {
-                    AsistenteScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory))
+                    AsistenteScreen(
+                        viewModel = viewModel(factory = AppViewModelProvider.Factory),
+                        onAbrirMapa = { navController.navigate(Screen.Mapa.de(it)) },
+                        abrirHorario = abrirHorarioIA,
+                        onHorarioAbierto = { abrirHorarioIA = false }
+                    )
                 }
 
                 composable(Screen.Notas.ruta) {

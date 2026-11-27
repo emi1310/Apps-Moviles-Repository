@@ -1,5 +1,10 @@
 package com.example.estudia.ui.pantallas
 
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.FilledTonalButton
+import java.time.format.DateTimeFormatter
+import com.example.estudia.modelo.EstadoCopiaAutomatica
+import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -122,6 +127,11 @@ fun PerfilScreen(
     }
     val abrirCopia = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) viewModel.importarCopia(uri.toString())
+    }
+    // Copia automática: se elige una carpeta (OpenDocumentTree) y la app
+    // guarda ahí una copia por semana.
+    val elegirCarpeta = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) viewModel.activarCopiaAutomatica(uri.toString())
     }
 
     // ---------- Foto de perfil: cámara o galería ----------
@@ -405,6 +415,13 @@ fun PerfilScreen(
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
+        BloqueCopiaAutomatica(
+            estado = estado.copiaAutomatica,
+            onElegirCarpeta = { elegirCarpeta.launch(null) },
+            onCopiarAhora = viewModel::copiarAhora,
+            onDesactivar = viewModel::desactivarCopiaAutomatica
+        )
+        Spacer(modifier = Modifier.height(10.dp))
         val rojo = MaterialTheme.colorScheme.error
         Row(
             modifier = Modifier
@@ -683,6 +700,51 @@ private fun BloqueLogros(logros: List<Logro>, onAbrir: () -> Unit) {
         // Las primeras medallas (las conseguidas van primero).
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.clearAndSetSemantics { }) {
             logros.take(6).forEach { Medalla(it.tipo, it.conseguido, tamano = 36.dp) }
+        }
+    }
+}
+
+// Copia automática semanal: apagada, invita a elegir una carpeta; prendida,
+// muestra la última copia y deja copiar ahora, cambiar la carpeta o apagarla.
+@Composable
+private fun BloqueCopiaAutomatica(
+    estado: EstadoCopiaAutomatica,
+    onElegirCarpeta: () -> Unit,
+    onCopiarAhora: () -> Unit,
+    onDesactivar: () -> Unit
+) {
+    val formato = remember { DateTimeFormatter.ofPattern("d/M/yyyy") }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
+            .padding(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconoCircular(Icons.Outlined.CloudSync, Color.White, fondo = BloqueVerde)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.copia_auto_titulo), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    when {
+                        !estado.activa -> stringResource(R.string.copia_auto_apagada)
+                        estado.ultima != null -> stringResource(R.string.copia_auto_ultima, estado.ultima.format(formato))
+                        else -> stringResource(R.string.copia_auto_nunca)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (estado.activa) {
+                FilledTonalButton(onClick = onCopiarAhora) { Text(stringResource(R.string.copia_auto_ahora)) }
+                TextButton(onClick = onElegirCarpeta) { Text(stringResource(R.string.copia_auto_elegir)) }
+                TextButton(onClick = onDesactivar) { Text(stringResource(R.string.copia_auto_desactivar)) }
+            } else {
+                FilledTonalButton(onClick = onElegirCarpeta) { Text(stringResource(R.string.copia_auto_elegir)) }
+            }
         }
     }
 }

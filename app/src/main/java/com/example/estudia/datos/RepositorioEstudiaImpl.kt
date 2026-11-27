@@ -7,6 +7,11 @@ import com.example.estudia.datos.local.FeriadoDao
 import com.example.estudia.datos.local.AsistenciaEntity
 import com.example.estudia.datos.local.CarreraDao
 import com.example.estudia.datos.local.EvaluacionEntity
+import com.example.estudia.modelo.EstadoCopiaAutomatica
+import com.example.estudia.modelo.calendarioIcs
+import com.example.estudia.modelo.eventosParaCalendario
+import java.time.Instant
+import java.time.ZoneId
 import com.example.estudia.modelo.Evaluacion
 import com.example.estudia.modelo.CategoriaArchivo
 import com.example.estudia.modelo.Feriado
@@ -716,14 +721,28 @@ class RepositorioEstudiaImpl(
 
     // ---------- Calendario del teléfono ----------
 
-    // Los bloques de estudio no se pasan: son un registro de lo que ya se estudió.
     override suspend fun sincronizarCalendario(nombreCalendario: String): Int? {
         val usuario = usuarioActual.first() ?: return null
-        val eventos = usuario.materias.filter { !it.archivada }.flatMap { materia ->
-            materia.eventos.filter { it.tipo != TipoEvento.BLOQUE_ESTUDIO }
-                .map { CalendarioTelefono.EventoAPasar(it, materia.nombre) }
-        }
-        return calendarioTelefono.sincronizar(eventos, nombreCalendario)
+        val cantidad = calendarioTelefono.sincronizar(eventosParaCalendario(usuario, LocalDate.now()), nombreCalendario)
+        if (cantidad != null) preferencias.guardarCalendarioAutomatico(true)
+        return cantidad
+    }
+
+    override val calendarioAutomatico: Flow<Boolean> = preferencias.calendarioAutomatico
+
+    override val guiasVistas: Flow<Set<Int>> = preferencias.guiasVistas
+    override suspend fun marcarGuiaVista(usuarioId: Int) = preferencias.marcarGuiaVista(usuarioId)
+
+    override suspend fun dejarDeSincronizarCalendario(): Boolean {
+        preferencias.guardarCalendarioAutomatico(false)
+        return calendarioTelefono.borrarCalendario()
+    }
+
+    override suspend fun exportarCalendarioIcs(uri: String, nombreCalendario: String): Int? {
+        val usuario = usuarioActual.first() ?: return null
+        val eventos = eventosParaCalendario(usuario, LocalDate.now())
+        val texto = calendarioIcs(eventos, nombreCalendario, ZoneId.systemDefault(), Instant.now())
+        return if (calendarioTelefono.guardarIcs(uri, texto)) eventos.size else null
     }
 
     // ---------- Feriados ----------
@@ -748,6 +767,29 @@ class RepositorioEstudiaImpl(
     override suspend fun exportarCopia(uri: String): Boolean {
         val usuario = usuarioActual.first() ?: return false
         return copiaDeSeguridad.exportar(usuario, uri)
+    }
+
+    override val copiaAutomatica: Flow<EstadoCopiaAutomatica> = preferencias.copiaAutomatica
+
+    override suspend fun activarCopiaAutomatica(carpeta: String): Boolean {
+        if (!copiaDeSeguridad.conservarPermiso(carpeta)) return false
+        preferencias.copiaAutomatica.first().carpeta?.takeIf { it != carpeta }?.let { copiaDeSeguridad.soltarPermiso(it) }
+        preferencias.guardarCarpetaCopia(carpeta)
+        return hacerCopiaAutomatica()
+    }
+
+    override suspend fun desactivarCopiaAutomatica() {
+        preferencias.copiaAutomatica.first().carpeta?.let { copiaDeSeguridad.soltarPermiso(it) }
+        preferencias.guardarCarpetaCopia(null)
+    }
+
+    override suspend fun hacerCopiaAutomatica(): Boolean {
+        val carpeta = preferencias.copiaAutomatica.first().carpeta ?: return false
+        val usuario = usuarioActual.first() ?: return false
+        val hoy = LocalDate.now()
+        val ok = copiaDeSeguridad.exportarACarpeta(usuario, carpeta, hoy)
+        if (ok) preferencias.guardarUltimaCopia(hoy)
+        return ok
     }
 
     // Reemplaza las materias del usuario por las de la copia y trae su

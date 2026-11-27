@@ -6,6 +6,9 @@ import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.datos.ResumenDia
 import com.example.estudia.datos.TareaEncontrada
 import com.example.estudia.datos.TareaParaAviso
+import com.example.estudia.modelo.EstadoCopiaAutomatica
+import com.example.estudia.modelo.calendarioIcs
+import com.example.estudia.modelo.eventosParaCalendario
 import com.example.estudia.modelo.Tema
 import com.example.estudia.modelo.Tarjeta
 import com.example.estudia.modelo.Archivo
@@ -385,8 +388,32 @@ class RepositorioFalso(
     // ---------- Calendario del teléfono ----------
     // Cuenta los eventos que se pasarían (sin bloques de estudio).
 
-    override suspend fun sincronizarCalendario(nombreCalendario: String): Int? =
-        usuario.value?.materias?.filter { !it.archivada }?.sumOf { m -> m.eventos.count { it.tipo != TipoEvento.BLOQUE_ESTUDIO } }
+    val calendarioAuto = MutableStateFlow(false)
+    var icsGuardado: String? = null
+    override suspend fun sincronizarCalendario(nombreCalendario: String): Int? {
+        val u = usuario.value ?: return null
+        calendarioAuto.value = true
+        return eventosParaCalendario(u, LocalDate.now()).size
+    }
+    override val calendarioAutomatico: Flow<Boolean> = calendarioAuto
+    override suspend fun dejarDeSincronizarCalendario(): Boolean {
+        calendarioAuto.value = false
+        return true
+    }
+    override suspend fun exportarCalendarioIcs(uri: String, nombreCalendario: String): Int? {
+        val u = usuario.value ?: return null
+        val eventos = eventosParaCalendario(u, LocalDate.now())
+        icsGuardado = calendarioIcs(eventos, nombreCalendario, java.time.ZoneId.of("America/Argentina/Buenos_Aires"), java.time.Instant.EPOCH)
+        return eventos.size
+    }
+
+    // ---------- Guía de primera vez ----------
+
+    val guias = MutableStateFlow<Set<Int>>(emptySet())
+    override val guiasVistas: Flow<Set<Int>> = guias
+    override suspend fun marcarGuiaVista(usuarioId: Int) {
+        guias.value = guias.value + usuarioId
+    }
 
     // ---------- Copia de seguridad ----------
     // "Guarda" la copia en memoria y la restaura reemplazando las materias.
@@ -401,6 +428,23 @@ class RepositorioFalso(
     override suspend fun importarCopia(uri: String): Boolean {
         val copia = copiaGuardada ?: return false
         usuario.value = usuario.value?.copy(materias = copia.materias, nombre = copia.nombre)
+        return true
+    }
+
+    val copiaAuto = MutableStateFlow(EstadoCopiaAutomatica())
+    var carpetaValida = true
+    override val copiaAutomatica: Flow<EstadoCopiaAutomatica> = copiaAuto
+    override suspend fun activarCopiaAutomatica(carpeta: String): Boolean {
+        if (!carpetaValida) return false
+        copiaAuto.value = EstadoCopiaAutomatica(carpeta)
+        return hacerCopiaAutomatica()
+    }
+    override suspend fun desactivarCopiaAutomatica() {
+        copiaAuto.value = EstadoCopiaAutomatica()
+    }
+    override suspend fun hacerCopiaAutomatica(): Boolean {
+        if (copiaAuto.value.carpeta == null || usuario.value == null) return false
+        copiaAuto.value = copiaAuto.value.copy(ultima = LocalDate.of(2026, 11, 26))
         return true
     }
 

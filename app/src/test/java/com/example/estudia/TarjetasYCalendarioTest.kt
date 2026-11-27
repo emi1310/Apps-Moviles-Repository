@@ -125,8 +125,9 @@ class TarjetasYCalendarioTest {
         val eventos = listOf(
             Evento(1, "Teórico", TipoEvento.CLASE, hoy, LocalTime.of(9, 0), LocalTime.of(11, 0), semanal = true),
             Evento(2, "Parcial", TipoEvento.EXAMEN, hoy, LocalTime.of(18, 0), LocalTime.of(20, 0)),
-            // Los bloques de estudio no se pasan.
-            Evento(3, "Estudio", TipoEvento.BLOQUE_ESTUDIO, hoy, LocalTime.of(14, 0), LocalTime.of(15, 0))
+            // Los bloques de estudio que ya pasaron no se pasan; los que vienen sí.
+            Evento(3, "Estudio", TipoEvento.BLOQUE_ESTUDIO, hoy.minusDays(1), LocalTime.of(14, 0), LocalTime.of(15, 0)),
+            Evento(4, "Estudiar: integrales", TipoEvento.BLOQUE_ESTUDIO, hoy.plusDays(2), LocalTime.of(14, 0), LocalTime.of(15, 0))
         )
         val repositorio = RepositorioFalso(usuario(Materia(1, "Física", 0, eventos = eventos)))
         val vm = CalendarioViewModel(repositorio, AvisosFalso())
@@ -136,6 +137,6 @@ class TarjetasYCalendarioTest {
         vm.sincronizarConTelefono("Estudia+")
         advanceUntilIdle()
         assertEquals(Mensaje.AVISO_CALENDARIO_SINCRONIZADO, avisos.single().mensaje)
-        assertEquals(listOf(2), avisos.single().argumentos)
+        assertEquals(listOf(3), avisos.single().argumentos)
     }
 }

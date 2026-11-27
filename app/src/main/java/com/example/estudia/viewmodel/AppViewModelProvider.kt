@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.estudia.BuildConfig
+import com.example.estudia.util.leerJpeg
 import com.example.estudia.EstudiaApp
 
 // Factory de todos los ViewModels de la app: le dice a Android cómo crear
@@ -31,7 +32,14 @@ object AppViewModelProvider {
         initializer { FinalesViewModel(estudiaApp().repositorio) }
         initializer { BibliografiaViewModel(estudiaApp().repositorio) }
         initializer { MapasViewModel(estudiaApp().repositorio) }
-        initializer { AsistenteViewModel(estudiaApp().repositorio, estudiaApp().asistente, estudiaApp().clavesIA, BuildConfig.GEMINI_API_KEY) }
+        initializer {
+            val app = estudiaApp()
+            AsistenteViewModel(
+                app.repositorio, app.asistente, app.clavesIA, BuildConfig.GEMINI_API_KEY,
+                avisosSistema = app.avisos,
+                leerFoto = { uri -> leerJpeg(app, android.net.Uri.parse(uri)) }
+            )
+        }
         initializer { MapaViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("mapaId") ?: 0) }
         initializer { ResumenSemanalViewModel(estudiaApp().repositorio) }
         initializer { BusquedaViewModel(estudiaApp().repositorio) }

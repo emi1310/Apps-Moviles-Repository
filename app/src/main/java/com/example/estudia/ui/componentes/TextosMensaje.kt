@@ -52,6 +52,15 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_NOTA_IA_GUARDADA -> R.string.aviso_nota_ia_guardada
     Mensaje.AVISO_IA_CONECTADA -> R.string.aviso_ia_conectada
     Mensaje.AVISO_IA_DESCONECTADA -> R.string.aviso_ia_desconectada
+    Mensaje.AVISO_PLAN_IA_GUARDADO -> R.string.aviso_plan_ia_guardado
+    Mensaje.AVISO_HORARIO_IA_GUARDADO -> R.string.aviso_horario_ia_guardado
+    Mensaje.AVISO_CALENDARIO_ICS_GUARDADO -> R.string.aviso_calendario_ics_guardado
+    Mensaje.AVISO_CALENDARIO_DESACTIVADO -> R.string.aviso_calendario_desactivado
+    Mensaje.AVISO_MAPA_IA_CREADO -> R.string.aviso_mapa_ia_creado
+    Mensaje.AVISO_COPIA_AUTO_ACTIVADA -> R.string.aviso_copia_auto_activada
+    Mensaje.AVISO_COPIA_AUTO_DESACTIVADA -> R.string.aviso_copia_auto_desactivada
+    Mensaje.AVISO_COPIA_AUTO_HECHA -> R.string.aviso_copia_auto_hecha
+    Mensaje.AVISO_COPIA_AUTO_ERROR -> R.string.aviso_copia_auto_error
     Mensaje.AVISO_FINAL_APROBADO_PLAN -> R.string.aviso_final_aprobado_plan
     Mensaje.AVISO_PDF_ERROR -> R.string.aviso_pdf_error
     Mensaje.AVISO_FERIADOS_CALENDARIO -> R.string.aviso_feriados_calendario

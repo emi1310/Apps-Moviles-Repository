@@ -1,6 +1,13 @@
 package com.example.estudia.datos
 
+import android.util.Base64
+import com.example.estudia.modelo.ClaseHorarioTexto
+import com.example.estudia.modelo.ESQUEMA_HORARIO
+import com.example.estudia.modelo.ESQUEMA_MAPA
+import com.example.estudia.modelo.ESQUEMA_PLAN
 import com.example.estudia.modelo.ErrorIA
+import com.example.estudia.modelo.RamaIA
+import com.example.estudia.modelo.SesionPlanTexto
 import com.example.estudia.modelo.INSTRUCCION_ASISTENTE
 import com.example.estudia.modelo.instruccionConDatos
 import com.example.estudia.modelo.MensajeIA
@@ -27,6 +34,19 @@ interface AsistenteIA {
 
     // Pide tarjetas de estudio (pregunta y respuesta) en JSON.
     suspend fun crearTarjetas(clave: String, pedido: String): ResultadoIA<List<TarjetaSugerida>>
+
+    // Plan de estudio para un examen (sesiones con fecha, hora, minutos y
+    // tema). contexto: la agenda del estudiante, para no pisar sus clases.
+    suspend fun planEstudio(clave: String, pedido: String, contexto: String): ResultadoIA<List<SesionPlanTexto>>
+
+    // Mapa mental: la idea central y sus ramas.
+    suspend fun mapaMental(clave: String, pedido: String): ResultadoIA<Pair<String, List<RamaIA>>>
+
+    // Lee una imagen (JPEG) y responde el pedido (por ejemplo, pasar un apunte a texto).
+    suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String>
+
+    // Lee la foto de un horario de cursada y devuelve sus clases.
+    suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<ClaseHorarioTexto>>
 }
 
 // Asistente con la API de Gemini (plan gratis de cada usuario). Usa generateContent por
@@ -61,6 +81,66 @@ class GeminiCliente(private val modelo: String) : AsistenteIA {
             }
         }
     }
+
+    override suspend fun planEstudio(clave: String, pedido: String, contexto: String): ResultadoIA<List<SesionPlanTexto>> =
+        when (val r = pedir(clave, pedidoUsuario(pedido), ESQUEMA_PLAN, instruccionConDatos(contexto))) {
+            is ResultadoIA.Falla -> r
+            is ResultadoIA.Ok -> try {
+                val lista = JSONObject(r.valor).getJSONArray("sesiones")
+                ResultadoIA.Ok((0 until lista.length()).map { i ->
+                    val s = lista.getJSONObject(i)
+                    SesionPlanTexto(s.optString("fecha"), s.optString("hora"), s.optInt("minutos", 60), s.optString("tema"))
+                })
+            } catch (e: Exception) {
+                ResultadoIA.Falla(ErrorIA.OTRO)
+            }
+        }
+
+    override suspend fun mapaMental(clave: String, pedido: String): ResultadoIA<Pair<String, List<RamaIA>>> =
+        when (val r = pedir(clave, pedidoUsuario(pedido), ESQUEMA_MAPA)) {
+            is ResultadoIA.Falla -> r
+            is ResultadoIA.Ok -> try {
+                val json = JSONObject(r.valor)
+                val ramas = json.getJSONArray("ramas")
+                ResultadoIA.Ok(json.optString("central") to (0 until ramas.length()).map { i ->
+                    val rama = ramas.getJSONObject(i)
+                    val detalles = rama.optJSONArray("detalles") ?: JSONArray()
+                    RamaIA(rama.optString("idea"), (0 until detalles.length()).map { detalles.optString(it) })
+                })
+            } catch (e: Exception) {
+                ResultadoIA.Falla(ErrorIA.OTRO)
+            }
+        }
+
+    override suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String> {
+        return when (val r = pedir(clave, conImagen(jpeg, pedido), null)) {
+            is ResultadoIA.Ok -> ResultadoIA.Ok(limpiarRespuesta(r.valor))
+            is ResultadoIA.Falla -> r
+        }
+    }
+
+    override suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<ClaseHorarioTexto>> =
+        when (val r = pedir(clave, conImagen(jpeg, pedido), ESQUEMA_HORARIO)) {
+            is ResultadoIA.Falla -> r
+            is ResultadoIA.Ok -> try {
+                val lista = JSONObject(r.valor).getJSONArray("clases")
+                ResultadoIA.Ok((0 until lista.length()).map { i ->
+                    val c = lista.getJSONObject(i)
+                    ClaseHorarioTexto(c.optString("materia"), c.optString("titulo"), c.optString("dia"), c.optString("inicio"), c.optString("fin"), c.optString("lugar"))
+                })
+            } catch (e: Exception) {
+                ResultadoIA.Falla(ErrorIA.OTRO)
+            }
+        }
+
+    // La foto (JPEG) y el pedido en un mismo mensaje.
+    private fun conImagen(jpeg: ByteArray, pedido: String): JSONArray {
+        val imagen = JSONObject().put("inlineData", JSONObject().put("mimeType", "image/jpeg").put("data", Base64.encodeToString(jpeg, Base64.NO_WRAP)))
+        return JSONArray().put(JSONObject().put("role", "user").put("parts", JSONArray().put(imagen).put(JSONObject().put("text", pedido))))
+    }
+
+    private fun pedidoUsuario(pedido: String) =
+        JSONArray().put(JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", pedido))))
 
     // esquemaJson != null pide la respuesta en JSON con ese esquema.
     private suspend fun pedir(clave: String, contenidos: JSONArray, esquemaJson: String?, instruccion: String = INSTRUCCION_ASISTENTE): ResultadoIA<String> = withContext(Dispatchers.IO) {

@@ -24,7 +24,7 @@ sealed class ResultadoIA<out T> {
 }
 
 // Las acciones rápidas de la pantalla.
-enum class AccionIA { RESUMIR, EXPLICAR, PREGUNTAS, TARJETAS }
+enum class AccionIA { RESUMIR, EXPLICAR, PREGUNTAS, TARJETAS, PLAN, MAPA, FOTO, SIMULACRO, HORARIO }
 
 // Instrucción fija para la IA: que ayude a aprender sin hacer el trabajo
 // por el estudiante, y que responda en texto plano (la app no muestra Markdown).

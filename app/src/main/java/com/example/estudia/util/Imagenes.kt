@@ -52,3 +52,11 @@ suspend fun guardarImagenParaCompartir(contexto: Context, imagen: Bitmap, titulo
     archivo.outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
     FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
 }
+
+// La foto como JPEG achicado (para mandarla a la IA). null si no se pudo leer.
+suspend fun leerJpeg(context: Context, uri: Uri, ladoMaximo: Int = 1600, calidad: Int = 85): ByteArray? {
+    val imagen = leerImagen(context, uri, ladoMaximo) ?: return null
+    return withContext(Dispatchers.IO) {
+        java.io.ByteArrayOutputStream().also { imagen.compress(Bitmap.CompressFormat.JPEG, calidad, it) }.toByteArray()
+    }
+}

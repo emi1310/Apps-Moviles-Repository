@@ -2,6 +2,7 @@ package com.example.estudia.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.datos.RepositorioEstudia
+import com.example.estudia.modelo.EstadoCopiaAutomatica
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.notificaciones.AvisosSistema
@@ -22,7 +23,8 @@ data class PerfilUiState(
     val fotoUri: String? = null,
     // Para el bloque "Tus logros".
     val logros: List<Logro> = emptyList(),
-    val permisoArchivosPedido: Boolean = false
+    val permisoArchivosPedido: Boolean = false,
+    val copiaAutomatica: EstadoCopiaAutomatica = EstadoCopiaAutomatica()
 ) {
     val logrosConseguidos: Int get() = logros.count { it.conseguido }
 
@@ -49,9 +51,11 @@ class PerfilViewModel(
             repositorio.usuarioActual,
             repositorio.recordatoriosActivos,
             repositorio.tema,
-            repositorio.permisoArchivosPedido
-        ) { usuario, recordatorios, tema, permisoPedido ->
+            repositorio.permisoArchivosPedido,
+            repositorio.copiaAutomatica
+        ) { usuario, recordatorios, tema, permisoPedido, copiaAuto ->
             PerfilUiState(
+                copiaAutomatica = copiaAuto,
                 usuario = usuario,
                 horasEstaSemana = usuario?.horasEstudioDeLaSemana(hoy()) ?: 0,
                 recordatoriosActivos = recordatorios,
@@ -92,6 +96,26 @@ class PerfilViewModel(
     }
 
     // ---------- Copia de seguridad ----------
+
+    // Copia automática: carpeta = la elegida con el selector del sistema.
+    fun activarCopiaAutomatica(carpeta: String) {
+        viewModelScope.launch {
+            avisar(Aviso(if (repositorio.activarCopiaAutomatica(carpeta)) Mensaje.AVISO_COPIA_AUTO_ACTIVADA else Mensaje.AVISO_COPIA_AUTO_ERROR))
+        }
+    }
+
+    fun desactivarCopiaAutomatica() {
+        viewModelScope.launch {
+            repositorio.desactivarCopiaAutomatica()
+            avisar(Aviso(Mensaje.AVISO_COPIA_AUTO_DESACTIVADA))
+        }
+    }
+
+    fun copiarAhora() {
+        viewModelScope.launch {
+            avisar(Aviso(if (repositorio.hacerCopiaAutomatica()) Mensaje.AVISO_COPIA_AUTO_HECHA else Mensaje.AVISO_COPIA_AUTO_ERROR))
+        }
+    }
 
     fun exportarCopia(uri: String) {
         viewModelScope.launch {

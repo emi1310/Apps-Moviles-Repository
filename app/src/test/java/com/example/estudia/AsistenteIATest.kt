@@ -11,6 +11,8 @@ import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.ResultadoIA
 import com.example.estudia.modelo.TarjetaSugerida
+import com.example.estudia.modelo.SesionPlanTexto
+import com.example.estudia.modelo.RamaIA
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.modelo.contextoParaEnviar
 import com.example.estudia.modelo.contextoDelEstudiante
@@ -43,7 +45,7 @@ import org.junit.Test
 import java.time.LocalDate
 
 // IA falsa: responde lo que se le indique, sin internet.
-private class AsistenteFalso(
+class AsistenteFalso(
     var respuesta: ResultadoIA<String> = ResultadoIA.Ok("Respuesta"),
     var tarjetas: ResultadoIA<List<TarjetaSugerida>> = ResultadoIA.Ok(emptyList())
 ) : AsistenteIA {
@@ -60,10 +62,26 @@ private class AsistenteFalso(
         return respuesta
     }
     override suspend fun crearTarjetas(clave: String, pedido: String) = tarjetas
+    var plan: ResultadoIA<List<SesionPlanTexto>> = ResultadoIA.Ok(emptyList())
+    var mapa: ResultadoIA<Pair<String, List<RamaIA>>> = ResultadoIA.Falla(ErrorIA.OTRO)
+    var textoImagen: ResultadoIA<String> = ResultadoIA.Ok("Texto del apunte")
+    val imagenes = mutableListOf<ByteArray>()
+    override suspend fun planEstudio(clave: String, pedido: String, contexto: String) = plan
+    override suspend fun mapaMental(clave: String, pedido: String) = mapa
+    var horario: ResultadoIA<List<com.example.estudia.modelo.ClaseHorarioTexto>> = ResultadoIA.Ok(emptyList())
+    val pedidosHorario = mutableListOf<String>()
+    override suspend fun leerHorario(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<List<com.example.estudia.modelo.ClaseHorarioTexto>> {
+        pedidosHorario += pedido
+        return horario
+    }
+    override suspend fun leerImagen(clave: String, jpeg: ByteArray, pedido: String): ResultadoIA<String> {
+        imagenes += jpeg
+        return textoImagen
+    }
 }
 
 // Claves en memoria (en el teléfono van cifradas).
-private class ClavesFalsas : ClavesIA {
+class ClavesFalsas : ClavesIA {
     val guardadas = MutableStateFlow<Map<Int, String>>(emptyMap())
     override fun clave(usuarioId: Int): Flow<String?> = guardadas.map { it[usuarioId] }
     override suspend fun guardar(usuarioId: Int, clave: String?) {
@@ -287,5 +305,80 @@ class AsistenteIATest {
         advanceUntilIdle()
         assertTrue(ia.contextos.single().contains("Análisis II"))
         assertTrue(instruccionConDatos(ia.contextos.single()).contains("no inventes"))
+    }
+
+    // ---------- Herramientas que guardan algo ----------
+
+    @Test
+    fun elPlanElegidoSeGuardaComoBloquesConAvisos() = runTest {
+        val parcial = Evento(9, "Parcial 2", TipoEvento.EXAMEN, hoy.plusDays(6), LocalTime.of(9, 0), LocalTime.of(11, 0))
+        val repositorio = RepositorioFalso(usuario().copy(materias = listOf(materia.copy(eventos = listOf(parcial)))))
+        val ia = AsistenteFalso().apply {
+            plan = ResultadoIA.Ok(listOf(SesionPlanTexto("2026-11-27", "17:00", 60, "Lectura"), SesionPlanTexto("2026-11-28", "10:00", 90, "Ejercicios")))
+        }
+        val avisos = AvisosFalso()
+        val vm = AsistenteViewModel(repositorio, ia, ClavesFalsas(), "clave-app", hoy = { hoy }, avisosSistema = avisos)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        advanceUntilIdle()
+
+        vm.pedirPlan(vm.uiState.value.examenes.single())
+        advanceUntilIdle()
+        val plan = vm.uiState.value.planPropuesto!!
+        assertEquals(2, plan.sesiones.size)
+
+        vm.guardarPlan(plan.sesiones.take(1), "Estudiar")
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.planPropuesto)
+        val bloques = repositorio.usuario.value!!.materias.single().eventos.filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO }
+        assertEquals(listOf("Estudiar: Lectura"), bloques.map { it.titulo })
+        assertEquals(bloques.map { it.id }, avisos.eventosProgramados)
+    }
+
+    @Test
+    fun elMapaDeUnaNotaSeGuardaYSeAbre() = runTest {
+        val repositorio = RepositorioFalso(usuario())
+        val ia = AsistenteFalso().apply { mapa = ResultadoIA.Ok("Integrales" to listOf(RamaIA("Dobles", listOf("Fubini")))) }
+        val vm = AsistenteViewModel(repositorio, ia, ClavesFalsas(), "clave-app", hoy = { hoy })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        advanceUntilIdle()
+
+        vm.crearMapa(vm.uiState.value.notas.single())
+        advanceUntilIdle()
+        val guardado = repositorio.usuario.value!!.mapas.single()
+        assertEquals("Análisis II", guardado.materia)
+        assertEquals(3, guardado.nodos.size)
+        assertEquals(guardado.id, vm.uiState.value.mapaCreado)
+        vm.mapaAbierto()
+        assertNull(vm.uiState.value.mapaCreado)
+    }
+
+    @Test
+    fun laFotoDeUnApunteQuedaEnLaCharla() = runTest {
+        val ia = AsistenteFalso()
+        val vm = AsistenteViewModel(RepositorioFalso(usuario()), ia, ClavesFalsas(), "clave-app", hoy = { hoy }, leerFoto = { byteArrayOf(1, 2, 3) })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        vm.leerApunte("content://foto", "Foto de un apunte")
+        advanceUntilIdle()
+        assertEquals(listOf("Foto de un apunte", "Texto del apunte"), vm.uiState.value.conversacion.map { it.mostrado })
+        assertEquals(3, ia.imagenes.single().size)
+
+        // Si la foto no se puede leer, queda el error para reintentar.
+        val sinFoto = AsistenteViewModel(RepositorioFalso(usuario()), AsistenteFalso(), ClavesFalsas(), "clave-app", hoy = { hoy })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { sinFoto.uiState.collect {} }
+        sinFoto.leerApunte("content://rota", "Foto")
+        advanceUntilIdle()
+        assertEquals(ErrorIA.OTRO, sinFoto.uiState.value.error)
+    }
+
+    @Test
+    fun elSimulacroMandaLasNotasElegidas() = runTest {
+        val ia = AsistenteFalso()
+        val vm = AsistenteViewModel(RepositorioFalso(usuario()), ia, ClavesFalsas(), "clave-app", hoy = { hoy })
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        advanceUntilIdle()
+        vm.simulacro(vm.uiState.value.notas, "Simulacro: Guía 7")
+        advanceUntilIdle()
+        assertEquals("Simulacro: Guía 7", vm.uiState.value.conversacion.first().mostrado)
+        assertTrue(ia.recibidas.single().single().texto.contains("Integrales dobles"))
     }
 }

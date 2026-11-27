@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Hoy": 4x2 celdas, se puede agrandar y se actualiza cada 30
+     minutos (además, la app lo actualiza cuando cambian los datos). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_hoy"
+    android:previewLayout="@layout/widget_hoy"
+    android:description="@string/widget_hoy_descripcion"
+    android:widgetCategory="home_screen" />

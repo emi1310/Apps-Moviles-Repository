@@ -1,7 +1,11 @@
 package com.example.estudia.datos
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
+import com.example.estudia.modelo.copiasParaBorrar
+import com.example.estudia.modelo.nombreCopiaAutomatica
 import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.ASISTENCIA_MINIMA
 import com.example.estudia.modelo.CategoriaArchivo
@@ -52,6 +56,63 @@ class CopiaDeSeguridad(context: Context) {
 
     private val contexto = context.applicationContext
     private val carpeta = File(contexto.filesDir, "archivos")
+
+    // ---------- Copia automática en una carpeta ----------
+
+    // El permiso de la carpeta elegida dura solo mientras la app está abierta:
+    // hay que pedir que se conserve para poder escribir ahí después (la copia
+    // semanal corre en segundo plano). false si no se pudo.
+    fun conservarPermiso(carpetaUri: String): Boolean = try {
+        contexto.contentResolver.takePersistableUriPermission(
+            Uri.parse(carpetaUri),
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        )
+        true
+    } catch (e: Exception) {
+        false
+    }
+
+    fun soltarPermiso(carpetaUri: String) {
+        runCatching {
+            contexto.contentResolver.releasePersistableUriPermission(
+                Uri.parse(carpetaUri),
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+        }
+    }
+
+    // Crea "estudia_auto_<usuario>_<fecha>.zip" en la carpeta (si ya hay una
+    // de hoy, la reemplaza) y borra las copias viejas de más. false si falló.
+    suspend fun exportarACarpeta(usuario: Usuario, carpetaUri: String, fecha: LocalDate): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val arbol = Uri.parse(carpetaUri)
+            val raiz = DocumentsContract.getTreeDocumentId(arbol)
+            val padre = DocumentsContract.buildDocumentUriUsingTree(arbol, raiz)
+            val nombre = nombreCopiaAutomatica(usuario.nombreUsuario, fecha)
+            val existentes = archivosDe(arbol, raiz)
+            existentes[nombre]?.let { DocumentsContract.deleteDocument(contexto.contentResolver, DocumentsContract.buildDocumentUriUsingTree(arbol, it)) }
+            val nuevo = DocumentsContract.createDocument(contexto.contentResolver, padre, "application/zip", nombre) ?: return@withContext false
+            if (!exportar(usuario, nuevo.toString())) return@withContext false
+            val todos = archivosDe(arbol, raiz)
+            copiasParaBorrar(todos.keys.toList(), usuario.nombreUsuario).forEach { viejo ->
+                todos[viejo]?.let { runCatching { DocumentsContract.deleteDocument(contexto.contentResolver, DocumentsContract.buildDocumentUriUsingTree(arbol, it)) } }
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // Nombre -> id de documento de los archivos de la carpeta.
+    private fun archivosDe(arbol: Uri, raiz: String): Map<String, String> {
+        val hijos = DocumentsContract.buildChildDocumentsUriUsingTree(arbol, raiz)
+        val columnas = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        val resultado = mutableMapOf<String, String>()
+        contexto.contentResolver.query(hijos, columnas, null, null, null)?.use { c ->
+            while (c.moveToNext()) resultado[c.getString(1)] = c.getString(0)
+        }
+        return resultado
+    }
 
     // Escribe la copia del usuario en la uri elegida. false si falló.
     suspend fun exportar(usuario: Usuario, uri: String): Boolean = withContext(Dispatchers.IO) {

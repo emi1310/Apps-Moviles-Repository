@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +21,7 @@ import com.example.estudia.ui.componentes.DialogoApp
 import com.example.estudia.ui.componentes.superficieVidrio
 import com.example.estudia.ui.componentes.TextoDialogo
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -122,6 +124,22 @@ fun CalendarioScreen(
             explicarCalendario = true
         }
     }
+    // El botón del calendario abre las opciones: pasar al teléfono (y que se
+    // mantenga al día), exportar un .ics o dejar de sincronizar.
+    var opcionesCalendario by remember { mutableStateOf(false) }
+    val nombreArchivoIcs = stringResource(R.string.calendario_archivo_ics)
+    val guardarIcs = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/calendar")) { uri ->
+        if (uri != null) viewModel.exportarIcs(uri.toString(), nombreCalendario)
+    }
+    if (opcionesCalendario) {
+        DialogoOpcionesCalendario(
+            automatico = estado.calendarioAutomatico,
+            onPasar = { opcionesCalendario = false; pasarAlTelefono() },
+            onExportar = { opcionesCalendario = false; guardarIcs.launch(nombreArchivoIcs) },
+            onDejar = { opcionesCalendario = false; viewModel.dejarDeSincronizar() },
+            onCancelar = { opcionesCalendario = false }
+        )
+    }
     if (explicarCalendario) {
         DialogoApp(
             titulo = stringResource(R.string.permiso_calendario_titulo),
@@ -212,7 +230,7 @@ fun CalendarioScreen(
                         FilledTonalIconButton(onClick = importarFeriados, enabled = !estado.actualizandoFeriados) {
                             Icon(Icons.Outlined.Celebration, contentDescription = stringResource(R.string.feriados_importar))
                         }
-                        FilledTonalIconButton(onClick = pasarAlTelefono) {
+                        FilledTonalIconButton(onClick = { opcionesCalendario = true }) {
                             Icon(Icons.Outlined.EventRepeat, contentDescription = stringResource(R.string.calendario_telefono))
                         }
                         FilledTonalIconButton(onClick = viewModel::irAHoy) {
@@ -486,5 +504,57 @@ private fun FilaEventoEncontrado(encontrado: EventoEncontrado, hoy: LocalDate, m
             )
         }
         Icon(iconoTipo(evento.tipo), contentDescription = null, tint = color, modifier = Modifier.padding(horizontal = 12.dp).size(22.dp))
+    }
+}
+
+// Opciones del calendario fuera de la app. Cada una es un bloque con ícono,
+// título y una línea que explica qué hace.
+@Composable
+private fun DialogoOpcionesCalendario(
+    automatico: Boolean,
+    onPasar: () -> Unit,
+    onExportar: () -> Unit,
+    onDejar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    DialogoApp(
+        titulo = stringResource(R.string.calendario_opciones_titulo),
+        icono = Icons.Outlined.EventRepeat,
+        textoConfirmar = null,
+        onConfirmar = {},
+        onCancelar = onCancelar
+    ) {
+        val opciones = buildList {
+            add(
+                Triple(
+                    Icons.Outlined.EventRepeat,
+                    stringResource(if (automatico) R.string.calendario_actualizar else R.string.calendario_telefono) to
+                        stringResource(if (automatico) R.string.calendario_automatico_activo else R.string.calendario_telefono_detalle),
+                    onPasar
+                )
+            )
+            add(Triple(Icons.Outlined.FileDownload, stringResource(R.string.calendario_exportar_ics) to stringResource(R.string.calendario_exportar_ics_detalle), onExportar))
+            if (automatico) {
+                add(Triple(Icons.Outlined.EventBusy, stringResource(R.string.calendario_dejar) to stringResource(R.string.calendario_dejar_detalle), onDejar))
+            }
+        }
+        opciones.forEach { (icono, textos, alTocar) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable(onClick = alTocar)
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+            ) {
+                Icon(icono, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(textos.first, style = MaterialTheme.typography.bodyLarge)
+                    Text(textos.second, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
     }
 }

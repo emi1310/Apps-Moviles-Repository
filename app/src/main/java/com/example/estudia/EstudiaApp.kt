@@ -27,18 +27,29 @@ import com.example.estudia.notificaciones.NotificacionTemporizador
 import com.example.estudia.notificaciones.Notificaciones
 import com.example.estudia.notificaciones.ProgramadorRecordatorios
 import com.example.estudia.widget.WidgetEstudia
+import com.example.estudia.widget.WidgetHoy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import com.example.estudia.datos.CopiaAutomaticaWorker
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import com.example.estudia.modelo.eventosParaCalendario
+import java.time.LocalDate
 
 // Clase Application: se crea una sola vez cuando arranca el proceso de la
 // app, antes que cualquier pantalla. Funciona como "contenedor" de las
 // dependencias compartidas (inyección de dependencias manual): el
 // Repository y AvisosSistema viven acá y los usan todos los ViewModels,
 // los Workers y TemporizadorReceiver.
+@OptIn(kotlinx.coroutines.FlowPreview::class)
 class EstudiaApp : Application() {
 
     private val preferencias by lazy { PreferenciasDataStore(this) }
@@ -104,7 +115,31 @@ class EstudiaApp : Application() {
         // El widget se redibuja cada vez que cambian los datos del usuario
         // (una tarea hecha, una sesión de estudio, cerrar sesión...).
         scope.launch {
-            repositorio.usuarioActual.distinctUntilChanged().collect { WidgetEstudia.actualizarTodos(this@EstudiaApp) }
+            repositorio.usuarioActual.distinctUntilChanged().collect {
+                WidgetEstudia.actualizarTodos(this@EstudiaApp)
+                WidgetHoy.actualizarTodos(this@EstudiaApp)
+            }
+        }
+        // Copia automática semanal: se programa (o se cancela) al prenderla o apagarla.
+        scope.launch {
+            repositorio.copiaAutomatica.map { it.activa }.distinctUntilChanged().collect { activa ->
+                CopiaAutomaticaWorker.programar(this@EstudiaApp, activa)
+            }
+        }
+        // Calendario del teléfono: una vez activado, cada cambio en los eventos
+        // (o el paso de los días) lo actualiza solo, unos segundos después.
+        // Sin el permiso de calendario no se toca.
+        scope.launch {
+            combine(
+                repositorio.calendarioAutomatico,
+                repositorio.usuarioActual.map { u -> u?.let { eventosParaCalendario(it, LocalDate.now()) } }.distinctUntilChanged()
+            ) { activo, eventos -> activo && eventos != null }
+                .debounce(3_000)
+                .collect { sincronizar ->
+                    val permiso = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                        .all { ContextCompat.checkSelfPermission(this@EstudiaApp, it) == PackageManager.PERMISSION_GRANTED }
+                    if (sincronizar && permiso) repositorio.sincronizarCalendario(getString(R.string.calendario_estudia))
+                }
         }
         scope.launch {
             val sesion = repositorio.sesionEstudio.first() ?: return@launch

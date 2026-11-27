@@ -300,10 +300,10 @@
         <item>Sí: en el temporizador activá \"Silenciar el teléfono\". La primera vez te lleva a Ajustes para darle a Estudia+ acceso a No molestar. Se activa solo mientras corre la sesión y al terminar el teléfono vuelve a como estaba.</item>
         <item>Sí: al crear o editar la tarea, con fecha límite, elegí en \"Recordarme\" el mismo día, 1, 2 o 7 días antes. El aviso llega a las 9:00 si tenés activados los Recordatorios. Además, a las 20:00 te avisamos si todavía no estudiaste y podés perder tu racha.</item>
         <item>En el Calendario, tocá un examen: se abre su temario. Cargá los temas que entran y marcalos a medida que los estudiás; ves cuántos días faltan y cuánto llevás.</item>
-        <item>En tu Perfil tocá \"Guardar copia\" y elegí dónde guardar el archivo (por ejemplo en Drive). Para recuperar todo, tocá \"Restaurar copia\" y elegí ese archivo: se reemplazan tus datos actuales.</item>
+        <item>En tu Perfil tocá \"Guardar copia\" y elegí dónde guardar el archivo (por ejemplo en Drive). Para recuperar todo, tocá \"Restaurar copia\" y elegí ese archivo: se reemplazan tus datos actuales. También podés activar la \"Copia automática semanal\": elegís una carpeta y cada semana se guarda sola una copia (se conservan las 4 últimas).</item>
         <item>En Materias, expandí una materia y en \"Tarjetas de estudio\" agregá preguntas con su respuesta. Con \"Repasar\" (o desde Inicio) las vas respondiendo: si la sabías vuelve en unos días, cada vez más espaciado; si no, vuelve mañana. Así repasás más lo que te cuesta.</item>
-        <item>Sí: en el Calendario tocá el botón de arriba que dice \"Pasar al calendario del teléfono\". La primera vez pide permiso de calendario. Se crea un calendario propio llamado \"Estudia+\" con tus clases, exámenes y entregas; tocalo de nuevo cuando cambies algo para actualizarlo.</item>
-        <item>Sí: agregá el widget de Estudia+ en la pantalla de inicio del teléfono (mantené apretado un lugar vacío y elegí Widgets). Muestra tu racha y tus 3 tareas más urgentes, y se actualiza solo.</item>
+        <item>Sí: en el Calendario tocá el botón de arriba con el calendario y las flechas y elegí \"Pasar al calendario del teléfono\". La primera vez pide permiso de calendario. Se crea un calendario propio llamado \"Estudia+\" con tus clases, exámenes, entregas y bloques de estudio que vienen, y desde ahí se mantiene al día solo cada vez que cambiás algo (desde el mismo botón podés dejar de sincronizar). Para verlos en Google Calendar en la compu o en otro teléfono, elegí \"Exportar archivo .ics\" e importalo ahí.</item>
+        <item>Sí: agregá el widget de Estudia+ en la pantalla de inicio del teléfono (mantené apretado un lugar vacío y elegí Widgets). Hay dos: \"Estudia+\" muestra tu racha y tus 3 tareas más urgentes, y \"Hoy\" muestra tus clases, exámenes, entregas y bloques de estudio del día, más las tareas que vencen hoy. Se actualizan solos.</item>
         <item>Sí: al crear o editar una nota, tocá el micrófono del campo Contenido y hablá. Lo dictado se suma al final del texto.</item>
         <item>Sí: en los archivos de una nota, tocá \"Pasar a texto\" en la foto. El texto que encuentre se agrega al final de la nota (con \"Deshacer\"). Funciona sin internet.</item>
         <item>En Materias, arriba, tocá \"Mi carrera\" y cargá las materias de tu plan con su año y sus correlativas (o pasá las que ya tenés en la app). Marcá cada una como pendiente, cursando, regular o aprobada: la app te dice cuáles ya podés cursar o rendir y qué porcentaje de la carrera llevás.</item>
@@ -322,7 +322,7 @@
         <item>En Materias, arriba, tocá \"Bibliografía\" y después \"Nueva fuente\". Elegí si es libro, artículo, web o apunte y cargá título, autores (Apellido, Inicial.; separados con punto y coma), año y editorial: mientras escribís ves la cita en normas APA 7. \"Copiar cita\" la deja lista para pegar en tu trabajo, y en el menú ⋮ está la versión corta para el texto, como (Cormen et al., 2009).</item>
         <item>Sí: al crear una nota elegí una plantilla: Resumen Cornell, Esquema, Cuadro comparativo o Línea de tiempo. El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
         <item>En Notas, arriba, tocá \"Mapas mentales\" y \"Nuevo mapa\", y escribí el tema central. Tocá una idea y elegí \"Nueva idea\" para sumarle una rama (se ubica sola). Arrastrá las ideas para acomodarlas, mové el mapa con un dedo y acercalo con dos. Cada rama tiene su color. Con \"Compartir como imagen\" lo mandás por WhatsApp o lo guardás en Drive.</item>
-        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
+        <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen y, con una foto de tu horario de cursada, carga tus clases semanales (crea las materias que falten). Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -1059,4 +1059,88 @@
     <string name="perfil_titulo">Mi perfil</string>
     <string name="perfil_subtitulo">Tus datos, preferencias y cuenta</string>
     <string name="aviso_feriados_error">No se pudieron traer los feriados. Revisá la conexión.</string>
+
+    <!-- Herramientas del Asistente IA que guardan algo en la app -->
+    <string name="ia_plan">Plan de estudio</string>
+    <string name="ia_plan_detalle">Reparte el temario de un examen en bloques de estudio</string>
+    <string name="ia_mapa">Mapa mental</string>
+    <string name="ia_mapa_detalle">Arma el mapa de una nota para que lo retoques</string>
+    <string name="ia_foto">Foto a nota</string>
+    <string name="ia_foto_detalle">Pasa a texto la foto de un apunte o del pizarrón</string>
+    <string name="ia_simulacro">Simulacro</string>
+    <string name="ia_simulacro_detalle">Te toma preguntas de tus notas y te corrige</string>
+    <string name="ia_foto_etiqueta">📷 Foto de un apunte</string>
+    <string name="ia_foto_como">Foto de un apunte</string>
+    <string name="ia_foto_explicacion">La IA pasa a texto lo que dice la foto. Después, con \"Guardar como nota\", la guardás en una materia.</string>
+    <string name="ia_foto_camara">Sacar foto</string>
+    <string name="ia_foto_galeria">Elegir de la galería</string>
+    <string name="ia_elegir_examen">Elegí el examen o la entrega</string>
+    <string name="ia_sin_examenes">No tenés exámenes ni entregas por venir. Cargalos en el Calendario (con su temario, si lo tenés).</string>
+    <string name="ia_plan_titulo">Plan para %1$s</string>
+    <string name="ia_plan_detalle_dialogo">Marcá las sesiones que querés guardar: se agregan al calendario como bloques de estudio de %1$s.</string>
+    <string name="ia_plan_guardar">Guardar %1$d</string>
+    <string name="ia_plan_prefijo">Estudiar</string>
+    <string name="ia_plan_fecha">%1$s · %2$s a %3$s</string>
+    <string name="ia_simulacro_elegir">Elegí hasta %1$d notas para el simulacro</string>
+    <string name="ia_simulacro_empezar">Empezar (%1$d)</string>
+    <string name="ia_simulacro_etiqueta">Simulacro: %1$s</string>
+    <string name="aviso_plan_ia_guardado">Se agregaron %1$d bloques de estudio para %2$s</string>
+    <string name="aviso_mapa_ia_creado">Mapa mental creado: retocalo como quieras</string>
+
+    <!-- Copia de seguridad automática -->
+    <string name="copia_auto_titulo">Copia automática semanal</string>
+    <string name="copia_auto_apagada">Elegí una carpeta y cada semana se guarda sola una copia de tus datos (se conservan las 4 últimas).</string>
+    <string name="copia_auto_ultima">Activada. Última copia: %1$s</string>
+    <string name="copia_auto_nunca">Activada. La primera copia se hace en un rato.</string>
+    <string name="copia_auto_elegir">Elegir carpeta</string>
+    <string name="copia_auto_ahora">Copiar ahora</string>
+    <string name="copia_auto_desactivar">Desactivar</string>
+    <string name="aviso_copia_auto_activada">Copia automática activada</string>
+    <string name="aviso_copia_auto_desactivada">Copia automática desactivada</string>
+    <string name="aviso_copia_auto_hecha">Copia guardada en la carpeta elegida</string>
+    <string name="aviso_copia_auto_error">No se pudo guardar la copia. Elegí la carpeta de nuevo.</string>
+
+    <!-- Widget "Hoy" -->
+    <string name="widget_hoy_descripcion">Tus clases, exámenes y entregas de hoy</string>
+    <string name="widget_hoy_titulo">Hoy</string>
+    <string name="widget_hoy_libre">Nada cargado para hoy. ¡Día libre!</string>
+    <string name="widget_hoy_mas">y %1$d más</string>
+
+    <!-- Horario de cursada desde una foto -->
+    <string name="ia_horario">Horario desde foto</string>
+    <string name="ia_horario_detalle">Sacale foto a tu horario y arma tus clases semanales</string>
+    <string name="ia_horario_como">Foto de tu horario</string>
+    <string name="ia_horario_explicacion">La IA lee las materias, los días y las horas. Antes de guardar revisás las clases; las materias que no tengas cargadas se crean solas.</string>
+    <string name="ia_horario_titulo">Clases de tu horario</string>
+    <string name="ia_horario_detalle_dialogo">Marcá las que querés guardar: se agregan al calendario como clases que se repiten cada semana.</string>
+    <string name="ia_horario_nueva">nueva</string>
+    <string name="ia_horario_clase">%1$s · %2$s de %3$s a %4$s</string>
+    <string name="aviso_horario_ia_guardado">Horario guardado: %1$d clases (%2$d materias nuevas)</string>
+
+    <!-- Calendario fuera de la app -->
+    <string name="calendario_opciones_titulo">Tu calendario en otras apps</string>
+    <string name="calendario_telefono_detalle">Crea el calendario \"Estudia+\" en el teléfono y lo mantiene al día solo</string>
+    <string name="calendario_actualizar">Actualizar ahora</string>
+    <string name="calendario_automatico_activo">Activado: cada cambio se pasa solo al calendario del teléfono</string>
+    <string name="calendario_exportar_ics">Exportar archivo .ics</string>
+    <string name="calendario_exportar_ics_detalle">Para importarlo en Google Calendar, Outlook o en otro dispositivo</string>
+    <string name="calendario_dejar">Dejar de sincronizar</string>
+    <string name="calendario_dejar_detalle">Borra el calendario \"Estudia+\" del teléfono</string>
+    <string name="calendario_archivo_ics">estudia_calendario.ics</string>
+    <string name="aviso_calendario_ics_guardado">Archivo .ics guardado con %1$d eventos</string>
+    <string name="aviso_calendario_desactivado">Listo: el calendario del teléfono ya no se actualiza</string>
+
+    <!-- Guía de primera vez -->
+    <string name="guia_saltar">Saltar</string>
+    <string name="guia_siguiente">Siguiente</string>
+    <string name="guia_empezar">Empezar</string>
+    <string name="guia_materias_titulo">Cargá tus materias</string>
+    <string name="guia_materias_texto">Cada materia guarda sus tareas, notas, exámenes y apuntes. Empezá por las que estás cursando.</string>
+    <string name="guia_materias_boton">Agregar una materia</string>
+    <string name="guia_horario_titulo">Tu horario en segundos</string>
+    <string name="guia_horario_texto">Sacale una foto al horario de cursada y la IA arma tus clases de cada semana. También podés cargarlas a mano en el Calendario.</string>
+    <string name="guia_horario_boton">Cargar desde una foto</string>
+    <string name="guia_recordatorios_titulo">Que no se te pase nada</string>
+    <string name="guia_recordatorios_texto">Activá los recordatorios y te avisamos antes de cada clase, la noche antes de un examen y cuando vence una tarea.</string>
+    <string name="guia_recordatorios_boton">Activar en Perfil</string>
 </resources>
