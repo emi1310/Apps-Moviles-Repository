@@ -213,8 +213,16 @@ fun MateriasScreen(
                     }
                 }
                 items(estado.materias, key = { it.id }) { materia ->
-                    TarjetaMateria(
+                    // Deslizar a la derecha archiva (o desarchiva) la materia.
+                    Deslizable(
                         modifier = Modifier.animateItem(),
+                        onArchivar = { viewModel.alternarArchivada(materia) },
+                        archivada = materia.archivada,
+                        forma = MaterialTheme.shapes.large,
+                        margenVertical = 6.dp
+                    ) {
+                    TarjetaMateria(
+                        modifier = Modifier,
                         materia = materia,
                         onAlternarTarea = { viewModel.alternarTarea(materia.id, it) },
                         onAlternarSubtarea = viewModel::alternarSubtarea,
@@ -251,6 +259,7 @@ fun MateriasScreen(
                         onArchivar = { viewModel.alternarArchivada(materia) },
                         onEliminar = { materiaParaEliminar = materia }
                     )
+                    }
                 }
             }
         }

@@ -103,7 +103,8 @@ class MateriasViewModel(
 
     fun alternarArchivada(materia: Materia) {
         actualizar(materia.copy(archivada = !materia.archivada))
-        avisar(Aviso(if (materia.archivada) Mensaje.AVISO_MATERIA_DESARCHIVADA else Mensaje.AVISO_MATERIA_ARCHIVADA))
+        // Con "Deshacer", por si se archivó deslizando sin querer.
+        avisar(Aviso(if (materia.archivada) Mensaje.AVISO_MATERIA_DESARCHIVADA else Mensaje.AVISO_MATERIA_ARCHIVADA, alDeshacer = { actualizar(materia) }))
     }
 
     // Eliminar una materia pide confirmación (borra todo su contenido) y,
