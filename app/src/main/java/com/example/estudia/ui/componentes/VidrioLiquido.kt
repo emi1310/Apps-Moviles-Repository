@@ -174,12 +174,13 @@ fun bordeLiquido(ancho: Dp = 1.dp): BorderStroke {
 }
 
 // Pieza del dock: refracta todo lo que pasa por detrás. Sin Android 13, vidrio().
+// tinte: el color del vidrio (translúcido); null = el velo claro u oscuro de siempre.
 @Composable
-fun Modifier.vidrioLiquido(forma: Shape, sombra: Dp = 16.dp): Modifier {
+fun Modifier.vidrioLiquido(forma: Shape, sombra: Dp = 16.dp, tinte: Color? = null): Modifier {
     val fondo = LocalFondoLiquido.current
     if (fondo == null || !vidrioLiquidoDisponible()) return vidrio(forma, sombra)
     val oscuro = esTemaOscuro()
-    val velo = if (oscuro) Color(0xFF14131C).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.28f)
+    val velo = tinte ?: if (oscuro) Color(0xFF14131C).copy(alpha = 0.22f) else Color.White.copy(alpha = 0.28f)
     val pieza = piezaLiquida(fondo, fondo.capa, forma, velo, fuerza = 14.dp, desenfoque = 3.dp, leerVersion = true)
         ?: return vidrio(forma, sombra)
     return this

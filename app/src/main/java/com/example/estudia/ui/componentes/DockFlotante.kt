@@ -402,6 +402,10 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
         }
     )
     val degradado = Brush.linearGradient(listOf(DegradadoInicio, DegradadoFin))
+    // Con Android 13 o más es de vidrio líquido; si no, el degradado violeta.
+    val liquido = LocalFondoLiquido.current != null && vidrioLiquidoDisponible()
+    // En el tema claro, más violeta: si no, el ícono blanco casi no se ve.
+    val oscuroCrear = esTemaOscuro()
     // Al apretarlo se hunde un poco y vuelve con un rebote.
     val interaccion = remember { MutableInteractionSource() }
     val apretado by interaccion.collectIsPressedAsState()
@@ -424,20 +428,32 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
                     center = centro
                 )
             }
-            .clip(CircleShape)
-            .background(degradado)
-            .drawBehind {
-                // Brillo de vidrio en la mitad de arriba.
-                drawCircle(
-                    brush = Brush.verticalGradient(
-                        listOf(Color.White.copy(alpha = 0.35f), Color.Transparent),
-                        startY = 0f,
-                        endY = size.height * 0.6f
-                    ),
-                    radius = size.minDimension / 2
-                )
-            }
-            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.05f))), CircleShape)
+            .then(
+                if (liquido) {
+                    // Vidrio líquido teñido de violeta: se ve lo de atrás
+                    // refractado en el borde, como el resto del dock, y el
+                    // degradado de la app encima, translúcido.
+                    Modifier
+                        .vidrioLiquido(CircleShape, sombra = 10.dp, tinte = DegradadoInicio.copy(alpha = if (oscuroCrear) 0.30f else 0.40f))
+                        .background(Brush.linearGradient(listOf(DegradadoInicio.copy(alpha = if (oscuroCrear) 0.28f else 0.40f), DegradadoFin.copy(alpha = if (oscuroCrear) 0.16f else 0.28f))))
+                } else {
+                    Modifier
+                        .clip(CircleShape)
+                        .background(degradado)
+                        .drawBehind {
+                            // Brillo de vidrio en la mitad de arriba.
+                            drawCircle(
+                                brush = Brush.verticalGradient(
+                                    listOf(Color.White.copy(alpha = 0.35f), Color.Transparent),
+                                    startY = 0f,
+                                    endY = size.height * 0.6f
+                                ),
+                                radius = size.minDimension / 2
+                            )
+                        }
+                        .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.05f))), CircleShape)
+                }
+            )
             .clickable(interactionSource = interaccion, indication = LocalIndication.current, role = Role.Button) { onCrear(accion) },
         contentAlignment = Alignment.Center
     ) {
@@ -455,16 +471,14 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
             val giro = remember { Animatable(-90f) }
             LaunchedEffect(Unit) { giro.animateTo(0f, tween(280, easing = FastOutSlowInEasing)) }
             if (actual == AccionRapida.GEMINI) {
-                // En el Asistente: el ícono de Gemini, sobre un círculo blanco.
-                Box(
-                    contentAlignment = Alignment.Center,
+                // En el Asistente: la estrella de Gemini, blanca como los demás íconos.
+                IconoGemini(
+                    26.dp,
+                    blanco = true,
                     modifier = Modifier
-                        .size(34.dp)
                         .graphicsLayer { rotationZ = giro.value }
-                        .clip(CircleShape)
-                        .background(Color.White)
                         .semantics { contentDescription = descripcion }
-                ) { IconoGemini(30.dp) }
+                )
             } else {
                 Icon(
                     imageVector = iconoAccion(actual),
