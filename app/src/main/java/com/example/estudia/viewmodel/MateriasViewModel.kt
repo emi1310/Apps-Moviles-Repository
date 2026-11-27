@@ -10,6 +10,8 @@ import com.example.estudia.modelo.CategoriaArchivo
 import com.example.estudia.modelo.ReglasCursada
 import com.example.estudia.modelo.conReglas
 import com.example.estudia.modelo.Prioridad
+import com.example.estudia.modelo.Repeticion
+import com.example.estudia.util.aTexto
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tarjeta
@@ -146,15 +148,18 @@ class MateriasViewModel(
         fechaLimite: LocalDate?,
         prioridad: Prioridad = Prioridad.MEDIA,
         subtareas: List<Subtarea> = emptyList(),
-        avisoDiasAntes: Int? = null
+        avisoDiasAntes: Int? = null,
+        repeticion: Repeticion? = null
     ) {
         val pasos = subtareas.map { it.copy(titulo = it.titulo.trim()) }.filter { it.titulo.isNotEmpty() }
         val aviso = avisoDiasAntes.takeIf { fechaLimite != null }
         viewModelScope.launch {
             val guardada = if (existente == null) {
-                repositorio.agregarTarea(materiaId, titulo.trim(), fechaLimite, prioridad, pasos.map { it.titulo }, aviso)
+                val nueva = repositorio.agregarTarea(materiaId, titulo.trim(), fechaLimite, prioridad, pasos.map { it.titulo }, aviso)
+                if (repeticion == null) nueva
+                else nueva.copy(repeticion = repeticion).also { repositorio.actualizarTarea(materiaId, it) }
             } else {
-                val editada = existente.copy(titulo = titulo.trim(), fechaLimite = fechaLimite, prioridad = prioridad, avisoDiasAntes = aviso)
+                val editada = existente.copy(titulo = titulo.trim(), fechaLimite = fechaLimite, prioridad = prioridad, avisoDiasAntes = aviso, repeticion = repeticion)
                 repositorio.actualizarTarea(materiaId, editada)
                 if (pasos != existente.subtareas) repositorio.guardarSubtareas(existente.id, pasos)
                 editada
@@ -171,7 +176,11 @@ class MateriasViewModel(
     fun alternarTarea(materiaId: Int, tarea: Tarea) {
         val cambiada = tarea.copy(completada = !tarea.completada)
         viewModelScope.launch {
-            repositorio.actualizarTarea(materiaId, cambiada)
+            // Si se repite, al completarla aparece la siguiente (con su aviso).
+            repositorio.actualizarTarea(materiaId, cambiada)?.let { siguiente ->
+                avisosSistema.programarTarea(siguiente)
+                avisar(Aviso(Mensaje.AVISO_TAREA_REPETIDA, listOf(siguiente.fechaLimite?.aTexto().orEmpty())))
+            }
             if (cambiada.completada) avisosSistema.cancelarTarea(tarea.id) else avisosSistema.programarTarea(cambiada)
         }
     }

@@ -364,3 +364,23 @@ val MIGRACION_12_13 = object : Migration(12, 13) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_nota_versiones_notaId` ON `nota_versiones` (`notaId`)")
     }
 }
+
+// Versión 13 -> 14: tareas que se repiten, clases de semana por medio y
+// recesos (tabla "recesos"). Las tareas que ya existían no se repiten y las
+// clases siguen siendo todas las semanas.
+val MIGRACION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `tareas` ADD COLUMN `repeticion` TEXT")
+        db.execSQL("ALTER TABLE `eventos` ADD COLUMN `cadaSemanas` INTEGER NOT NULL DEFAULT 1")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recesos` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`usuarioId` INTEGER NOT NULL, " +
+                "`nombre` TEXT NOT NULL, " +
+                "`desde` INTEGER NOT NULL, " +
+                "`hasta` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`usuarioId`) REFERENCES `usuarios`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_recesos_usuarioId` ON `recesos` (`usuarioId`)")
+    }
+}

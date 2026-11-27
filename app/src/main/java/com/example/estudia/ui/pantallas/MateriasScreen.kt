@@ -49,8 +49,10 @@ import com.example.estudia.ui.componentes.TarjetaMateria
 import com.example.estudia.ui.componentes.TarjetaAcceso
 import com.example.estudia.ui.theme.BloqueNaranja
 import com.example.estudia.ui.theme.BloqueAzul
+import com.example.estudia.ui.theme.BloqueVerde
 import com.example.estudia.ui.theme.BloqueVioleta
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import com.example.estudia.ui.componentes.abrirArchivo
@@ -76,7 +78,9 @@ fun MateriasScreen(
     // Accesos de arriba: el plan de estudios, las mesas de finales y la bibliografía.
     onAbrirCarrera: () -> Unit = {},
     onAbrirFinales: () -> Unit = {},
-    onAbrirBibliografia: () -> Unit = {}
+    onAbrirBibliografia: () -> Unit = {},
+    // La matriz de prioridades (urgente / importante).
+    onAbrirMatriz: () -> Unit = {}
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(busqueda) { viewModel.cambiarBusqueda(busqueda) }
@@ -140,11 +144,11 @@ fun MateriasScreen(
                     TarjetaAcceso(stringResource(R.string.carrera_titulo), stringResource(R.string.acceso_carrera), Icons.Outlined.School, BloqueVioleta, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirCarrera)
                     TarjetaAcceso(stringResource(R.string.finales_titulo), stringResource(R.string.acceso_finales), Icons.Outlined.WorkspacePremium, BloqueNaranja, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirFinales)
                 }
-                // La bibliografía, a lo ancho abajo (tres juntas no entran).
-                TarjetaAcceso(
-                    stringResource(R.string.biblio_titulo), stringResource(R.string.acceso_biblio), Icons.Outlined.LocalLibrary, BloqueAzul,
-                    Modifier.fillMaxWidth().padding(bottom = 12.dp), apilada = false, alTocar = onAbrirBibliografia
-                )
+                // La bibliografía y la matriz de prioridades, abajo.
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 12.dp).height(IntrinsicSize.Min)) {
+                    TarjetaAcceso(stringResource(R.string.biblio_titulo), stringResource(R.string.acceso_biblio), Icons.Outlined.LocalLibrary, BloqueAzul, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirBibliografia)
+                    TarjetaAcceso(stringResource(R.string.matriz_titulo), stringResource(R.string.acceso_matriz), Icons.Outlined.GridView, BloqueVerde, Modifier.weight(1f).fillMaxHeight(), alTocar = onAbrirMatriz)
+                }
             }
 
             if (estado.buscando) {
@@ -293,8 +297,8 @@ fun MateriasScreen(
     tareaEnDialogo?.let { (materiaId, tarea) ->
         DialogoTarea(
             tarea = tarea,
-            onConfirmar = { titulo, fecha, prioridad, subtareas, aviso ->
-                viewModel.guardarTarea(materiaId, tarea, titulo, fecha, prioridad, subtareas, aviso)
+            onConfirmar = { titulo, fecha, prioridad, subtareas, aviso, repeticion ->
+                viewModel.guardarTarea(materiaId, tarea, titulo, fecha, prioridad, subtareas, aviso, repeticion)
                 tareaEnDialogo = null
             },
             onCancelar = { tareaEnDialogo = null }

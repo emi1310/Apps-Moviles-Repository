@@ -2,6 +2,7 @@ package com.example.estudia.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.estudia.notificaciones.AvisosSistema
 import com.example.estudia.datos.RepositorioEstudia
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
@@ -60,7 +61,9 @@ data class InicioUiState(
 // pantalla solo dibuja el UiState.
 class InicioViewModel(
     private val repositorio: RepositorioEstudia,
-    private val hoy: () -> LocalDate = { LocalDate.now() }
+    private val hoy: () -> LocalDate = { LocalDate.now() },
+    // Para los avisos de las tareas (null en los tests que no los usan).
+    private val avisosSistema: AvisosSistema? = null
 ) : ViewModel() {
 
     private val orden = MutableStateFlow(OrdenTareas.FECHA)
@@ -76,7 +79,11 @@ class InicioViewModel(
 
     fun alternarTarea(item: TareaConMateria) {
         viewModelScope.launch {
-            repositorio.actualizarTarea(item.materiaId, item.tarea.copy(completada = !item.tarea.completada))
+            val cambiada = item.tarea.copy(completada = !item.tarea.completada)
+            val siguiente = repositorio.actualizarTarea(item.materiaId, cambiada)
+            if (cambiada.completada) avisosSistema?.cancelarTarea(cambiada.id) else avisosSistema?.programarTarea(cambiada)
+            // Si se repite, la siguiente ya tiene su aviso.
+            siguiente?.let { avisosSistema?.programarTarea(it) }
         }
     }
 }

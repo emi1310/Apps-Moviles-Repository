@@ -15,6 +15,7 @@ import com.example.estudia.datos.local.MIGRACION_9_10
 import com.example.estudia.datos.local.MIGRACION_10_11
 import com.example.estudia.datos.local.MIGRACION_11_12
 import com.example.estudia.datos.local.MIGRACION_12_13
+import com.example.estudia.datos.local.MIGRACION_13_14
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -373,6 +374,35 @@ class MigracionesTest {
         db.query("SELECT COUNT(*) FROM nota_versiones").use { c ->
             c.moveToFirst()
             assertEquals(0, c.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrar13a14AgregaRepeticionSemanasYRecesos() {
+        ayudante.createDatabase(nombreBase, 13).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO tareas (id, materiaId, titulo, fechaLimite, completada, prioridad) VALUES (1, 1, 'TP', 20000, 0, 1)")
+            execSQL("INSERT INTO eventos (id, materiaId, titulo, tipo, fecha, horaInicio, horaFin, semanal) VALUES (1, 1, 'Teoría', 'CLASE', 20000, 600, 720, 1)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 14, true, MIGRACION_13_14)
+
+        // Lo que ya estaba: la tarea no se repite y la clase es todas las semanas.
+        db.query("SELECT repeticion FROM tareas").use { c ->
+            c.moveToFirst()
+            assertTrue(c.isNull(0))
+        }
+        db.query("SELECT cadaSemanas FROM eventos").use { c ->
+            c.moveToFirst()
+            assertEquals(1, c.getInt(0))
+        }
+        db.execSQL("INSERT INTO recesos (usuarioId, nombre, desde, hasta) VALUES (1, 'Invierno', 20640, 20651)")
+        db.query("SELECT nombre FROM recesos").use { c ->
+            c.moveToFirst()
+            assertEquals("Invierno", c.getString(0))
         }
         db.close()
     }

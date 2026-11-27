@@ -108,6 +108,8 @@ dependencies {
     implementation(libs.mlkit.text.recognition)
     // Efecto de vidrio esmerilado (desenfoca lo que pasa por detrás del dock).
     implementation(libs.haze)
+    // Aviso al llegar a la facultad (geovallas de Google Play Services).
+    implementation(libs.play.services.location)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     constraints {
         // room-testing (MigrationTestHelper) necesita kotlinx-serialization 1.8+,

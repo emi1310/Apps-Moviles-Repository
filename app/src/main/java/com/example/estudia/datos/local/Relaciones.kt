@@ -64,7 +64,10 @@ data class UsuarioConMaterias(
     val fuentes: List<FuenteEntity>,
     // Versión 12: mapas mentales.
     @Relation(parentColumn = "id", entityColumn = "usuarioId")
-    val mapas: List<MapaEntity>
+    val mapas: List<MapaEntity>,
+    // Versión 14: recesos.
+    @Relation(parentColumn = "id", entityColumn = "usuarioId")
+    val recesos: List<RecesoEntity>
 )
 
 // Resultado de un JOIN: una fila de otra tabla + datos de su materia.

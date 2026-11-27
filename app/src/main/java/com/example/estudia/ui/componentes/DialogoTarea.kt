@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.estudia.R
 import com.example.estudia.modelo.Prioridad
+import com.example.estudia.modelo.Repeticion
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import java.time.LocalDate
@@ -35,7 +36,7 @@ import java.time.LocalDate
 @Composable
 fun DialogoTarea(
     tarea: Tarea?,
-    onConfirmar: (titulo: String, fechaLimite: LocalDate?, prioridad: Prioridad, subtareas: List<Subtarea>, avisoDiasAntes: Int?) -> Unit,
+    onConfirmar: (titulo: String, fechaLimite: LocalDate?, prioridad: Prioridad, subtareas: List<Subtarea>, avisoDiasAntes: Int?, repeticion: Repeticion?) -> Unit,
     onCancelar: () -> Unit
 ) {
     var titulo by remember { mutableStateOf(tarea?.titulo ?: "") }
@@ -43,6 +44,7 @@ fun DialogoTarea(
     var fecha by remember { mutableStateOf(if (tarea == null) LocalDate.now() else tarea.fechaLimite) }
     var prioridad by remember { mutableStateOf(tarea?.prioridad ?: Prioridad.MEDIA) }
     var aviso by remember { mutableStateOf(tarea?.avisoDiasAntes) }
+    var repeticion by remember { mutableStateOf(tarea?.repeticion) }
     // Las subtareas que ya existían conservan su id y si estaban hechas.
     val pasos = remember { (tarea?.subtareas ?: emptyList()).toMutableStateList() }
     var error by remember { mutableStateOf(false) }
@@ -53,7 +55,7 @@ fun DialogoTarea(
         textoConfirmar = stringResource(if (tarea == null) R.string.crear else R.string.guardar),
         onConfirmar = {
             if (titulo.isBlank()) error = true
-            else onConfirmar(titulo.trim(), fecha, prioridad, pasos.toList(), aviso.takeIf { fecha != null })
+            else onConfirmar(titulo.trim(), fecha, prioridad, pasos.toList(), aviso.takeIf { fecha != null }, repeticion)
         },
         onCancelar = onCancelar
     ) {
@@ -92,6 +94,19 @@ fun DialogoTarea(
             }
         }
 
+        // Repetir: al completarla se crea sola la siguiente (ej: un TP cada lunes).
+        EtiquetaCampo(stringResource(R.string.repeticion_titulo))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+        ) {
+            PastillaFiltro(stringResource(R.string.repeticion_no), elegida = repeticion == null) { repeticion = null }
+            Repeticion.entries.forEach { opcion ->
+                PastillaFiltro(textoRepeticion(opcion), elegida = repeticion == opcion) { repeticion = opcion }
+            }
+        }
+        if (repeticion != null) TextoDialogo(stringResource(R.string.repeticion_explicacion))
+
         EtiquetaCampo(stringResource(R.string.prioridad))
         SelectorPrioridad(prioridad) { prioridad = it }
 
@@ -118,3 +133,14 @@ fun DialogoTarea(
         )
     }
 }
+
+// "Cada día", "Cada semana", "Cada 2 semanas" o "Cada mes".
+@Composable
+fun textoRepeticion(repeticion: Repeticion): String = stringResource(
+    when (repeticion) {
+        Repeticion.DIARIA -> R.string.repeticion_diaria
+        Repeticion.SEMANAL -> R.string.repeticion_semanal
+        Repeticion.QUINCENAL -> R.string.repeticion_quincenal
+        Repeticion.MENSUAL -> R.string.repeticion_mensual
+    }
+)

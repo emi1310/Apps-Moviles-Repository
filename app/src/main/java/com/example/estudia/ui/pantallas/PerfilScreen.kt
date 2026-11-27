@@ -87,6 +87,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.notificaciones.Notificaciones
+import com.example.estudia.notificaciones.AvisoLlegada
+import com.example.estudia.ui.componentes.LocalAvisos
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.DialogoConfirmacion
 import com.example.estudia.ui.componentes.DialogoEditarPerfil
@@ -367,6 +373,9 @@ fun PerfilScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+        // ---------- Aviso al llegar a la facultad ----------
+        AjusteAvisoLlegada()
+        Spacer(modifier = Modifier.height(8.dp))
 
         // ---------- Tema: sol (claro) o luna (oscuro) ----------
         // Si todavía sigue al teléfono (SISTEMA), se marca el que se ve ahora.
@@ -615,7 +624,7 @@ private fun BloqueEstadistica(valor: String, etiqueta: String, icono: ImageVecto
 // Bloque claro de una preferencia: el ícono en un círculo de color a la
 // izquierda y el resto (texto, interruptor o selector) a la derecha.
 @Composable
-private fun BloqueAjuste(icono: ImageVector, color: Color, contenido: @Composable RowScope.() -> Unit) {
+internal fun BloqueAjuste(icono: ImageVector, color: Color, contenido: @Composable RowScope.() -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -745,6 +754,105 @@ private fun BloqueCopiaAutomatica(
             } else {
                 FilledTonalButton(onClick = onElegirCarpeta) { Text(stringResource(R.string.copia_auto_elegir)) }
             }
+        }
+    }
+}
+
+// Aviso al llegar a la facultad. Al activarlo: se explica, se piden la
+// ubicación y (desde Android 10) la ubicación "todo el tiempo", y se guarda
+// dónde está el teléfono en ese momento como la facultad.
+@Composable
+private fun AjusteAvisoLlegada() {
+    val context = LocalContext.current
+    val avisos = LocalAvisos.current
+    val alcance = rememberCoroutineScope()
+    var activo by remember { mutableStateOf(AvisoLlegada.lugarGuardado(context) != null) }
+    var explicando by rememberSaveable { mutableStateOf(false) }
+    var pidiendoSegundoPlano by rememberSaveable { mutableStateOf(false) }
+    var buscando by remember { mutableStateOf(false) }
+    val textoListo = stringResource(R.string.llegada_activado)
+    val textoSinUbicacion = stringResource(R.string.llegada_sin_ubicacion)
+    val textoSinPermiso = stringResource(R.string.llegada_sin_permiso)
+
+    val guardarAca: () -> Unit = {
+        buscando = true
+        alcance.launch {
+            val lugar = AvisoLlegada.ubicacionActual(context)
+            val ok = lugar != null && AvisoLlegada.activar(context, lugar)
+            if (!ok) AvisoLlegada.desactivar(context)
+            activo = ok
+            buscando = false
+            avisos.mostrarTexto(if (ok) textoListo else textoSinUbicacion)
+        }
+    }
+    val pedirSegundoPlano = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        if (concedido) guardarAca() else avisos.mostrarTexto(textoSinPermiso)
+    }
+    val pedirUbicacion = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { resultado ->
+        when {
+            resultado.values.none { it } -> avisos.mostrarTexto(textoSinPermiso)
+            AvisoLlegada.tieneSegundoPlano(context) -> guardarAca()
+            else -> pidiendoSegundoPlano = true
+        }
+    }
+
+    BloqueAjuste(Icons.Outlined.LocationOn, BloqueVerde) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.llegada_ajuste), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(if (activo) R.string.llegada_ajuste_activo else R.string.llegada_ajuste_descripcion),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = activo,
+            enabled = !buscando,
+            onCheckedChange = { activar ->
+                if (activar) explicando = true
+                else {
+                    AvisoLlegada.desactivar(context)
+                    activo = false
+                }
+            }
+        )
+    }
+
+    if (explicando) {
+        DialogoApp(
+            titulo = stringResource(R.string.llegada_ajuste),
+            icono = Icons.Outlined.LocationOn,
+            textoConfirmar = stringResource(R.string.llegada_estoy_aca),
+            onConfirmar = {
+                explicando = false
+                when {
+                    !AvisoLlegada.tieneUbicacion(context) -> pedirUbicacion.launch(
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    )
+                    !AvisoLlegada.tieneSegundoPlano(context) -> pidiendoSegundoPlano = true
+                    else -> guardarAca()
+                }
+            },
+            onCancelar = { explicando = false }
+        ) {
+            TextoDialogo(stringResource(R.string.llegada_explicacion))
+        }
+    }
+
+    // Android 10 o más: "Permitir todo el tiempo" se elige en una pantalla aparte.
+    if (pidiendoSegundoPlano && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        DialogoApp(
+            titulo = stringResource(R.string.llegada_segundo_plano_titulo),
+            icono = Icons.Outlined.LocationOn,
+            textoConfirmar = stringResource(R.string.continuar),
+            onConfirmar = {
+                pidiendoSegundoPlano = false
+                pedirSegundoPlano.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            },
+            onCancelar = { pidiendoSegundoPlano = false }
+        ) {
+            TextoDialogo(stringResource(R.string.llegada_segundo_plano))
         }
     }
 }

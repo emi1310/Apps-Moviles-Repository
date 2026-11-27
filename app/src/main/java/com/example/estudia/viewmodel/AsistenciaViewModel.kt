@@ -3,6 +3,7 @@ package com.example.estudia.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.datos.RepositorioEstudia
+import com.example.estudia.modelo.diasSinClase
 import com.example.estudia.modelo.ResumenAsistencia
 import com.example.estudia.modelo.Usuario
 import com.example.estudia.modelo.clasesEntre
@@ -47,7 +48,8 @@ class AsistenciaViewModel(
 
     // Los feriados no se marcan ni cuentan: ese día no hubo clase.
     val uiState: StateFlow<AsistenciaUiState> = combine(repositorio.usuarioActual, repositorio.feriados) { usuario, feriados ->
-        if (usuario == null) AsistenciaUiState() else armarAsistencia(usuario, hoy(), feriados.map { it.fecha }.toSet())
+        // Los recesos tampoco cuentan.
+        if (usuario == null) AsistenciaUiState() else armarAsistencia(usuario, hoy(), diasSinClase(feriados, usuario.recesos).keys)
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AsistenciaUiState())
 

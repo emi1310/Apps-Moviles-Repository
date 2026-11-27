@@ -79,4 +79,18 @@ interface CarreraDao {
 
     @Delete
     suspend fun eliminarMapa(mapa: MapaEntity)
+
+    // ---------- Recesos (versión 14) ----------
+
+    @Insert
+    suspend fun insertarReceso(receso: RecesoEntity): Long
+
+    @Update
+    suspend fun actualizarReceso(receso: RecesoEntity)
+
+    @Delete
+    suspend fun eliminarReceso(receso: RecesoEntity)
+
+    @Query("SELECT * FROM recesos WHERE usuarioId = :usuarioId")
+    suspend fun recesosDe(usuarioId: Int): List<RecesoEntity>
 }

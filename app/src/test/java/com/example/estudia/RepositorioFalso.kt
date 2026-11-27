@@ -27,6 +27,8 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.VersionNota
+import com.example.estudia.modelo.Receso
+import com.example.estudia.modelo.siguienteTareaRepetida
 import com.example.estudia.modelo.cambioParaHistorial
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Prioridad
@@ -174,8 +176,17 @@ class RepositorioFalso(
     }
 
     // Igual que en Room: solo cambia la tarea, sus subtareas quedan como estaban.
-    override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea) =
-        cambiarMateria(materiaId) { m -> m.copy(tareas = m.tareas.map { if (it.id == tarea.id) tarea.copy(subtareas = it.subtareas) else it }) }
+    // Como el real: si se completa una que se repite, crea la siguiente.
+    override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea): Tarea? {
+        val anterior = usuario.value?.materias?.firstOrNull { it.id == materiaId }?.tareas?.firstOrNull { it.id == tarea.id }
+        val siguiente = siguienteTareaRepetida(anterior, tarea.copy(subtareas = anterior?.subtareas ?: tarea.subtareas), LocalDate.now())
+        val guardada = if (siguiente != null) tarea.copy(repeticion = null) else tarea
+        cambiarMateria(materiaId) { m -> m.copy(tareas = m.tareas.map { if (it.id == tarea.id) guardada.copy(subtareas = it.subtareas) else it }) }
+        if (siguiente == null) return null
+        val creada = siguiente.copy(id = siguienteId++, subtareas = siguiente.subtareas.map { it.copy(id = siguienteId++) })
+        cambiarMateria(materiaId) { it.copy(tareas = it.tareas + creada) }
+        return creada
+    }
 
     override suspend fun guardarSubtareas(tareaId: Int, subtareas: List<Subtarea>) =
         cambiarTarea(tareaId) { t -> t.copy(subtareas = subtareas.map { if (it.id == 0) it.copy(id = siguienteId++) else it }) }
@@ -375,6 +386,14 @@ class RepositorioFalso(
 
     override suspend fun restaurarFuente(usuarioId: Int, fuente: Fuente) =
         cambiarUsuario { it.copy(fuentes = it.fuentes + fuente) }
+
+    override suspend fun guardarReceso(usuarioId: Int, receso: Receso) = cambiarUsuario { u ->
+        if (receso.id == 0) u.copy(recesos = u.recesos + receso.copy(id = siguienteId++))
+        else u.copy(recesos = u.recesos.map { if (it.id == receso.id) receso else it })
+    }
+
+    override suspend fun eliminarReceso(usuarioId: Int, receso: Receso) =
+        cambiarUsuario { u -> u.copy(recesos = u.recesos.filter { it.id != receso.id }) }
 
     // ---------- Mapas mentales ----------
 

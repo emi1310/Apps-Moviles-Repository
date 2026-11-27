@@ -25,6 +25,13 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Grabar audio (la clase) para adjuntarlo a una nota. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Aviso al llegar a la facultad: la ubicación (también en segundo plano,
+         para enterarse de la llegada con la app cerrada) y volver a armar el
+         aviso cuando se reinicia el teléfono. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />
@@ -142,6 +149,19 @@
         <receiver
             android:name=".widget.WidgetAccionesReceiver"
             android:exported="false" />
+
+        <!-- Aviso al llegar a la facultad: lo llama Google Play Services al
+             entrar en la zona, y al reiniciar el teléfono se vuelve a armar. -->
+        <receiver
+            android:name=".notificaciones.LlegadaReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notificaciones.ArranqueReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Comparte los adjuntos (filesDir/archivos) con otras apps para
              abrirlos, con acceso temporal de solo lectura. No es exportado:

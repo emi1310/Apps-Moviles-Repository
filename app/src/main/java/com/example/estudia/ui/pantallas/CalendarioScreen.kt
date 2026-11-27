@@ -11,6 +11,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.BeachAccess
 import androidx.compose.material.icons.outlined.Celebration
 import androidx.compose.material.icons.outlined.EventRepeat
 import androidx.compose.material.icons.outlined.FileDownload
@@ -54,6 +55,7 @@ import com.example.estudia.ui.componentes.texto
 import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.CasillaDia
 import com.example.estudia.ui.componentes.DialogoEvento
+import com.example.estudia.ui.componentes.DialogoRecesos
 import com.example.estudia.ui.componentes.DialogoTemario
 import com.example.estudia.modelo.TipoEvento
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -187,6 +189,15 @@ fun CalendarioScreen(
             explicarFeriados = true
         }
     }
+    var viendoRecesos by rememberSaveable { mutableStateOf(false) }
+    if (viendoRecesos) {
+        DialogoRecesos(
+            recesos = estado.recesos,
+            onGuardar = viewModel::guardarReceso,
+            onEliminar = viewModel::eliminarReceso,
+            onCerrar = { viendoRecesos = false }
+        )
+    }
     if (explicarFeriados) {
         DialogoApp(
             titulo = stringResource(R.string.feriados_titulo),
@@ -229,6 +240,10 @@ fun CalendarioScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         FilledTonalIconButton(onClick = importarFeriados, enabled = !estado.actualizandoFeriados) {
                             Icon(Icons.Outlined.Celebration, contentDescription = stringResource(R.string.feriados_importar))
+                        }
+                        // Recesos: vacaciones y semanas sin clases.
+                        FilledTonalIconButton(onClick = { viendoRecesos = true }) {
+                            Icon(Icons.Outlined.BeachAccess, contentDescription = stringResource(R.string.recesos_titulo))
                         }
                         FilledTonalIconButton(onClick = { opcionesCalendario = true }) {
                             Icon(Icons.Outlined.EventRepeat, contentDescription = stringResource(R.string.calendario_telefono))
@@ -406,10 +421,10 @@ fun CalendarioScreen(
             // Al editar se puede mover el evento a otra materia activa.
             materias = estado.materiasActivas,
             fechaInicial = estado.seleccionado,
-            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace ->
+            onConfirmar = { materiaId, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace, cadaSemanas ->
                 val error = viewModel.guardarEvento(
                     materiaId, editando?.evento, titulo, tipo, fecha, inicio, fin, semanal, repetirHasta,
-                    virtual, lugar, enlace
+                    virtual, lugar, enlace, cadaSemanas
                 )
                 if (error == null) mostrarDialogo = false
                 error?.texto()

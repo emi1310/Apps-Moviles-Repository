@@ -93,7 +93,9 @@ data class TareaEntity(
     @ColumnInfo(defaultValue = "1")
     val prioridad: Int = 1,
     // Versión 7: días antes de la fecha límite en que se avisa (null = sin aviso).
-    val avisoDiasAntes: Int? = null
+    val avisoDiasAntes: Int? = null,
+    // Versión 14: cada cuánto se repite (nombre de Repeticion) o null.
+    val repeticion: String? = null
 )
 
 // Versión 8: tarjetas de estudio de una materia (pregunta y respuesta), con
@@ -192,7 +194,10 @@ data class EventoEntity(
     @ColumnInfo(defaultValue = "0")
     val virtual: Boolean = false,
     val lugar: String? = null,
-    val enlace: String? = null
+    val enlace: String? = null,
+    // Versión 14: 1 = todas las semanas, 2 = semana por medio.
+    @ColumnInfo(defaultValue = "1")
+    val cadaSemanas: Int = 1
 )
 
 @Entity(
@@ -460,4 +465,26 @@ data class NotaVersionEntity(
     val titulo: String,
     val contenido: String,
     val fecha: Long
+)
+
+// Versión 14: recesos del usuario (días sin clases, de "desde" a "hasta").
+@Entity(
+    tableName = "recesos",
+    foreignKeys = [
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["usuarioId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("usuarioId")]
+)
+data class RecesoEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val usuarioId: Int,
+    val nombre: String,
+    val desde: LocalDate,
+    val hasta: LocalDate
 )

@@ -29,7 +29,9 @@ data class Usuario(
     // Versión 11: bibliografía (libros, artículos, webs y apuntes).
     val fuentes: List<Fuente> = emptyList(),
     // Versión 12: mapas mentales.
-    val mapas: List<MapaMental> = emptyList()
+    val mapas: List<MapaMental> = emptyList(),
+    // Versión 14: recesos (días sin clases).
+    val recesos: List<Receso> = emptyList()
 ) {
 
     // Cuenta el total de notas sumando las notas de todas las materias.

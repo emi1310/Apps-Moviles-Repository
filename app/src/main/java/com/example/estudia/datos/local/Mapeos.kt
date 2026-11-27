@@ -18,6 +18,8 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.Receso
+import com.example.estudia.modelo.Repeticion
 import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
@@ -49,7 +51,8 @@ fun UsuarioConMaterias.aModelo(): Usuario = Usuario(
     fuentes = fuentes.map { it.aModelo() }
         .sortedWith(compareBy<Fuente> { (it.listaAutores.firstOrNull() ?: it.titulo).lowercase() }.thenBy { it.anio ?: 0 }),
     // El que se tocó último, primero.
-    mapas = mapas.map { it.aModelo() }.sortedWith(compareByDescending<MapaMental> { it.modificado }.thenByDescending { it.id })
+    mapas = mapas.map { it.aModelo() }.sortedWith(compareByDescending<MapaMental> { it.modificado }.thenByDescending { it.id }),
+    recesos = recesos.map { it.aModelo() }.sortedBy { it.desde }
 )
 
 // Los archivos llegan todos juntos: los que tienen notaId van a su nota,
@@ -99,7 +102,8 @@ fun TareaEntity.aModelo(subtareas: List<Subtarea> = emptyList()): Tarea = Tarea(
     completada = completada,
     prioridad = Prioridad.desdePeso(prioridad),
     subtareas = subtareas,
-    avisoDiasAntes = avisoDiasAntes
+    avisoDiasAntes = avisoDiasAntes,
+    repeticion = Repeticion.desdeTexto(repeticion)
 )
 
 fun SubtareaEntity.aModelo(): Subtarea = Subtarea(id = id, titulo = titulo, completada = completada)
@@ -126,7 +130,8 @@ fun EventoEntity.aModelo(temas: List<Tema> = emptyList(), asistencias: List<Asis
     asistencias = asistencias,
     virtual = virtual,
     lugar = lugar,
-    enlace = enlace
+    enlace = enlace,
+    cadaSemanas = cadaSemanas
 )
 
 fun TemaEntity.aModelo(): Tema = Tema(id = id, titulo = titulo, estudiado = estudiado)
@@ -178,7 +183,8 @@ fun Tarea.aEntidad(materiaId: Int): TareaEntity = TareaEntity(
     fechaLimite = fechaLimite,
     completada = completada,
     prioridad = prioridad.peso,
-    avisoDiasAntes = avisoDiasAntes
+    avisoDiasAntes = avisoDiasAntes,
+    repeticion = repeticion?.name
 )
 
 fun Evento.aEntidad(materiaId: Int): EventoEntity = EventoEntity(
@@ -193,7 +199,8 @@ fun Evento.aEntidad(materiaId: Int): EventoEntity = EventoEntity(
     repetirHasta = repetirHasta,
     virtual = virtual,
     lugar = lugar,
-    enlace = enlace
+    enlace = enlace,
+    cadaSemanas = cadaSemanas
 )
 
 fun Nota.aEntidad(materiaId: Int): NotaEntity = NotaEntity(
@@ -321,3 +328,7 @@ fun MapaEntity.aModelo(): MapaMental {
 
 fun MapaMental.aEntidad(usuarioId: Int): MapaEntity =
     MapaEntity(id, usuarioId, materia, titulo, codificarNodos(nodos), modificado)
+
+fun RecesoEntity.aModelo(): Receso = Receso(id, nombre, desde, hasta)
+
+fun Receso.aEntidad(usuarioId: Int): RecesoEntity = RecesoEntity(id, usuarioId, nombre, desde, hasta)

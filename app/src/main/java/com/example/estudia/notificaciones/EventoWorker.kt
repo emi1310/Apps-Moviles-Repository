@@ -6,6 +6,8 @@ import androidx.work.WorkerParameters
 import com.example.estudia.EstudiaApp
 import com.example.estudia.R
 import com.example.estudia.modelo.TipoEvento
+import com.example.estudia.modelo.diasSinClase
+import kotlinx.coroutines.flow.first
 import com.example.estudia.util.aTexto
 import java.time.Duration
 import java.time.LocalDate
@@ -28,7 +30,11 @@ class EventoWorker(
         val repositorio = app.repositorio
         val datos = repositorio.eventoParaRecordatorio(eventoId)
 
-        if (datos != null) {
+        // Los feriados y los recesos no hay clase: no se avisa (pero se programa
+        // la de la semana siguiente, más abajo).
+        val sinClase = datos != null && datos.evento.tipo == TipoEvento.CLASE &&
+            datos.inicio.toLocalDate() in diasSinClase(repositorio.feriados.first(), repositorio.usuarioActual.first()?.recesos.orEmpty())
+        if (datos != null && !sinClase) {
             val contexto = applicationContext
             val evento = datos.evento
             val titulo: String

@@ -10,6 +10,7 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.MateriaPlan
 import com.example.estudia.modelo.MesaFinal
 import com.example.estudia.modelo.Fuente
+import com.example.estudia.modelo.Receso
 import com.example.estudia.modelo.MapaMental
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
@@ -97,7 +98,9 @@ interface RepositorioEstudia {
     ): Tarea
     // Solo la fila de la tarea (título, fecha, prioridad, hecha): las
     // subtareas no se tocan. Para cambiarlas está guardarSubtareas.
-    suspend fun actualizarTarea(materiaId: Int, tarea: Tarea)
+    // Si se completa una tarea que se repite, crea la siguiente y la devuelve
+    // (para programar su aviso); si no, null.
+    suspend fun actualizarTarea(materiaId: Int, tarea: Tarea): Tarea?
     // Reemplaza la lista de subtareas de una tarea (las nuevas van con id 0).
     suspend fun guardarSubtareas(tareaId: Int, subtareas: List<Subtarea>)
     suspend fun alternarSubtarea(tareaId: Int, subtarea: Subtarea)
@@ -195,6 +198,10 @@ interface RepositorioEstudia {
     suspend fun actualizarFuente(usuarioId: Int, fuente: Fuente)
     suspend fun eliminarFuente(usuarioId: Int, fuente: Fuente)
     suspend fun restaurarFuente(usuarioId: Int, fuente: Fuente)
+
+    // Recesos (días sin clases).
+    suspend fun guardarReceso(usuarioId: Int, receso: Receso)
+    suspend fun eliminarReceso(usuarioId: Int, receso: Receso)
 
     // ---------- Mapas mentales ----------
 

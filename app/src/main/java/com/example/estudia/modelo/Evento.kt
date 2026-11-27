@@ -31,7 +31,10 @@ data class Evento(
     // Versión 10: clase presencial (con aula o lugar) o virtual (con link).
     val virtual: Boolean = false,
     val lugar: String? = null,
-    val enlace: String? = null
+    val enlace: String? = null,
+    // Versión 14: las clases semanales pueden ser cada 1 semana o semana por
+    // medio (2), para horarios de semana A y semana B.
+    val cadaSemanas: Int = 1
 ) {
     val inicio: LocalDateTime get() = fecha.atTime(horaInicio)
 
@@ -53,6 +56,8 @@ data class Evento(
         if (!semanal) return inicio.takeIf { it.isAfter(desde) }
         var dia = maxOf(fecha, desde.toLocalDate()).with(TemporalAdjusters.nextOrSame(fecha.dayOfWeek))
         if (!dia.atTime(horaInicio).isAfter(desde)) dia = dia.plusWeeks(1)
+        // Semana por medio: si cae en la semana que no toca, pasa a la siguiente.
+        if (!enSemanaQueToca(dia)) dia = dia.plusWeeks(1)
         val hasta = repetirHasta
         return if (hasta != null && dia.isAfter(hasta)) null else dia.atTime(horaInicio)
     }
@@ -64,7 +69,16 @@ data class Evento(
         val hasta = repetirHasta
         return dia.dayOfWeek == fecha.dayOfWeek &&
             !dia.isBefore(fecha) &&
-            (hasta == null || !dia.isAfter(hasta))
+            (hasta == null || !dia.isAfter(hasta)) &&
+            enSemanaQueToca(dia)
+    }
+
+    // Para las de semana por medio: true si entre la primera clase y "dia"
+    // pasó una cantidad de semanas que es múltiplo de cadaSemanas.
+    private fun enSemanaQueToca(dia: LocalDate): Boolean {
+        if (cadaSemanas <= 1) return true
+        val semanas = java.time.temporal.ChronoUnit.WEEKS.between(fecha, dia)
+        return Math.floorMod(semanas, cadaSemanas.toLong()) == 0L
     }
 }
 

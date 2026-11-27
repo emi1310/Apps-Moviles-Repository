@@ -80,6 +80,7 @@ import com.example.estudia.ui.pantallas.PerfilScreen
 import com.example.estudia.ui.pantallas.RegistroScreen
 import com.example.estudia.ui.pantallas.TemporizadorScreen
 import com.example.estudia.ui.pantallas.AsistenciaScreen
+import com.example.estudia.ui.pantallas.MatrizScreen
 import com.example.estudia.ui.pantallas.BusquedaScreen
 import com.example.estudia.ui.pantallas.CarreraScreen
 import com.example.estudia.ui.pantallas.FinalesScreen
@@ -354,6 +355,7 @@ fun AppNavegacion(
                         onNotaNecesaria = { navController.navigate(Screen.NotaNecesaria.de(it)) },
                         onAbrirCarrera = { navController.navigate(Screen.Carrera.ruta) },
                         onAbrirFinales = { navController.navigate(Screen.Finales.ruta) },
+                        onAbrirMatriz = { navController.navigate(Screen.Matriz.ruta) },
                         onAbrirBibliografia = { navController.navigate(Screen.Bibliografia.ruta) },
                         onCreacionAbierta = { accionPendiente = null }
                     )
@@ -474,6 +476,9 @@ fun AppNavegacion(
 
                 composable(Screen.Asistencia.ruta) {
                     AsistenciaScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+                composable(Screen.Matriz.ruta) {
+                    MatrizScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
                 }
 
                 composable(Screen.Finales.ruta) {

@@ -2,6 +2,8 @@ package com.example.estudia.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.example.estudia.datos.RepositorioEstudia
+import com.example.estudia.modelo.Receso
+import com.example.estudia.modelo.diasSinClase
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Tema
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -35,6 +38,8 @@ data class CalendarioUiState(
     val feriadoDelDia: String? = null,
     val hayFeriados: Boolean = false,
     val actualizandoFeriados: Boolean = false,
+    // Versión 14: recesos del usuario (días sin clases).
+    val recesos: List<Receso> = emptyList(),
     // El calendario del teléfono se mantiene al día solo.
     val calendarioAutomatico: Boolean = false,
     // Búsqueda desde la lupa del dock: con texto, en lugar del mes se muestran
@@ -65,7 +70,8 @@ class CalendarioViewModel(
 
     val uiState: StateFlow<CalendarioUiState> =
         combine(repositorio.usuarioActual, mes, seleccionado, repositorio.feriados, actualizandoFeriados) { usuario, mesActual, dia, feriados, actualizando ->
-            val porFecha = feriados.associate { it.fecha to it.nombre }
+            // Los recesos cuentan como feriados: días sin clase, en rojo y con su nombre.
+            val porFecha = diasSinClase(feriados, usuario?.recesos.orEmpty())
             val materias = usuario?.materias ?: emptyList()
             val eventos = materias.flatMap { materia ->
                 materia.eventos.map { EventoConMateria(it, materia.id, materia.nombre, materia.color) }
@@ -87,6 +93,7 @@ class CalendarioViewModel(
                 feriadosDelMes = porFecha.filterKeys { YearMonth.from(it) == mesActual },
                 feriadoDelDia = porFecha[dia],
                 hayFeriados = feriados.isNotEmpty(),
+                recesos = usuario?.recesos.orEmpty(),
                 actualizandoFeriados = actualizando,
                 todosLosEventos = eventos
             )
@@ -139,7 +146,9 @@ class CalendarioViewModel(
         // Versión 10: virtual (con link) o presencial (con aula o lugar).
         virtual: Boolean = false,
         lugar: String? = null,
-        enlace: String? = null
+        enlace: String? = null,
+        // Versión 14: 1 = todas las semanas, 2 = semana por medio.
+        cadaSemanas: Int = 1
     ): Mensaje? {
         if (!fin.isAfter(inicio)) return Mensaje.ERROR_HORA_FIN
         // Solo las clases se repiten; "hasta" no puede ser antes de la primera clase.
@@ -149,6 +158,7 @@ class CalendarioViewModel(
             existente?.id ?: 0, titulo.trim(), tipo, fecha, inicio, fin,
             semanal = seRepite,
             repetirHasta = if (seRepite) repetirHasta else null,
+            cadaSemanas = if (seRepite) cadaSemanas.coerceIn(1, 2) else 1,
             virtual = virtual,
             // Se guarda solo lo que corresponde a la modalidad elegida.
             lugar = if (virtual) null else lugar?.trim()?.ifEmpty { null },
@@ -254,6 +264,27 @@ class CalendarioViewModel(
                     }
                 )
             )
+        }
+    }
+
+    // ---------- Recesos ----------
+
+    // Devuelve el error a mostrar o null si se guardó.
+    fun guardarReceso(existente: Receso?, nombre: String, desde: LocalDate, hasta: LocalDate): Mensaje? {
+        if (nombre.isBlank()) return Mensaje.ERROR_NOMBRE_RECESO
+        if (hasta.isBefore(desde)) return Mensaje.ERROR_FECHAS_RECESO
+        viewModelScope.launch {
+            val usuario = repositorio.usuarioActual.first() ?: return@launch
+            repositorio.guardarReceso(usuario.id, Receso(existente?.id ?: 0, nombre.trim(), desde, hasta))
+        }
+        return null
+    }
+
+    fun eliminarReceso(receso: Receso) {
+        viewModelScope.launch {
+            val usuario = repositorio.usuarioActual.first() ?: return@launch
+            repositorio.eliminarReceso(usuario.id, receso)
+            avisar(Aviso(Mensaje.AVISO_RECESO_ELIMINADO, alDeshacer = { repositorio.guardarReceso(usuario.id, receso.copy(id = 0)) }))
         }
     }
 }

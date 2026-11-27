@@ -25,6 +25,8 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.Prioridad
+import com.example.estudia.modelo.Receso
+import com.example.estudia.modelo.Repeticion
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tarjeta
@@ -207,6 +209,10 @@ private fun usuarioAJson(u: Usuario) = JSONObject()
         JSONObject().put("materia", m.materia).put("titulo", m.titulo)
             .put("nodos", codificarNodos(m.nodos)).put("modificado", m.modificado.toString())
     }))
+    // Versión 14: recesos.
+    .put("recesos", JSONArray(u.recesos.map { r ->
+        JSONObject().put("nombre", r.nombre).put("desde", r.desde.toString()).put("hasta", r.hasta.toString())
+    }))
 
 private fun materiaAJson(m: Materia) = JSONObject()
     .put("id", m.id)
@@ -224,6 +230,7 @@ private fun materiaAJson(m: Materia) = JSONObject()
             .put("completada", t.completada)
             .put("prioridad", t.prioridad.peso)
             .put("avisoDiasAntes", t.avisoDiasAntes ?: JSONObject.NULL)
+            .put("repeticion", t.repeticion?.name ?: JSONObject.NULL)
             .put("subtareas", JSONArray(t.subtareas.map { JSONObject().put("titulo", it.titulo).put("completada", it.completada) }))
     }))
     .put("eventos", JSONArray(m.eventos.map { e ->
@@ -240,6 +247,7 @@ private fun materiaAJson(m: Materia) = JSONObject()
             .put("virtual", e.virtual)
             .put("lugar", e.lugar ?: JSONObject.NULL)
             .put("enlace", e.enlace ?: JSONObject.NULL)
+            .put("cadaSemanas", e.cadaSemanas)
     }))
     .put("notas", JSONArray(m.notas.map { n ->
         JSONObject()
@@ -336,7 +344,11 @@ private fun jsonAUsuario(j: JSONObject): Usuario = Usuario(
             nodos = decodificarNodos(m.getString("nodos")),
             modificado = m.textoONull("modificado")?.let { LocalDate.parse(it) } ?: LocalDate.now()
         )
-    }?.filter { mapa -> mapa.nodos.any { it.padreId == null } } ?: emptyList()
+    }?.filter { mapa -> mapa.nodos.any { it.padreId == null } } ?: emptyList(),
+    // Las copias anteriores a la versión 14 no tienen recesos.
+    recesos = j.optJSONArray("recesos")?.mapear { r ->
+        Receso(0, r.getString("nombre"), LocalDate.parse(r.getString("desde")), LocalDate.parse(r.getString("hasta")))
+    } ?: emptyList()
 )
 
 private fun jsonAMateria(j: JSONObject): Materia {
@@ -371,7 +383,8 @@ private fun jsonAMateria(j: JSONObject): Materia {
                 completada = t.getBoolean("completada"),
                 prioridad = Prioridad.desdePeso(t.getInt("prioridad")),
                 subtareas = t.getJSONArray("subtareas").mapear { Subtarea(0, it.getString("titulo"), it.getBoolean("completada")) },
-                avisoDiasAntes = t.enteroONull("avisoDiasAntes")
+                avisoDiasAntes = t.enteroONull("avisoDiasAntes"),
+                repeticion = Repeticion.desdeTexto(t.textoONull("repeticion"))
             )
         },
         eventos = j.getJSONArray("eventos").mapear { e ->
@@ -388,7 +401,8 @@ private fun jsonAMateria(j: JSONObject): Materia {
                 asistencias = e.optJSONArray("asistencias")?.mapear { Asistencia(0, LocalDate.parse(it.getString("fecha")), it.getBoolean("presente")) } ?: emptyList(),
                 virtual = e.optBoolean("virtual", false),
                 lugar = e.textoONull("lugar"),
-                enlace = e.textoONull("enlace")
+                enlace = e.textoONull("enlace"),
+                cadaSemanas = e.optInt("cadaSemanas", 1)
             )
         },
         notas = j.getJSONArray("notas").mapear { n ->

@@ -475,7 +475,8 @@ class AsistenteViewModel(
             is AccionPropuesta.CompletarTarea -> {
                 val t = tarea(accion.tarea) ?: return noEncontrada
                 val cambiada = t.copy(completada = accion.hecha)
-                repositorio.actualizarTarea(materia.id, cambiada)
+                val siguiente = repositorio.actualizarTarea(materia.id, cambiada)
+                siguiente?.let { avisosSistema?.programarTarea(it) }
                 if (cambiada.completada) avisosSistema?.cancelarTarea(t.id) else avisosSistema?.programarTarea(cambiada)
                 hecha
             }

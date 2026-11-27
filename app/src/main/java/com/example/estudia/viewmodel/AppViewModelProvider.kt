@@ -19,7 +19,7 @@ import com.example.estudia.EstudiaApp
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer { SesionViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
-        initializer { InicioViewModel(estudiaApp().repositorio) }
+        initializer { InicioViewModel(estudiaApp().repositorio, avisosSistema = estudiaApp().avisos) }
         initializer { MateriasViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
         initializer { CalendarioViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
         initializer { NotasViewModel(estudiaApp().repositorio) }
@@ -30,6 +30,7 @@ object AppViewModelProvider {
         initializer { LogrosViewModel(estudiaApp().repositorio) }
         initializer { CarreraViewModel(estudiaApp().repositorio) }
         initializer { AsistenciaViewModel(estudiaApp().repositorio) }
+        initializer { MatrizViewModel(estudiaApp().repositorio, estudiaApp().avisos) }
         initializer { FinalesViewModel(estudiaApp().repositorio) }
         initializer { BibliografiaViewModel(estudiaApp().repositorio) }
         initializer { MapasViewModel(estudiaApp().repositorio) }

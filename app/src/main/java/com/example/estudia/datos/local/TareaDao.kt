@@ -22,6 +22,7 @@ abstract class TareaDao {
 
     @Update
     abstract suspend fun actualizar(tarea: TareaEntity)
+@Query("SELECT * FROM tareas WHERE id = :id")    abstract suspend fun obtener(id: Int): TareaEntity?
 
     @Delete
     abstract suspend fun eliminar(tarea: TareaEntity)

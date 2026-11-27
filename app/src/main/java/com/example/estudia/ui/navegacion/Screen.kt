@@ -34,6 +34,7 @@ sealed class Screen(val ruta: String) {
     }
     object ResumenSemanal : Screen("resumen_semanal")
     object Busqueda : Screen("busqueda")
+    object Matriz : Screen("matriz")
     // ¿Qué nota necesito?: el id de la materia (-1 = la primera).
     object NotaNecesaria : Screen("nota_necesaria/{materiaId}") {
         fun de(materiaId: Int) = "nota_necesaria/$materiaId"

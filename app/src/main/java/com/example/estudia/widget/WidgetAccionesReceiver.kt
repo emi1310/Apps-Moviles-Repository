@@ -27,8 +27,9 @@ class WidgetAccionesReceiver : BroadcastReceiver() {
                     ?.materias?.firstOrNull { it.id == materiaId }
                     ?.tareas?.firstOrNull { it.id == tareaId }
                 if (tarea != null && !tarea.completada) {
-                    app.repositorio.actualizarTarea(materiaId, tarea.copy(completada = true))
+                    val siguiente = app.repositorio.actualizarTarea(materiaId, tarea.copy(completada = true))
                     app.avisos.cancelarTarea(tarea.id)
+                    siguiente?.let { app.avisos.programarTarea(it) }
                 }
                 // Por si la app no está abierta para enterarse del cambio.
                 actualizarTodosLosWidgets(context)

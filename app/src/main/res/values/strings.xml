@@ -283,6 +283,11 @@
         <item>¿Cómo agrupo mis notas o dejo una arriba?</item>
         <item>¿Puedo grabar la clase?</item>
         <item>¿Puedo volver a una versión anterior de una nota?</item>
+        <item>¿Puedo hacer que una tarea se repita?</item>
+        <item>¿Cómo cargo una clase que es semana por medio?</item>
+        <item>¿Cómo marco las vacaciones o semanas sin clases?</item>
+        <item>¿Cómo sé qué tarea hacer primero?</item>
+        <item>¿Me puede avisar cuando llego a la facultad?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -331,6 +336,11 @@
         <item>Escribí una etiqueta con # en el título o el texto, por ejemplo #parcial o #importante. Arriba de la lista de Notas aparecen todas tus etiquetas: tocá una para ver solo esas notas (y de nuevo para verlas todas). Para dejar una nota arriba de todo, usá el pin de la nota abierta o \"Fijar arriba\" en su menú ⋮; ahí también está \"Cambiar color\" para darle un color propio.</item>
         <item>Sí: en la nota abierta, menú ⋮ → \"Grabar audio\". Mientras grabás podés pausar y tocar \"Marcar momento\" cuando digan algo importante. Al guardar, el audio queda adjunto a la nota (se escucha tocándolo) y las marcas se anotan al final del texto. Entran unos 80 minutos por grabación.</item>
         <item>Sí: en la nota abierta, menú ⋮ → \"Historial de cambios\". Cada vez que cambiás el título o el texto, cómo estaba antes queda guardado (las últimas 20 versiones). Tocá una para verla y \"Volver a esta versión\" para recuperarla; lo que tenías también queda en el historial.</item>
+        <item>Sí: al crear o editar la tarea, en \"Repetir\" elegí cada día, cada semana, cada 2 semanas o cada mes. Cuando la completás, se crea sola la siguiente con la próxima fecha, los mismos pasos (sin marcar) y el mismo aviso. Si la completaste tarde, la siguiente queda en la próxima fecha desde hoy.</item>
+        <item>En el Calendario, al crear la clase activá \"Repetir cada semana\" y elegí \"Semana por medio\". La clase va la semana de la fecha que pusiste, se saltea la siguiente y así (semana A y semana B). Con \"Última clase\" marcás cuándo termina el cuatrimestre.</item>
+        <item>En el Calendario, tocá el botón de la sombrilla (Recesos) y \"Agregar receso\": un nombre, desde y hasta. Esos días se ven en rojo como los feriados, las clases no se avisan y no cuentan en la asistencia. Tocá un receso para editarlo o la X para borrarlo.</item>
+        <item>En Materias, tocá \"Prioridades\": tus tareas pendientes se reparten en cuatro bloques según si son urgentes (vencen en 2 días o menos) e importantes (prioridad alta): Hacelo ya, Planificalo, Sacalo rápido y Después. Tocá una para completarla; en su menú ⋮ la marcás o desmarcás como importante.</item>
+        <item>Sí: en el Perfil activá \"Aviso al llegar a la facu\" estando en la facultad. Se guarda ese lugar y cada día que llegues te avisa tus clases de hoy y las tareas que vencen (una vez por día). Pide la ubicación \"todo el tiempo\" para funcionar con la app cerrada; el lugar queda solo en tu teléfono.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -968,6 +978,63 @@
     <string name="grabacion_error">No se pudo grabar el audio</string>
     <string name="aviso_version_restaurada">La nota volvió a la versión anterior</string>
     <string name="aviso_grabacion_guardada">Se guardó la grabación en la nota</string>
+    <!-- Tareas que se repiten, semana por medio y recesos -->
+    <string name="repeticion_titulo">Repetir</string>
+    <string name="repeticion_no">No</string>
+    <string name="repeticion_diaria">Cada día</string>
+    <string name="repeticion_semanal">Cada semana</string>
+    <string name="repeticion_quincenal">Cada 2 semanas</string>
+    <string name="repeticion_mensual">Cada mes</string>
+    <string name="repeticion_explicacion">Al completarla se crea sola la siguiente, con la próxima fecha, los mismos pasos y el mismo aviso.</string>
+    <string name="aviso_tarea_repetida">Listo. La próxima vence el %1$s</string>
+    <string name="semanas_todas">Todas las semanas</string>
+    <string name="semanas_por_medio">Semana por medio</string>
+    <string name="semanas_por_medio_explicacion">Semana A y semana B: esta clase va la semana del %1$s, se saltea la siguiente y así.</string>
+    <string name="recesos_titulo">Recesos</string>
+    <string name="recesos_explicacion">Días sin clases, como las vacaciones de invierno o la semana de parciales. Esos días las clases no se avisan, no cuentan en la asistencia y el calendario los marca en rojo.</string>
+    <string name="recesos_agregar">Agregar receso</string>
+    <string name="recesos_nuevo">Nuevo receso</string>
+    <string name="recesos_editar">Editar receso</string>
+    <string name="recesos_nombre">Nombre (ej: Vacaciones de invierno)</string>
+    <string name="recesos_desde">Desde</string>
+    <string name="recesos_hasta">Hasta (inclusive)</string>
+    <string name="recesos_rango">Del %1$s al %2$s</string>
+    <string name="recesos_eliminar">Eliminar %1$s</string>
+    <string name="aviso_receso_eliminado">Se eliminó el receso</string>
+    <string name="error_nombre_receso">Ponele un nombre al receso</string>
+    <string name="error_fechas_receso">La fecha de fin no puede ser antes de la de inicio</string>
+    <!-- Matriz de prioridades (urgente / importante) -->
+    <string name="matriz_titulo">Prioridades</string>
+    <string name="acceso_matriz">Qué hacer primero</string>
+    <string name="matriz_subtitulo">Urgente: vence en 2 días o menos. Importante: prioridad alta. Tocá una tarea para completarla.</string>
+    <string name="matriz_hacer_ya">Hacelo ya</string>
+    <string name="matriz_hacer_ya_detalle">Urgente e importante</string>
+    <string name="matriz_planificar">Planificalo</string>
+    <string name="matriz_planificar_detalle">Importante, todavía hay tiempo: reservale un rato</string>
+    <string name="matriz_rapido">Sacalo rápido</string>
+    <string name="matriz_rapido_detalle">Urgente pero no tan importante: resolvelo sin perder mucho tiempo</string>
+    <string name="matriz_despues">Después</string>
+    <string name="matriz_despues_detalle">Ni urgente ni importante</string>
+    <string name="matriz_cuadrante_vacio">Nada por acá</string>
+    <string name="matriz_marcar_importante">Marcar como importante</string>
+    <string name="matriz_quitar_importante">Quitar importante</string>
+    <string name="matriz_vacia">No tenés tareas pendientes</string>
+    <string name="matriz_vacia_sugerencia">Cuando cargues tareas en tus materias, acá vas a ver cuáles hacer primero.</string>
+    <!-- Aviso al llegar a la facultad -->
+    <string name="llegada_ajuste">Aviso al llegar a la facu</string>
+    <string name="llegada_ajuste_descripcion">Al llegar, una notificación con tus clases de hoy y lo que vence</string>
+    <string name="llegada_ajuste_activo">Activo: te avisa al llegar (una vez por día)</string>
+    <string name="llegada_explicacion">Usá esto estando en la facultad: se guarda dónde estás ahora y, cada día que llegues ahí, te llega un aviso con tus clases de hoy y las tareas que vencen. Para enterarse aunque la app esté cerrada, Android pide la ubicación \"todo el tiempo\". El lugar queda solo en tu teléfono.</string>
+    <string name="llegada_estoy_aca">Estoy en la facu</string>
+    <string name="llegada_segundo_plano_titulo">Ubicación todo el tiempo</string>
+    <string name="llegada_segundo_plano">En la pantalla que sigue elegí \"Permitir todo el tiempo\". Si no, el aviso solo funcionaría con la app abierta.</string>
+    <string name="llegada_activado">Listo: te vamos a avisar cuando llegues</string>
+    <string name="llegada_sin_ubicacion">No se pudo saber dónde estás. Revisá que la ubicación del teléfono esté prendida.</string>
+    <string name="llegada_sin_permiso">Sin permiso de ubicación no se puede avisar al llegar</string>
+    <string name="llegada_titulo">Llegaste a la facu</string>
+    <string name="llegada_clases">Hoy cursás: %1$s</string>
+    <string name="llegada_tareas">Vencen: %1$s</string>
+    <string name="llegada_nada">Hoy no tenés clases ni tareas que venzan. ¡Buen día para adelantar!</string>
     <string name="aviso_final_aprobado_plan">¡Felicitaciones! %1$s quedó aprobada en Mi carrera</string>
     <string name="notificacion_finales_titulo">Finales</string>
     <string name="notificacion_final_hoy">Hoy rendís %1$s. ¡Éxitos!</string>
@@ -1088,9 +1155,9 @@
     <string name="feriados_titulo">Feriados</string>
     <string name="feriados_explicacion">Para traer los feriados de tu Google Calendar necesitamos leer el calendario del teléfono (solo leemos los feriados). Si preferís, los bajamos de internet.</string>
     <string name="feriados_desde_internet">Desde internet</string>
-    <string name="feriado_nombre">Feriado: %1$s</string>
+    <string name="feriado_nombre">Sin clases: %1$s</string>
     <string name="feriado_detalle">No hay clases y no cuenta en la asistencia</string>
-    <string name="feriado_sin_clase">Feriado: no hay clase</string>
+    <string name="feriado_sin_clase">Ese día no hay clase</string>
     <string name="aviso_feriados_calendario">Listo: %1$d feriados de tu Google Calendar</string>
     <string name="aviso_feriados_internet">Listo: %1$d feriados (bajados de internet)</string>
     <string name="acceso_carrera">Plan y correlativas</string>

@@ -45,6 +45,8 @@ import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.VersionNota
+import com.example.estudia.modelo.Receso
+import com.example.estudia.modelo.siguienteTareaRepetida
 import com.example.estudia.modelo.cambioParaHistorial
 import com.example.estudia.modelo.MAXIMO_VERSIONES_NOTA
 import com.example.estudia.modelo.PreferenciaTema
@@ -259,8 +261,18 @@ class RepositorioEstudiaImpl(
         return nueva.copy(id = id)
     }
 
-    override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea) {
-        tareaDao.actualizar(tarea.aEntidad(materiaId))
+    override suspend fun actualizarTarea(materiaId: Int, tarea: Tarea): Tarea? {
+        // Si se completa una que se repite, la repetición pasa a la siguiente.
+        val anterior = tareaDao.obtener(tarea.id)?.aModelo()
+        val siguiente = siguienteTareaRepetida(anterior, tarea, LocalDate.now())
+        tareaDao.actualizar((if (siguiente != null) tarea.copy(repeticion = null) else tarea).aEntidad(materiaId))
+        if (siguiente == null) return null
+        val creada = agregarTarea(
+            materiaId, siguiente.titulo, siguiente.fechaLimite, siguiente.prioridad,
+            siguiente.subtareas.map { it.titulo }, siguiente.avisoDiasAntes
+        ).copy(repeticion = siguiente.repeticion)
+        tareaDao.actualizar(creada.aEntidad(materiaId))
+        return creada
     }
 
     override suspend fun guardarSubtareas(tareaId: Int, subtareas: List<Subtarea>) {
@@ -577,13 +589,13 @@ class RepositorioEstudiaImpl(
             )
         ).toInt()
         insertarMaterias(usuarioId, usuario.materias)
-        insertarCarrera(usuarioId, usuario.planEstudio, usuario.finales, usuario.fuentes, usuario.mapas)
+        insertarCarrera(usuarioId, usuario.planEstudio, usuario.finales, usuario.fuentes, usuario.mapas, usuario.recesos)
     }
 
     // Inserta el plan de estudios, los finales, la bibliografía y los mapas
     // mentales como nuevos. Los ids de las
     // correlativas se traducen a los ids nuevos que genera SQLite.
-    private suspend fun insertarCarrera(usuarioId: Int, plan: List<MateriaPlan>, finales: List<MesaFinal>, fuentes: List<Fuente>, mapas: List<MapaMental>) {
+    private suspend fun insertarCarrera(usuarioId: Int, plan: List<MateriaPlan>, finales: List<MesaFinal>, fuentes: List<Fuente>, mapas: List<MapaMental>, recesos: List<Receso> = emptyList()) {
         val idsNuevos = mutableMapOf<Int, Int>()
         plan.forEach { materia ->
             idsNuevos[materia.id] = carreraDao.insertarMateriaPlan(
@@ -599,6 +611,7 @@ class RepositorioEstudiaImpl(
         finales.forEach { carreraDao.insertarFinal(it.aEntidad(usuarioId).copy(id = 0)) }
         fuentes.forEach { carreraDao.insertarFuente(it.aEntidad(usuarioId).copy(id = 0)) }
         mapas.forEach { carreraDao.insertarMapa(it.aEntidad(usuarioId).copy(id = 0)) }
+        recesos.forEach { carreraDao.insertarReceso(it.aEntidad(usuarioId).copy(id = 0)) }
     }
 
     // Inserta materias con todo su contenido como nuevas (los ids del objeto
@@ -712,6 +725,17 @@ class RepositorioEstudiaImpl(
         carreraDao.insertarFuente(fuente.aEntidad(usuarioId))
     }
 
+    // ---------- Recesos ----------
+
+    // id 0 = nuevo; si no, se actualiza.
+    override suspend fun guardarReceso(usuarioId: Int, receso: Receso) {
+        if (receso.id == 0) carreraDao.insertarReceso(receso.aEntidad(usuarioId)) else carreraDao.actualizarReceso(receso.aEntidad(usuarioId))
+    }
+
+    override suspend fun eliminarReceso(usuarioId: Int, receso: Receso) {
+        carreraDao.eliminarReceso(receso.aEntidad(usuarioId))
+    }
+
     // ---------- Mapas mentales ----------
 
     override suspend fun agregarMapa(usuarioId: Int, mapa: MapaMental): MapaMental {
@@ -822,11 +846,12 @@ class RepositorioEstudiaImpl(
         usuario.finales.forEach { carreraDao.eliminarFinal(it.aEntidad(usuario.id)) }
         usuario.fuentes.forEach { carreraDao.eliminarFuente(it.aEntidad(usuario.id)) }
         usuario.mapas.forEach { carreraDao.eliminarMapa(it.aEntidad(usuario.id)) }
+        usuario.recesos.forEach { carreraDao.eliminarReceso(it.aEntidad(usuario.id)) }
         usuarioDao.actualizarPerfil(usuario.id, copia.nombre, copia.carrera, copia.anio, copia.email)
         usuarioDao.actualizarMetaSemanal(usuario.id, copia.metaHorasSemanales)
         usuarioDao.actualizarFotoPerfil(usuario.id, copia.fotoPerfil)
         insertarMaterias(usuario.id, copia.materias)
-        insertarCarrera(usuario.id, copia.planEstudio, copia.finales, copia.fuentes, copia.mapas)
+        insertarCarrera(usuario.id, copia.planEstudio, copia.finales, copia.fuentes, copia.mapas, copia.recesos)
         return true
     }
 }

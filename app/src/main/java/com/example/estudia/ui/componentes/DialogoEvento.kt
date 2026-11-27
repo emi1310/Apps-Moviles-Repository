@@ -18,6 +18,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.estudia.R
+import com.example.estudia.util.aTexto
 import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.TipoEvento
@@ -64,7 +66,7 @@ fun DialogoEvento(
     onConfirmar: (
         materiaId: Int, titulo: String, tipo: TipoEvento, fecha: LocalDate,
         inicio: LocalTime, fin: LocalTime, semanal: Boolean, repetirHasta: LocalDate?,
-        virtual: Boolean, lugar: String, enlace: String
+        virtual: Boolean, lugar: String, enlace: String, cadaSemanas: Int
     ) -> Int?,
     onCancelar: () -> Unit
 ) {
@@ -76,6 +78,7 @@ fun DialogoEvento(
     var fin by remember { mutableStateOf(evento?.horaFin ?: LocalTime.of(10, 0)) }
     var semanal by remember { mutableStateOf(evento?.semanal ?: false) }
     var repetirHasta by remember { mutableStateOf(evento?.repetirHasta) }
+    var cadaSemanas by remember { mutableIntStateOf(evento?.cadaSemanas ?: 1) }
     var virtual by remember { mutableStateOf(evento?.virtual ?: false) }
     var lugar by remember { mutableStateOf(evento?.lugar ?: "") }
     var enlace by remember { mutableStateOf(evento?.enlace ?: "") }
@@ -92,7 +95,7 @@ fun DialogoEvento(
                 m == null -> R.string.error_elegir_materia
                 t == null -> R.string.error_elegir_tipo
                 titulo.isBlank() -> R.string.error_titulo_evento
-                else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace)
+                else -> onConfirmar(m.id, titulo, t, fecha, inicio, fin, semanal, repetirHasta, virtual, lugar, enlace, cadaSemanas)
             }
         },
         onCancelar = onCancelar
@@ -177,6 +180,13 @@ fun DialogoEvento(
                 Switch(checked = semanal, onCheckedChange = null)
             }
             if (semanal) {
+                // Semana A / semana B: la clase va semana por medio, empezando
+                // por la semana de la fecha elegida.
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    PastillaFiltro(stringResource(R.string.semanas_todas), elegida = cadaSemanas == 1) { cadaSemanas = 1 }
+                    PastillaFiltro(stringResource(R.string.semanas_por_medio), elegida = cadaSemanas == 2) { cadaSemanas = 2 }
+                }
+                if (cadaSemanas == 2) TextoDialogo(stringResource(R.string.semanas_por_medio_explicacion, fecha.aTexto()))
                 EtiquetaCampo(stringResource(R.string.repetir_hasta))
                 CampoFecha(
                     fecha = repetirHasta,
