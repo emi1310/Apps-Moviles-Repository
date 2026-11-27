@@ -88,9 +88,9 @@ fun MateriaConDetalle.aModelo(): Materia {
     )
 }
 
-fun TarjetaEntity.aModelo(): Tarjeta = Tarjeta(id, pregunta, respuesta, caja, proximoRepaso)
+fun TarjetaEntity.aModelo(): Tarjeta = Tarjeta(id, pregunta, respuesta, caja, proximoRepaso, imagen)
 
-fun Tarjeta.aEntidad(materiaId: Int): TarjetaEntity = TarjetaEntity(id, materiaId, pregunta, respuesta, caja, proximoRepaso)
+fun Tarjeta.aEntidad(materiaId: Int): TarjetaEntity = TarjetaEntity(id, materiaId, pregunta, respuesta, caja, proximoRepaso, imagen)
 
 fun TareaConSubtareas.aModelo(): Tarea = tarea.aModelo(subtareas.map { it.aModelo() }.sortedBy { it.id })
 

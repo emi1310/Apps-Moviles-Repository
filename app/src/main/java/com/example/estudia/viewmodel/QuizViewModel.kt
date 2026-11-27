@@ -12,7 +12,7 @@ import kotlin.random.Random
 
 // Una pregunta del quiz: la pregunta de una tarjeta, su respuesta y tres
 // respuestas de otras tarjetas de la misma materia, mezcladas.
-data class PreguntaQuiz(val pregunta: String, val opciones: List<String>, val correcta: Int)
+data class PreguntaQuiz(val pregunta: String, val opciones: List<String>, val correcta: Int, val imagen: String? = null)
 
 data class QuizUiState(
     val cargando: Boolean = true,
@@ -100,6 +100,6 @@ fun armarQuiz(tarjetas: List<Tarjeta>, random: Random, cantidad: Int = PREGUNTAS
             .shuffled(random)
             .take(OPCIONES_POR_PREGUNTA - 1)
         val opciones = (incorrectas + correcta).shuffled(random)
-        PreguntaQuiz(tarjeta.pregunta, opciones, opciones.indexOf(correcta))
+        PreguntaQuiz(tarjeta.pregunta, opciones, opciones.indexOf(correcta), tarjeta.imagen)
     }
 }

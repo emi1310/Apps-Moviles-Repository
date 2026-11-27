@@ -352,6 +352,7 @@ fun AppNavegacion(
                         busqueda = textoBusqueda,
                         onRepasar = { navController.navigate(Screen.Repaso.de(it)) },
                         onQuiz = { navController.navigate(Screen.Quiz.de(it)) },
+                        onPares = { navController.navigate(Screen.Pares.de(it)) },
                         onNotaNecesaria = { navController.navigate(Screen.NotaNecesaria.de(it)) },
                         onAbrirCarrera = { navController.navigate(Screen.Carrera.ruta) },
                         onAbrirFinales = { navController.navigate(Screen.Finales.ruta) },
@@ -536,6 +537,13 @@ fun AppNavegacion(
                     arguments = listOf(navArgument(Screen.Repaso.ARGUMENTO) { type = NavType.IntType })
                 ) {
                     QuizScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
+                }
+
+                composable(
+                    Screen.Pares.ruta,
+                    arguments = listOf(navArgument(Screen.Repaso.ARGUMENTO) { type = NavType.IntType })
+                ) {
+                    com.example.estudia.ui.pantallas.ParesScreen(viewModel = viewModel(factory = AppViewModelProvider.Factory), onVolver = { navController.popBackStack() })
                 }
             }
             }

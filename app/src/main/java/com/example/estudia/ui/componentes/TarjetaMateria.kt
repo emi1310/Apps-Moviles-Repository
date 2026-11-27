@@ -55,6 +55,10 @@ import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.Subtarea
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tarjeta
+import com.example.estudia.modelo.MINIMO_PARES
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.UploadFile
 import java.time.LocalDate
 
 // Bloque de una materia: una tarjeta neutra con el nombre, las tareas
@@ -84,6 +88,8 @@ fun TarjetaMateria(
     onRepasar: () -> Unit,
     onQuiz: () -> Unit,
     onNotaNecesaria: () -> Unit,
+    onImportarTarjetas: () -> Unit = {},
+    onPares: () -> Unit = {},
     onEditar: () -> Unit,
     onArchivar: () -> Unit,
     onEliminar: () -> Unit,
@@ -252,8 +258,11 @@ fun TarjetaMateria(
                                     .background(MaterialTheme.colorScheme.surfaceVariant)
                                     .padding(start = 14.dp)
                             ) {
+                                if (tarjeta.imagen != null) {
+                                    Icon(Icons.Outlined.Image, contentDescription = stringResource(R.string.tarjeta_imagen), tint = colorAcentoTexto(color), modifier = Modifier.padding(end = 10.dp).size(20.dp))
+                                }
                                 Column(modifier = Modifier.weight(1f).padding(vertical = 8.dp)) {
-                                    Text(tarjeta.pregunta, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    Text(tarjeta.pregunta.ifBlank { stringResource(R.string.tarjeta_imagen) }, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         stringResource(R.string.tarjeta_caja, tarjeta.caja),
                                         style = MaterialTheme.typography.labelSmall,
@@ -277,6 +286,12 @@ fun TarjetaMateria(
                                 "${stringResource(R.string.tarjetas_repasar)} ($paraHoy)",
                                 Icons.Outlined.PlayArrow, color, onRepasar, Modifier.weight(1f)
                             )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BotonBloque(stringResource(R.string.importar), Icons.Outlined.UploadFile, color, onImportarTarjetas, Modifier.weight(1f))
+                        if (materia.tarjetas.size >= MINIMO_PARES) {
+                            BotonBloque(stringResource(R.string.pares_titulo), Icons.Outlined.Extension, color, onPares, Modifier.weight(1f))
                         }
                     }
                 }

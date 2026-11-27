@@ -288,6 +288,10 @@
         <item>¿Cómo marco las vacaciones o semanas sin clases?</item>
         <item>¿Cómo sé qué tarea hacer primero?</item>
         <item>¿Me puede avisar cuando llego a la facultad?</item>
+        <item>¿Puedo importar tarjetas de Quizlet, Anki o una planilla?</item>
+        <item>¿Qué es \"Unir pares\"?</item>
+        <item>¿Puedo fijar una meta de estudio por día?</item>
+        <item>¿Cómo hago para no distraerme con el celular mientras estudio?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -310,7 +314,7 @@
         <item>Sí: al crear o editar la tarea, con fecha límite, elegí en \"Recordarme\" el mismo día, 1, 2 o 7 días antes. El aviso llega a las 9:00 si tenés activados los Recordatorios. Además, a las 20:00 te avisamos si todavía no estudiaste y podés perder tu racha.</item>
         <item>En el Calendario, tocá un examen: se abre su temario. Cargá los temas que entran y marcalos a medida que los estudiás; ves cuántos días faltan y cuánto llevás.</item>
         <item>En tu Perfil tocá \"Guardar copia\" y elegí dónde guardar el archivo (por ejemplo en Drive). Para recuperar todo, tocá \"Restaurar copia\" y elegí ese archivo: se reemplazan tus datos actuales. También podés activar la \"Copia automática semanal\": elegís una carpeta y cada semana se guarda sola una copia (se conservan las 4 últimas).</item>
-        <item>En Materias, expandí una materia y en \"Tarjetas de estudio\" agregá preguntas con su respuesta. Con \"Repasar\" (o desde Inicio) las vas respondiendo: si la sabías vuelve en unos días, cada vez más espaciado; si no, vuelve mañana. Así repasás más lo que te cuesta.</item>
+        <item>En Materias, expandí una materia y en \"Tarjetas de estudio\" agregá preguntas con su respuesta. Con \"Repasar\" (o desde Inicio) las vas respondiendo: si la sabías vuelve en unos días, cada vez más espaciado; si no, vuelve mañana. Así repasás más lo que te cuesta. La pregunta puede llevar una imagen (\"Agregar imagen\"), y en el repaso podés activar \"Escribir\" para escribir la respuesta y que la app te diga si está bien.</item>
         <item>Sí: en el Calendario tocá el botón de arriba con el calendario y las flechas y elegí \"Pasar al calendario del teléfono\". La primera vez pide permiso de calendario. Se crea un calendario propio llamado \"Estudia+\" con tus clases, exámenes, entregas y bloques de estudio que vienen, y desde ahí se mantiene al día solo cada vez que cambiás algo (desde el mismo botón podés dejar de sincronizar). Para verlos en Google Calendar en la compu o en otro teléfono, elegí \"Exportar archivo .ics\" e importalo ahí.</item>
         <item>Sí: en la pantalla de inicio del teléfono mantené apretado un lugar vacío, elegí Widgets y después Estudia+. Hay cinco: \"Tareas\" (tus tareas más urgentes; el círculo las completa sin abrir la app), \"Hoy\" (lo que tenés en el día), \"Panel\" (botones para crear una nota, un evento o una materia, estudiar, el Asistente, el horario, la agenda y buscar), \"Estudiar\" (el temporizador con Pausar y Terminar) y \"Próximo examen\" (días que faltan y avance del temario). Se actualizan solos.</item>
         <item>Sí: al crear o editar una nota, tocá el micrófono del campo Contenido y hablá. Lo dictado se suma al final del texto.</item>
@@ -341,6 +345,10 @@
         <item>En el Calendario, tocá el botón de la sombrilla (Recesos) y \"Agregar receso\": un nombre, desde y hasta. Esos días se ven en rojo como los feriados, las clases no se avisan y no cuentan en la asistencia. Tocá un receso para editarlo o la X para borrarlo.</item>
         <item>En Materias, tocá \"Prioridades\": tus tareas pendientes se reparten en cuatro bloques según si son urgentes (vencen en 2 días o menos) e importantes (prioridad alta): Hacelo ya, Planificalo, Sacalo rápido y Después. Tocá una para completarla; en su menú ⋮ la marcás o desmarcás como importante.</item>
         <item>Sí: en el Perfil activá \"Aviso al llegar a la facu\" estando en la facultad. Se guarda ese lugar y cada día que llegues te avisa tus clases de hoy y las tareas que vencen (una vez por día). Pide la ubicación \"todo el tiempo\" para funcionar con la app cerrada; el lugar queda solo en tu teléfono.</item>
+        <item>Sí: en Materias, en \"Tarjetas de estudio\", tocá \"Importar\". Elegí un archivo .csv o .txt, o pegá el texto: una tarjeta por línea, con pregunta y respuesta separadas por tabulación, punto y coma o coma. Sirve lo que exporta Quizlet, Anki (Notas en texto plano) y Excel o Google Sheets. Las que ya tenías no se repiten.</item>
+        <item>Un juego con tus tarjetas (hacen falta 3 o más): se mezclan las preguntas y respuestas de hasta 6 tarjetas y tenés que unir cada pregunta con su respuesta lo más rápido posible. Cada error suma 1 segundo y se guarda tu récord de cada materia. Está en \"Tarjetas de estudio\", en cada materia.</item>
+        <item>Sí: en el temporizador, abajo, tocá \"Meta del día\" y elegí cuánto querés estudiar (de 30 minutos a 4 horas). El anillo se llena con las sesiones y bloques de estudio de hoy y te avisa cuando la cumplís.</item>
+        <item>En el temporizador dejá activado \"Avisarme si salgo de la app\": si te vas a otra app mientras corre el tiempo te llega una notificación para volver. Durante la sesión también podés tocar \"Fijar la app\", que deja la pantalla fija en Estudia+ hasta que pauses o termines. Y \"Silenciar el teléfono\" pone No molestar.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -1001,6 +1009,57 @@
     <string name="recesos_rango">Del %1$s al %2$s</string>
     <string name="recesos_eliminar">Eliminar %1$s</string>
     <string name="aviso_receso_eliminado">Se eliminó el receso</string>
+    <!-- Estudio: imágenes, respuesta escrita, importar, unir pares, meta diaria, concentración -->
+    <string name="horas_minutos_corto">%1$dh %2$d min</string>
+    <string name="tarjeta_imagen">Imagen de la tarjeta</string>
+    <string name="tarjeta_agregar_imagen">Agregar imagen</string>
+    <string name="tarjeta_cambiar_imagen">Cambiar imagen</string>
+    <string name="tarjeta_quitar_imagen">Quitar</string>
+    <string name="repaso_escribir">Escribir</string>
+    <string name="repaso_tu_respuesta">Tu respuesta</string>
+    <string name="repaso_comprobar">Comprobar</string>
+    <string name="repaso_no_se">No sé, ver la respuesta</string>
+    <string name="repaso_correcta">¡Correcta!</string>
+    <string name="repaso_casi">Casi: revisá la diferencia</string>
+    <string name="repaso_incorrecta">No coincide</string>
+    <string name="repaso_escribiste">Escribiste: %1$s</string>
+    <string name="importar">Importar</string>
+    <string name="importar_tarjetas">Importar tarjetas</string>
+    <string name="importar_tarjetas_explicacion">Pegá las tarjetas o elegí un archivo .csv o .txt: una por línea, con la pregunta y la respuesta separadas por tabulación, punto y coma o coma. Sirve lo que exportan Quizlet, Anki (Notas en texto plano) y las planillas de Excel o Google Sheets.</string>
+    <string name="importar_elegir_archivo">Elegir archivo</string>
+    <string name="importar_pegar">O pegá el texto acá</string>
+    <string name="importar_ejemplo">Mitocondria;Produce la energía de la célula</string>
+    <string name="importar_nada">No se encontraron tarjetas. Revisá que cada línea tenga pregunta y respuesta separadas.</string>
+    <string name="importar_error_archivo">No se pudo leer el archivo (o pesa más de 2 MB).</string>
+    <plurals name="importar_se_crean">
+        <item quantity="one">Se va a crear %1$d tarjeta:</item>
+        <item quantity="other">Se van a crear %1$d tarjetas:</item>
+    </plurals>
+    <string name="aviso_tarjetas_importadas">Tarjetas importadas: %1$d (repetidas que se saltearon: %2$d)</string>
+    <string name="pares_titulo">Unir pares</string>
+    <string name="pares_instrucciones">Tocá una pregunta y después su respuesta. Cada error suma 1 segundo.</string>
+    <string name="pares_errores">Errores: %1$d (+%1$d s)</string>
+    <string name="pares_faltan">Faltan tarjetas</string>
+    <string name="pares_faltan_sugerencia">Para jugar hacen falta al menos 3 tarjetas con respuestas distintas.</string>
+    <string name="pares_listo">¡Terminaste!</string>
+    <string name="pares_record">¡Nuevo récord!</string>
+    <string name="pares_penalizacion">Incluye %1$d s por errores</string>
+    <string name="pares_mejor">Tu récord: %1$s</string>
+    <string name="pares_otra_vez">Jugar otra vez</string>
+    <string name="meta_diaria_titulo">Meta del día</string>
+    <string name="meta_diaria_explicacion">¿Cuánto querés estudiar por día? Se suman las sesiones del temporizador y los bloques de estudio de hoy.</string>
+    <string name="meta_diaria_sin">Sin meta</string>
+    <string name="meta_diaria_sin_fijar">Hoy: %1$s. Tocá para fijar una meta diaria.</string>
+    <string name="meta_diaria_progreso">Hoy: %1$s de %2$s</string>
+    <string name="meta_diaria_cumplida">¡Cumpliste la meta! Hoy: %1$s</string>
+    <string name="meta_diaria_cambiar">cambiar la meta del día</string>
+    <string name="aviso_meta_diaria_cumplida">¡Cumpliste tu meta de %1$d minutos de hoy! 🎉</string>
+    <string name="concentracion_titulo">Avisarme si salgo de la app</string>
+    <string name="concentracion_descripcion">Mientras corre el tiempo, si te vas a otra app te llega una notificación para volver.</string>
+    <string name="fijar_app">Fijar la app (bloquear las demás)</string>
+    <string name="fijar_app_quitar">Dejar de fijar la app</string>
+    <string name="salida_titulo">¡Volvé a concentrarte!</string>
+    <string name="salida_texto">Tu sesión de %2$s sigue corriendo: faltan %1$d min.</string>
     <string name="error_nombre_receso">Ponele un nombre al receso</string>
     <string name="error_fechas_receso">La fecha de fin no puede ser antes de la de inicio</string>
     <!-- Matriz de prioridades (urgente / importante) -->

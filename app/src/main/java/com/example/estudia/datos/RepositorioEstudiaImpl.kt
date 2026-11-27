@@ -127,6 +127,12 @@ class RepositorioEstudiaImpl(
     override val tema: Flow<PreferenciaTema> = preferencias.tema
     override val permisoArchivosPedido: Flow<Boolean> = preferencias.permisoArchivosPedido
     override val silenciarAlEstudiar: Flow<Boolean> = preferencias.silenciarAlEstudiar
+    override val metaDiariaMinutos: Flow<Int> = preferencias.metaDiariaMinutos
+    override suspend fun cambiarMetaDiaria(minutos: Int) = preferencias.guardarMetaDiaria(minutos)
+    override val avisarAlSalir: Flow<Boolean> = preferencias.avisarAlSalir
+    override suspend fun cambiarAvisarAlSalir(activo: Boolean) = preferencias.guardarAvisarAlSalir(activo)
+    override fun mejorTiempoPares(materiaId: Int): Flow<Long?> = preferencias.mejorTiempoPares(materiaId)
+    override suspend fun guardarMejorTiempoPares(materiaId: Int, millis: Long) = preferencias.guardarMejorTiempoPares(materiaId, millis)
     override val feriados: Flow<List<Feriado>> = feriadoDao.observarTodos().map { lista -> lista.map { it.aModelo() } }
 
     override fun buscarNotas(usuarioId: Int, texto: String): Flow<List<NotaEncontrada>> =
@@ -314,8 +320,8 @@ class RepositorioEstudiaImpl(
     // ---------- Tarjetas de estudio ----------
 
     // Una tarjeta nueva arranca en la caja 1, para repasarla hoy.
-    override suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String) {
-        tarjetaDao.insertar(TarjetaEntity(materiaId = materiaId, pregunta = pregunta, respuesta = respuesta, caja = 1, proximoRepaso = LocalDate.now()))
+    override suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String, imagen: String?) {
+        tarjetaDao.insertar(TarjetaEntity(materiaId = materiaId, pregunta = pregunta, respuesta = respuesta, caja = 1, proximoRepaso = LocalDate.now(), imagen = imagen))
     }
 
     override suspend fun actualizarTarjeta(materiaId: Int, tarjeta: Tarjeta) {

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
+import com.example.estudia.modelo.avanceMetaDiaria
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -28,8 +30,12 @@ data class TemporizadorUiState(
     val sesion: SesionEstudio? = null,              // null = no hay sesión en curso
     val ahora: Long = 0,                            // hora actual, se actualiza cada segundo
     val minutosHoy: Int = 0,                        // estudiados hoy (todas las materias)
-    val silenciar: Boolean = false                  // "Silenciar el teléfono" mientras corre
+    val silenciar: Boolean = false,                 // "Silenciar el teléfono" mientras corre
+    val metaDiaria: Int = 0,                        // minutos por día (0 = sin meta)
+    val avisarAlSalir: Boolean = true               // notificación si sale de la app con la sesión corriendo
 ) {
+    val avanceMeta: Float get() = avanceMetaDiaria(minutosHoy, metaDiaria)
+
     val restanteMillis: Long get() = sesion?.restanteMillis(ahora) ?: (minutosElegidos * 60_000L)
     val avance: Float get() = sesion?.avance(ahora) ?: 0f
 
@@ -66,14 +72,18 @@ class TemporizadorViewModel(
 
     private val elecciones = combine(materiaElegidaId, minutosElegidos) { id, minutos -> id to minutos }
 
+    private data class Ajustes(val silenciar: Boolean, val metaDiaria: Int, val avisarAlSalir: Boolean)
+
+    private val ajustes = combine(repositorio.silenciarAlEstudiar, repositorio.metaDiariaMinutos, repositorio.avisarAlSalir) { s, m, a -> Ajustes(s, m, a) }
+
     val uiState: StateFlow<TemporizadorUiState> =
         combine(
             repositorio.usuarioActual,
             repositorio.sesionEstudio,
             elecciones,
             tic,
-            repositorio.silenciarAlEstudiar
-        ) { usuario, sesion, (id, minutos), ahora, silenciar ->
+            ajustes
+        ) { usuario, sesion, (id, minutos), ahora, ajustes ->
             val activas = usuario?.materias?.filter { !it.archivada } ?: emptyList()
             val hoy = LocalDate.now()
             TemporizadorUiState(
@@ -84,10 +94,10 @@ class TemporizadorViewModel(
                 minutosElegidos = minutos,
                 sesion = sesion,
                 ahora = ahora,
-                minutosHoy = activas.flatMap { it.eventos }
-                    .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == hoy }
-                    .sumOf { it.duracionMinutos() }.toInt(),
-                silenciar = silenciar
+                minutosHoy = minutosDeEstudioDelDia(activas, hoy),
+                silenciar = ajustes.silenciar,
+                metaDiaria = ajustes.metaDiaria,
+                avisarAlSalir = ajustes.avisarAlSalir
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TemporizadorUiState())
 
@@ -99,11 +109,32 @@ class TemporizadorViewModel(
             repositorio.sesionEstudio.collectLatest { sesion ->
                 if (sesion == null || sesion.enPausa) return@collectLatest
                 delay(sesion.restanteMillis(reloj()))
+                val antes = minutosHoyAhora()
                 val guardada = repositorio.completarSesionSiTermino() ?: return@collectLatest
                 avisosSistema.actualizarTemporizador(null)
                 avisar(Aviso(Mensaje.AVISO_SESION_COMPLETA, listOf(guardada.minutos, guardada.nombreMateria)))
+                avisarSiCumplioMeta(antes)
             }
         }
+    }
+
+    private suspend fun minutosHoyAhora(): Int =
+        minutosDeEstudioDelDia(repositorio.usuarioActual.first()?.materias?.filter { !it.archivada }.orEmpty(), LocalDate.now())
+
+    // Si con la sesión que se acaba de guardar llegó a la meta del día, lo festeja.
+    private suspend fun avisarSiCumplioMeta(minutosAntes: Int) {
+        val meta = repositorio.metaDiariaMinutos.first()
+        if (meta > 0 && minutosAntes < meta && minutosHoyAhora() >= meta) {
+            avisar(Aviso(Mensaje.AVISO_META_DIARIA_CUMPLIDA, listOf(meta)))
+        }
+    }
+
+    fun cambiarMetaDiaria(minutos: Int) {
+        viewModelScope.launch { repositorio.cambiarMetaDiaria(minutos) }
+    }
+
+    fun cambiarAvisarAlSalir(activo: Boolean) {
+        viewModelScope.launch { repositorio.cambiarAvisarAlSalir(activo) }
     }
 
     fun elegirMateria(materia: Materia) {
@@ -140,12 +171,14 @@ class TemporizadorViewModel(
     // Corta antes de tiempo y guarda lo que se estudió hasta ahora.
     fun terminar() {
         viewModelScope.launch {
+            val antes = minutosHoyAhora()
             val minutos = repositorio.terminarSesion(guardar = true)
             avisosSistema.actualizarTemporizador(null)
             avisar(
                 if (minutos > 0) Aviso(Mensaje.AVISO_SESION_GUARDADA, listOf(minutos))
                 else Aviso(Mensaje.AVISO_SESION_MUY_CORTA)
             )
+            if (minutos > 0) avisarSiCumplioMeta(antes)
         }
     }
 
@@ -157,3 +190,10 @@ class TemporizadorViewModel(
         }
     }
 }
+
+// Minutos estudiados en el día: los bloques de estudio de esa fecha
+// (cada sesión del temporizador se guarda como uno).
+fun minutosDeEstudioDelDia(materias: List<Materia>, dia: LocalDate): Int =
+    materias.flatMap { it.eventos }
+        .filter { it.tipo == TipoEvento.BLOQUE_ESTUDIO && it.fecha == dia }
+        .sumOf { it.duracionMinutos() }.toInt()

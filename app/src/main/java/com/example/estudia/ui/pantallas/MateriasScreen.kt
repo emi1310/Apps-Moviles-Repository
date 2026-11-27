@@ -29,6 +29,7 @@ import com.example.estudia.modelo.Calificacion
 import com.example.estudia.modelo.Tarea
 import com.example.estudia.modelo.Tarjeta
 import com.example.estudia.ui.componentes.DialogoTarjeta
+import com.example.estudia.ui.componentes.DialogoImportarTarjetas
 import com.example.estudia.ui.componentes.LocalEspacioDock
 import com.example.estudia.ui.componentes.selectorDeArchivos
 import com.example.estudia.ui.componentes.camaraDeFotos
@@ -74,6 +75,8 @@ fun MateriasScreen(
     onRepasar: (Int) -> Unit = {},
     // Quiz con las tarjetas y "¿Qué nota necesito?" de esa materia.
     onQuiz: (Int) -> Unit = {},
+    // Juego "Unir pares" con las tarjetas de esa materia.
+    onPares: (Int) -> Unit = {},
     onNotaNecesaria: (Int) -> Unit = {},
     // Accesos de arriba: el plan de estudios, las mesas de finales y la bibliografía.
     onAbrirCarrera: () -> Unit = {},
@@ -98,6 +101,8 @@ fun MateriasScreen(
     var calificacionEnDialogo by remember { mutableStateOf<Pair<Int, Calificacion?>?>(null) }
     // Tarjeta de estudio a crear (tarjeta == null) o editar, junto con su materia.
     var tarjetaEnDialogo by remember { mutableStateOf<Pair<Int, Tarjeta?>?>(null) }
+    // Materia a la que se le importan tarjetas (CSV, Quizlet, Anki).
+    var importarEnMateria by remember { mutableStateOf<Int?>(null) }
     // rememberSaveable: si Android recrea la pantalla mientras el usuario
     // está en el selector de archivos, no se pierde a qué materia adjuntarlo.
     var idMateriaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -258,6 +263,8 @@ fun MateriasScreen(
                         onEliminarTarjeta = { viewModel.eliminarTarjeta(materia.id, it) },
                         onRepasar = { onRepasar(materia.id) },
                         onQuiz = { onQuiz(materia.id) },
+                        onImportarTarjetas = { importarEnMateria = materia.id },
+                        onPares = { onPares(materia.id) },
                         onNotaNecesaria = { onNotaNecesaria(materia.id) },
                         onEditar = { materiaParaEditar = materia },
                         onArchivar = { viewModel.alternarArchivada(materia) },
@@ -308,12 +315,22 @@ fun MateriasScreen(
     tarjetaEnDialogo?.let { (materiaId, tarjeta) ->
         DialogoTarjeta(
             tarjeta = tarjeta,
-            onConfirmar = { pregunta, respuesta ->
-                val guardada = viewModel.guardarTarjeta(materiaId, tarjeta, pregunta, respuesta)
+            onConfirmar = { pregunta, respuesta, imagen ->
+                val guardada = viewModel.guardarTarjeta(materiaId, tarjeta, pregunta, respuesta, imagen)
                 if (guardada) tarjetaEnDialogo = null
                 guardada
             },
             onCancelar = { tarjetaEnDialogo = null }
+        )
+    }
+
+    importarEnMateria?.let { materiaId ->
+        DialogoImportarTarjetas(
+            onImportar = { tarjetas ->
+                viewModel.importarTarjetas(materiaId, tarjetas)
+                importarEnMateria = null
+            },
+            onCancelar = { importarEnMateria = null }
         )
     }
 

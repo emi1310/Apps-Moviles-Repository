@@ -384,3 +384,10 @@ val MIGRACION_13_14 = object : Migration(13, 14) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_recesos_usuarioId` ON `recesos` (`usuarioId`)")
     }
 }
+
+// Versión 15: las tarjetas de estudio pueden tener una imagen.
+val MIGRACION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `tarjetas` ADD COLUMN `imagen` TEXT")
+    }
+}

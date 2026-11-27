@@ -44,6 +44,18 @@ interface RepositorioEstudia {
     val tema: Flow<PreferenciaTema>
     val permisoArchivosPedido: Flow<Boolean>
     val silenciarAlEstudiar: Flow<Boolean>
+
+    // Meta de minutos de estudio por día (0 = sin meta).
+    val metaDiariaMinutos: Flow<Int>
+    suspend fun cambiarMetaDiaria(minutos: Int)
+
+    // Avisar con una notificación si sale de la app mientras corre el temporizador.
+    val avisarAlSalir: Flow<Boolean>
+    suspend fun cambiarAvisarAlSalir(activo: Boolean)
+
+    // Mejor tiempo (en milisegundos) del juego "Unir pares" de una materia.
+    fun mejorTiempoPares(materiaId: Int): Flow<Long?>
+    suspend fun guardarMejorTiempoPares(materiaId: Int, millis: Long)
     // Feriados guardados (versión 10), ordenados por fecha.
     val feriados: Flow<List<Feriado>>
 
@@ -116,7 +128,7 @@ interface RepositorioEstudia {
 
     // ---------- Tarjetas de estudio ----------
 
-    suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String)
+    suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String, imagen: String? = null)
     // También guarda el resultado de un repaso (caja y próximo repaso).
     suspend fun actualizarTarjeta(materiaId: Int, tarjeta: Tarjeta)
     suspend fun eliminarTarjeta(materiaId: Int, tarjeta: Tarjeta)

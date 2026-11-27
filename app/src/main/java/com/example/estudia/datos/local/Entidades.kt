@@ -119,7 +119,9 @@ data class TarjetaEntity(
     val pregunta: String,
     val respuesta: String,
     val caja: Int,
-    val proximoRepaso: LocalDate
+    val proximoRepaso: LocalDate,
+    // Versión 15: imagen de la pregunta (archivo en filesDir/tarjetas).
+    val imagen: String? = null
 )
 
 // Versión 7: temas del temario de un examen. Se borran con su evento.

@@ -80,3 +80,25 @@ suspend fun leerBytes(context: Context, uri: Uri, maximo: Int): ByteArray? = wit
         null
     }
 }
+
+// ---------- Imágenes de las tarjetas de estudio ----------
+
+// Carpeta privada de la app con las imágenes de las tarjetas.
+fun carpetaImagenesTarjetas(contexto: Context): File = File(contexto.filesDir, "tarjetas")
+
+// Copia la imagen elegida como JPEG achicado (1280 px) y devuelve el nombre
+// del archivo (lo que se guarda en la tarjeta). null si no se pudo leer.
+suspend fun guardarImagenTarjeta(contexto: Context, uri: Uri): String? {
+    val bytes = leerJpeg(contexto, uri, ladoMaximo = 1280, calidad = 85) ?: return null
+    return withContext(Dispatchers.IO) {
+        val carpeta = carpetaImagenesTarjetas(contexto).apply { mkdirs() }
+        val nombre = java.util.UUID.randomUUID().toString() + ".jpg"
+        File(carpeta, nombre).writeBytes(bytes)
+        nombre
+    }
+}
+
+// Lee la imagen de una tarjeta (null si se borró o no se pudo leer).
+suspend fun leerImagenTarjeta(contexto: Context, nombre: String): Bitmap? = withContext(Dispatchers.IO) {
+    runCatching { BitmapFactory.decodeFile(File(carpetaImagenesTarjetas(contexto), nombre).path) }.getOrNull()
+}

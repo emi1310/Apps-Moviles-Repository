@@ -10,6 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.os.PowerManager
+import androidx.lifecycle.lifecycleScope
+import com.example.estudia.notificaciones.Notificaciones
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import com.example.estudia.ui.navegacion.AccionExterna
 import com.example.estudia.ui.navegacion.AppNavegacion
 import com.example.estudia.ui.navegacion.accionDelIntent
@@ -43,6 +48,33 @@ class MainActivity : ComponentActivity() {
                     onAccionHecha = { accionExterna = null }
                 )
             }
+        }
+    }
+
+    // Volvió a la app: se saca el aviso de "volvé a estudiar".
+    override fun onStart() {
+        super.onStart()
+        androidx.core.app.NotificationManagerCompat.from(this).cancel(Notificaciones.ID_SALIDA)
+    }
+
+    // Salió de la app (fue a otra o al inicio) con el temporizador corriendo:
+    // si el usuario lo pidió, una notificación lo invita a volver. No avisa
+    // si solo se apagó la pantalla ni si la pantalla está girando.
+    override fun onStop() {
+        super.onStop()
+        if (isChangingConfigurations) return
+        val pantallaPrendida = getSystemService(PowerManager::class.java)?.isInteractive ?: true
+        if (!pantallaPrendida) return
+        val repositorio = (application as EstudiaApp).repositorio
+        val contexto = applicationContext
+        lifecycleScope.launch {
+            val sesion = repositorio.sesionEstudio.first() ?: return@launch
+            if (sesion.enPausa || !repositorio.avisarAlSalir.first()) return@launch
+            Notificaciones.mostrar(
+                contexto, Notificaciones.ID_SALIDA,
+                contexto.getString(R.string.salida_titulo),
+                contexto.getString(R.string.salida_texto, sesion.minutosRestantes(System.currentTimeMillis()), sesion.nombreMateria)
+            )
         }
     }
 

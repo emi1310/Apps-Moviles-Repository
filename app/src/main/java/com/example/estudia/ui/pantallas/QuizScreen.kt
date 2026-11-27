@@ -142,7 +142,8 @@ private fun textoCronometro(segundos: Long): String = "%d:%02d".format(segundos 
 @Composable
 private fun PreguntaActual(pregunta: PreguntaQuiz, elegida: Int?, color: Color, onElegir: (Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
+        pregunta.imagen?.let { com.example.estudia.ui.componentes.ImagenTarjeta(it, Modifier.fillMaxWidth()) }
+        if (pregunta.pregunta.isNotBlank()) Text(
             text = pregunta.pregunta,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,

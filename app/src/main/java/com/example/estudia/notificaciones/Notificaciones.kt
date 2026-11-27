@@ -37,6 +37,7 @@ object Notificaciones {
     const val ID_RESUMEN_SEMANAL = 5
     const val ID_FINALES = 6
     const val ID_LLEGADA = 7
+    const val ID_SALIDA = 8
     // Cada tarea con aviso usa 500000 + su id (lejos de los ids de eventos).
     const val ID_BASE_TAREAS = 500_000
 

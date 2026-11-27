@@ -14,7 +14,9 @@ data class Tarjeta(
     val pregunta: String,
     val respuesta: String,
     val caja: Int = 1,
-    val proximoRepaso: LocalDate = LocalDate.now()
+    val proximoRepaso: LocalDate = LocalDate.now(),
+    // Foto o dibujo de la pregunta (nombre del archivo en filesDir/tarjetas).
+    val imagen: String? = null
 ) {
     fun tocaRepasar(hoy: LocalDate): Boolean = !proximoRepaso.isAfter(hoy)
 

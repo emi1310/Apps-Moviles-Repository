@@ -54,6 +54,9 @@ object AppViewModelProvider {
         initializer {
             QuizViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)
         }
+        initializer {
+            ParesViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)
+        }
         // El id de la materia llega por la ruta de navegación (SavedStateHandle).
         initializer {
             RepasoViewModel(estudiaApp().repositorio, createSavedStateHandle().get<Int>("materiaId") ?: TODAS_LAS_MATERIAS)

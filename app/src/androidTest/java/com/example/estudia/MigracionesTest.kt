@@ -16,6 +16,7 @@ import com.example.estudia.datos.local.MIGRACION_10_11
 import com.example.estudia.datos.local.MIGRACION_11_12
 import com.example.estudia.datos.local.MIGRACION_12_13
 import com.example.estudia.datos.local.MIGRACION_13_14
+import com.example.estudia.datos.local.MIGRACION_14_15
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -403,6 +404,27 @@ class MigracionesTest {
         db.query("SELECT nombre FROM recesos").use { c ->
             c.moveToFirst()
             assertEquals("Invierno", c.getString(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrar14a15AgregaImagenALasTarjetas() {
+        ayudante.createDatabase(nombreBase, 14).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO tarjetas (id, materiaId, pregunta, respuesta, caja, proximoRepaso) VALUES (1, 1, '¿F?', 'm·a', 2, 20000)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 15, true, MIGRACION_14_15)
+
+        // La tarjeta que ya estaba sigue igual y sin imagen.
+        db.query("SELECT pregunta, caja, imagen FROM tarjetas").use { c ->
+            c.moveToFirst()
+            assertEquals("¿F?", c.getString(0))
+            assertEquals(2, c.getInt(1))
+            assertTrue(c.isNull(2))
         }
         db.close()
     }

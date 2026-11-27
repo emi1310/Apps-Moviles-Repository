@@ -64,6 +64,15 @@ class RepositorioFalso(
     override val permisoArchivosPedido: Flow<Boolean> = permisoArchivos
     val silenciar = MutableStateFlow(false)
     override val silenciarAlEstudiar: Flow<Boolean> = silenciar
+    val metaDiaria = MutableStateFlow(0)
+    override val metaDiariaMinutos: Flow<Int> = metaDiaria
+    override suspend fun cambiarMetaDiaria(minutos: Int) { metaDiaria.value = minutos }
+    val avisarSalir = MutableStateFlow(true)
+    override val avisarAlSalir: Flow<Boolean> = avisarSalir
+    override suspend fun cambiarAvisarAlSalir(activo: Boolean) { avisarSalir.value = activo }
+    val mejoresTiempos = MutableStateFlow<Map<Int, Long>>(emptyMap())
+    override fun mejorTiempoPares(materiaId: Int): Flow<Long?> = mejoresTiempos.map { it[materiaId] }
+    override suspend fun guardarMejorTiempoPares(materiaId: Int, millis: Long) { mejoresTiempos.value = mejoresTiempos.value + (materiaId to millis) }
 
     // Feriados: "feriadosParaTraer" es lo que devolvería la fuente (null = falla).
     val feriadosGuardados = MutableStateFlow<List<Feriado>>(emptyList())
@@ -218,8 +227,8 @@ class RepositorioFalso(
 
     // ---------- Tarjetas de estudio ----------
 
-    override suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String) =
-        cambiarMateria(materiaId) { it.copy(tarjetas = it.tarjetas + Tarjeta(siguienteId++, pregunta, respuesta, proximoRepaso = LocalDate.now())) }
+    override suspend fun agregarTarjeta(materiaId: Int, pregunta: String, respuesta: String, imagen: String?) =
+        cambiarMateria(materiaId) { it.copy(tarjetas = it.tarjetas + Tarjeta(siguienteId++, pregunta, respuesta, proximoRepaso = LocalDate.now(), imagen = imagen)) }
 
     override suspend fun actualizarTarjeta(materiaId: Int, tarjeta: Tarjeta) =
         cambiarMateria(materiaId) { m -> m.copy(tarjetas = m.tarjetas.map { if (it.id == tarjeta.id) tarjeta else it }) }

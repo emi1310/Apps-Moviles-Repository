@@ -43,6 +43,10 @@ sealed class Screen(val ruta: String) {
     object Quiz : Screen("quiz/{materiaId}") {
         fun de(materiaId: Int) = "quiz/$materiaId"
     }
+    // Juego "Unir pares" con las tarjetas de una materia.
+    object Pares : Screen("pares/{materiaId}") {
+        fun de(materiaId: Int) = "pares/$materiaId"
+    }
     // Repaso de tarjetas: lleva el id de la materia (-1 = todas).
     object Repaso : Screen("repaso/{materiaId}") {
         const val ARGUMENTO = "materiaId"

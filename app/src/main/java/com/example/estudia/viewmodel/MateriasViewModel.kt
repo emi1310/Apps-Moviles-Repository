@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -203,14 +204,26 @@ class MateriasViewModel(
 
     // ---------- Tarjetas de estudio ----------
 
-    // Crea o edita una tarjeta. false si falta la pregunta o la respuesta.
-    fun guardarTarjeta(materiaId: Int, existente: Tarjeta?, pregunta: String, respuesta: String): Boolean {
-        if (pregunta.isBlank() || respuesta.isBlank()) return false
+    // Crea o edita una tarjeta. false si falta la respuesta, o la pregunta
+    // (una tarjeta con imagen puede no tener texto en la pregunta).
+    fun guardarTarjeta(materiaId: Int, existente: Tarjeta?, pregunta: String, respuesta: String, imagen: String? = null): Boolean {
+        if ((pregunta.isBlank() && imagen == null) || respuesta.isBlank()) return false
         viewModelScope.launch {
-            if (existente == null) repositorio.agregarTarjeta(materiaId, pregunta.trim(), respuesta.trim())
-            else repositorio.actualizarTarjeta(materiaId, existente.copy(pregunta = pregunta.trim(), respuesta = respuesta.trim()))
+            if (existente == null) repositorio.agregarTarjeta(materiaId, pregunta.trim(), respuesta.trim(), imagen)
+            else repositorio.actualizarTarjeta(materiaId, existente.copy(pregunta = pregunta.trim(), respuesta = respuesta.trim(), imagen = imagen))
         }
         return true
+    }
+
+    // Crea las tarjetas importadas. Las que ya existen (misma pregunta) no se repiten.
+    fun importarTarjetas(materiaId: Int, tarjetas: List<Pair<String, String>>) {
+        viewModelScope.launch {
+            val existentes = repositorio.usuarioActual.first()?.materias?.firstOrNull { it.id == materiaId }?.tarjetas
+                .orEmpty().map { it.pregunta.trim().lowercase() }.toSet()
+            val nuevas = tarjetas.filter { it.first.trim().lowercase() !in existentes }
+            nuevas.forEach { (pregunta, respuesta) -> repositorio.agregarTarjeta(materiaId, pregunta.trim(), respuesta.trim()) }
+            avisar(Aviso(Mensaje.AVISO_TARJETAS_IMPORTADAS, listOf(nuevas.size, tarjetas.size - nuevas.size)))
+        }
     }
 
     fun eliminarTarjeta(materiaId: Int, tarjeta: Tarjeta) {

@@ -39,6 +39,8 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_GRABACION_GUARDADA -> R.string.aviso_grabacion_guardada
     Mensaje.AVISO_TAREA_REPETIDA -> R.string.aviso_tarea_repetida
     Mensaje.AVISO_RECESO_ELIMINADO -> R.string.aviso_receso_eliminado
+    Mensaje.AVISO_TARJETAS_IMPORTADAS -> R.string.aviso_tarjetas_importadas
+    Mensaje.AVISO_META_DIARIA_CUMPLIDA -> R.string.aviso_meta_diaria_cumplida
     Mensaje.ERROR_NOMBRE_RECESO -> R.string.error_nombre_receso
     Mensaje.ERROR_FECHAS_RECESO -> R.string.error_fechas_receso
     Mensaje.AVISO_OCR_SIN_TEXTO -> R.string.aviso_ocr_sin_texto

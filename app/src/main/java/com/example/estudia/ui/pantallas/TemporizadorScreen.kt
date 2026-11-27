@@ -65,6 +65,16 @@ import com.example.estudia.ui.componentes.TarjetaSeccion
 import com.example.estudia.viewmodel.DURACIONES_TEMPORIZADOR
 import com.example.estudia.viewmodel.TemporizadorUiState
 import com.example.estudia.viewmodel.TemporizadorViewModel
+import android.app.Activity
+import android.app.ActivityManager
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material.icons.outlined.PhonelinkLock
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.runtime.LaunchedEffect
+import com.example.estudia.ui.componentes.DialogoMetaDiaria
+import com.example.estudia.ui.componentes.FilaMetaDiaria
+import com.example.estudia.ui.theme.BloqueNaranja
 
 // Pantalla "Temporizador de estudio" (método Pomodoro): se elige materia y
 // duración, y un anillo muestra el tiempo que falta. Al terminar, la sesión
@@ -77,6 +87,20 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
     val sesion = estado.sesion
     val color = estado.materiaElegida?.let { Color(it.color) } ?: MaterialTheme.colorScheme.primary
     var sonidoElegido by rememberSaveable { mutableStateOf(TipoSonido.NINGUNO) }
+    var elegirMeta by remember { mutableStateOf(false) }
+
+    // "Fijar la app": al pausar o terminar la sesión se suelta sola.
+    var fijada by remember { mutableStateOf(appFijada(context)) }
+    LaunchedEffect(sesion == null || sesion.enPausa) {
+        if (sesion == null || sesion.enPausa) {
+            fijarApp(context, false)
+            fijada = false
+        }
+    }
+    LifecycleResumeEffect(Unit) {
+        fijada = appFijada(context)
+        onPauseOrDispose { }
+    }
 
     // Mientras corre el tiempo, la pantalla no se apaga sola.
     val vista = LocalView.current
@@ -227,6 +251,17 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
                     Text(stringResource(R.string.temporizador_terminar))
                 }
             }
+            if (!sesion.enPausa) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { fijarApp(context, !fijada); fijada = appFijada(context) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                ) {
+                    Icon(if (fijada) Icons.Outlined.LockOpen else Icons.Outlined.PushPin, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(if (fijada) R.string.fijar_app_quitar else R.string.fijar_app))
+                }
+            }
             TextButton(onClick = viewModel::descartar, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text(stringResource(R.string.temporizador_descartar))
             }
@@ -290,20 +325,73 @@ fun TemporizadorScreen(viewModel: TemporizadorViewModel, onVolver: () -> Unit) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        TarjetaSeccion(
-            titulo = stringResource(R.string.temporizador_hoy),
-            icono = Icons.Outlined.Timer,
-            color = MaterialTheme.colorScheme.secondary,
-            detalle = stringResource(R.string.minutos_corto, estado.minutosHoy)
+        // ---------- Avisar si sale de la app ----------
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.temporizador_consejo),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            IconoCircular(Icons.Outlined.PhonelinkLock, Color.White, fondo = BloqueNaranja)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.concentracion_titulo), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    text = stringResource(R.string.concentracion_descripcion),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Switch(checked = estado.avisarAlSalir, onCheckedChange = viewModel::cambiarAvisarAlSalir)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        // ---------- Meta del día (tocar para cambiarla) ----------
+        FilaMetaDiaria(
+            minutosHoy = estado.minutosHoy,
+            meta = estado.metaDiaria,
+            avance = estado.avanceMeta,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .superficieVidrio(RoundedCornerShape(22.dp), borde = false)
+                .clickable(onClickLabel = stringResource(R.string.meta_diaria_cambiar)) { elegirMeta = true }
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        )
+        Text(
+            text = stringResource(R.string.temporizador_consejo),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp)
+        )
+    }
+
+    if (elegirMeta) {
+        DialogoMetaDiaria(
+            meta = estado.metaDiaria,
+            onElegir = { viewModel.cambiarMetaDiaria(it); elegirMeta = false },
+            onCancelar = { elegirMeta = false }
+        )
     }
 }
+
+// Fijar la pantalla de Android (fijar app): mientras está fijada no se
+// puede ir a otra app ni ver notificaciones; se sale con Atrás + Recientes
+// (o el gesto que indique el teléfono). Android pide confirmación la primera vez.
+private fun fijarApp(context: android.content.Context, fijar: Boolean) {
+    val actividad = context as? Activity ?: return
+    val gestor = context.getSystemService(ActivityManager::class.java)
+    val fijada = gestor.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+    runCatching {
+        if (fijar && !fijada) actividad.startLockTask()
+        if (!fijar && fijada) actividad.stopLockTask()
+    }
+}
+
+private fun appFijada(context: android.content.Context): Boolean =
+    context.getSystemService(ActivityManager::class.java).lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
 
 // Anillo con el tiempo que falta en el centro. Se va llenando con el color
 // de la materia a medida que avanza la sesión.

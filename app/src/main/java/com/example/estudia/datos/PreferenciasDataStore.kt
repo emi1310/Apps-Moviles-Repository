@@ -2,6 +2,8 @@ package com.example.estudia.datos
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -21,6 +23,8 @@ private val CLAVE_RECORDATORIOS = booleanPreferencesKey("recordatorios_activos")
 private val CLAVE_TEMA = stringPreferencesKey("tema")
 private val CLAVE_PERMISO_ARCHIVOS = booleanPreferencesKey("permiso_archivos_pedido")
 private val CLAVE_SILENCIAR = booleanPreferencesKey("silenciar_al_estudiar")
+private val CLAVE_META_DIARIA = intPreferencesKey("meta_diaria_minutos")
+private val CLAVE_AVISAR_SALIR = booleanPreferencesKey("avisar_al_salir")
 private val CLAVE_CARPETA_COPIA = stringPreferencesKey("carpeta_copia_automatica")
 private val CLAVE_ULTIMA_COPIA = stringPreferencesKey("ultima_copia_automatica")
 private val CLAVE_CALENDARIO_AUTO = booleanPreferencesKey("calendario_telefono_automatico")
@@ -48,6 +52,30 @@ class PreferenciasDataStore(private val context: Context) {
     // corre el temporizador. Por defecto no: necesita un acceso especial.
     val silenciarAlEstudiar: Flow<Boolean> = context.preferenciasDataStore.data
         .map { preferencias -> preferencias[CLAVE_SILENCIAR] ?: false }
+
+    // Meta de minutos de estudio por día (0 = sin meta).
+    val metaDiariaMinutos: Flow<Int> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[CLAVE_META_DIARIA] ?: 0 }
+
+    suspend fun guardarMetaDiaria(minutos: Int) {
+        context.preferenciasDataStore.edit { preferencias -> preferencias[CLAVE_META_DIARIA] = minutos.coerceAtLeast(0) }
+    }
+
+    // Aviso si sale de la app con el temporizador corriendo (por defecto sí).
+    val avisarAlSalir: Flow<Boolean> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[CLAVE_AVISAR_SALIR] ?: true }
+
+    suspend fun guardarAvisarAlSalir(activo: Boolean) {
+        context.preferenciasDataStore.edit { preferencias -> preferencias[CLAVE_AVISAR_SALIR] = activo }
+    }
+
+    // Mejor tiempo del juego "Unir pares" por materia.
+    fun mejorTiempoPares(materiaId: Int): Flow<Long?> = context.preferenciasDataStore.data
+        .map { preferencias -> preferencias[longPreferencesKey("pares_mejor_$materiaId")] }
+
+    suspend fun guardarMejorTiempoPares(materiaId: Int, millis: Long) {
+        context.preferenciasDataStore.edit { preferencias -> preferencias[longPreferencesKey("pares_mejor_$materiaId")] = millis }
+    }
 
     suspend fun guardarSilenciarAlEstudiar(activo: Boolean) {
         context.preferenciasDataStore.edit { preferencias ->

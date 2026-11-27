@@ -34,6 +34,39 @@ import com.example.estudia.ui.componentes.colorAcentoTexto
 import com.example.estudia.ui.componentes.fondoSuave
 import com.example.estudia.ui.theme.LocalDegradado
 import com.example.estudia.viewmodel.RepasoViewModel
+import com.example.estudia.modelo.ResultadoRespuesta
+import com.example.estudia.ui.componentes.CampoTexto
+import com.example.estudia.ui.componentes.ImagenTarjeta
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+
+// Lo que dice la app de la respuesta escrita: correcta, casi o distinta.
+@Composable
+private fun ResultadoEscrito(resultado: ResultadoRespuesta, escrita: String) {
+    val (texto, color) = when (resultado) {
+        ResultadoRespuesta.CORRECTA -> stringResource(R.string.repaso_correcta) to Color(0xFF00B894)
+        ResultadoRespuesta.CASI -> stringResource(R.string.repaso_casi) to Color(0xFFFDA43C)
+        ResultadoRespuesta.INCORRECTA -> stringResource(R.string.repaso_incorrecta) to MaterialTheme.colorScheme.error
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+        Text(
+            texto,
+            style = MaterialTheme.typography.labelLarge,
+            color = colorAcentoTexto(color),
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(fondoSuave(color))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+        )
+        Text(
+            stringResource(R.string.repaso_escribiste, escrita.trim()),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 6.dp)
+        )
+    }
+}
 
 // Pantalla de repaso de tarjetas: muestra la pregunta; al tocar "Ver
 // respuesta" aparece la respuesta y se elige "La sabía" o "No la sabía".
@@ -86,11 +119,21 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
         }
 
         val color = Color(actual.colorMateria)
-        Text(
-            text = pluralStringResource(R.plurals.repaso_quedan, estado.pendientes.size, estado.pendientes.size),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = pluralStringResource(R.plurals.repaso_quedan, estado.pendientes.size, estado.pendientes.size),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            // Modo "Escribir la respuesta".
+            Text(
+                text = stringResource(R.string.repaso_escribir),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Switch(checked = estado.escribir, onCheckedChange = viewModel::cambiarEscribir)
+        }
 
         // La tarjeta: materia y caja arriba, la pregunta y (si se pidió) la respuesta.
         BloqueColor(color = color) {
@@ -117,19 +160,28 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = actual.tarjeta.pregunta,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                actual.tarjeta.imagen?.let { imagen ->
+                    ImagenTarjeta(imagen, Modifier.fillMaxWidth().padding(bottom = 12.dp), altoMaximo = 260.dp)
+                }
+                if (actual.tarjeta.pregunta.isNotBlank()) {
+                    Text(
+                        text = actual.tarjeta.pregunta,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 AnimatedContent(targetState = estado.mostrandoRespuesta, label = "respuesta") { mostrando ->
                     if (mostrando) {
                         Column {
                             Spacer(modifier = Modifier.height(20.dp))
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(20.dp))
+                            estado.resultado?.let { resultado ->
+                                ResultadoEscrito(resultado, estado.escrita)
+                                Spacer(modifier = Modifier.height(12.dp))
+                            }
                             Text(
                                 text = actual.tarjeta.respuesta,
                                 style = MaterialTheme.typography.titleMedium,
@@ -144,7 +196,26 @@ fun RepasoScreen(viewModel: RepasoViewModel, onVolver: () -> Unit) {
             }
         }
 
-        if (!estado.mostrandoRespuesta) {
+        if (!estado.mostrandoRespuesta && estado.escribir) {
+            CampoTexto(
+                value = estado.escrita,
+                onValueChange = viewModel::escribirRespuesta,
+                label = { Text(stringResource(R.string.repaso_tu_respuesta)) },
+                minLines = 2,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Button(
+                onClick = viewModel::comprobar,
+                enabled = estado.escrita.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            ) {
+                Text(stringResource(R.string.repaso_comprobar), style = MaterialTheme.typography.titleMedium)
+            }
+            TextButton(onClick = viewModel::verRespuesta, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text(stringResource(R.string.repaso_no_se))
+            }
+        } else if (!estado.mostrandoRespuesta) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
