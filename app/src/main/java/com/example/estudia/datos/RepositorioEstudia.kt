@@ -13,6 +13,7 @@ import com.example.estudia.modelo.Fuente
 import com.example.estudia.modelo.MapaMental
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.VersionNota
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.SesionEstudio
@@ -136,7 +137,10 @@ interface RepositorioEstudia {
     // ---------- Notas ----------
 
     suspend fun agregarNota(materiaId: Int, titulo: String, contenido: String)
+    // Si cambia el título o el texto, lo anterior queda en el historial.
     suspend fun actualizarNota(materiaId: Int, nota: Nota)
+    // Historial de la nota (lo más nuevo primero).
+    fun versionesDeNota(notaId: Int): Flow<List<VersionNota>>
     // Borra la nota (y las filas de sus adjuntos) pero deja los archivos en
     // disco, por si el usuario toca "Deshacer". Ver borrarArchivosDelDisco.
     suspend fun eliminarNota(materiaId: Int, nota: Nota)

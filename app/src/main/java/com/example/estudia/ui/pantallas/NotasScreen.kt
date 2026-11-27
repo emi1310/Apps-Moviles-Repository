@@ -27,6 +27,9 @@ import com.example.estudia.ui.componentes.Deslizable
 import com.example.estudia.ui.componentes.EncabezadoPantalla
 import com.example.estudia.ui.componentes.EstadoVacio
 import com.example.estudia.ui.componentes.DialogoNota
+import com.example.estudia.ui.componentes.DialogoColorNota
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.PastillaFiltro
 import com.example.estudia.ui.componentes.RecolectarAvisos
@@ -37,7 +40,8 @@ import com.example.estudia.viewmodel.NotaConMateria
 import com.example.estudia.viewmodel.NotasViewModel
 
 // Pantalla "Mis Notas": buscador, filtros Todas / Recientes / Favoritas y
-// la lista de notas, cada una con sus archivos adjuntos.
+// la lista de notas, cada una con sus archivos adjuntos. Debajo de los
+// filtros, las etiquetas (#palabra) de las notas; las fijadas van arriba.
 @Composable
 fun NotasScreen(
     viewModel: NotasViewModel,
@@ -62,6 +66,7 @@ fun NotasScreen(
 
     var crearNota by rememberSaveable { mutableStateOf(false) }
     var notaParaEditar by remember { mutableStateOf<NotaConMateria?>(null) }
+    var notaParaColor by remember { mutableStateOf<NotaConMateria?>(null) }
     var idNotaParaAdjuntar by rememberSaveable { mutableStateOf<Int?>(null) }
 
     // Selector de archivos: solo se abre con el permiso de fotos y archivos
@@ -109,6 +114,17 @@ fun NotasScreen(
                         }
                     }
                 }
+                // Etiquetas (#palabra) de las notas: tocar una muestra solo esas notas.
+                if (estado.etiquetas.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 8.dp, bottom = 4.dp)
+                    ) {
+                        estado.etiquetas.forEach { etiqueta ->
+                            PastillaFiltro("#$etiqueta", elegida = estado.etiqueta == etiqueta) { viewModel.elegirEtiqueta(etiqueta) }
+                        }
+                    }
+                }
                 if (estado.notas.isEmpty() && !estado.cargando) {
                     if (estado.busqueda.isNotBlank()) {
                         EstadoVacio(Icons.Outlined.SearchOff, stringResource(R.string.sin_resultados), stringResource(R.string.sin_resultados_sugerencia))
@@ -149,7 +165,9 @@ fun NotasScreen(
                         alEliminarArchivo = { viewModel.eliminarArchivo(item, it) },
                         alPasarATexto = { viewModel.pasarATexto(item, it) },
                         alExportarPdf = { viewModel.exportarPdf(item) },
-                        alAbrir = { onAbrirNota(item.nota.id) }
+                        alAbrir = { onAbrirNota(item.nota.id) },
+                        alFijar = { viewModel.alternarFijada(item) },
+                        alCambiarColor = { notaParaColor = item }
                     )
                 }
             }
@@ -180,6 +198,18 @@ fun NotasScreen(
                 notaParaEditar = null
             },
             onCancelar = { notaParaEditar = null }
+        )
+    }
+
+    notaParaColor?.let { item ->
+        DialogoColorNota(
+            actual = item.nota.color,
+            colorMateria = item.colorMateria,
+            onElegir = {
+                viewModel.cambiarColor(item, it)
+                notaParaColor = null
+            },
+            onCancelar = { notaParaColor = null }
         )
     }
 }

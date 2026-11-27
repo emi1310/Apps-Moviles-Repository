@@ -279,6 +279,10 @@
         <item>¿Hay plantillas para resúmenes o esquemas?</item>
         <item>¿Cómo hago un mapa mental?</item>
         <item>¿Qué hace el Asistente IA?</item>
+        <item>¿Puedo hacer una lista para marcar dentro de una nota?</item>
+        <item>¿Cómo agrupo mis notas o dejo una arriba?</item>
+        <item>¿Puedo grabar la clase?</item>
+        <item>¿Puedo volver a una versión anterior de una nota?</item>
     </string-array>
     <string-array name="ayuda_respuestas">
         <item>En Materias, tocá una materia para expandirla y elegí \"Agregar tarea\". Podés ponerle una fecha límite opcional; si vence, se muestra en rojo.</item>
@@ -320,9 +324,13 @@
         <item>Sí: al crear o editar un evento elegí Presencial (y escribí el aula o lugar, si querés) o Virtual (y pegá el link de Meet, Zoom o el que usen). En el calendario aparece un botón \"Unirse\" que abre el link.</item>
         <item>En el Calendario tocá el botón de los feriados, arriba. Si nos dejás leer el calendario del teléfono, los traemos de tu Google Calendar (\"Feriados en Argentina\"); si no, los bajamos de internet. Los feriados aparecen en rojo, ese día las clases dicen \"Feriado: no hay clase\" y no cuentan en la asistencia.</item>
         <item>En Materias, arriba, tocá \"Bibliografía\" y después \"Nueva fuente\". Elegí si es libro, artículo, web o apunte y cargá título, autores (Apellido, Inicial.; separados con punto y coma), año y editorial: mientras escribís ves la cita en normas APA 7. \"Copiar cita\" la deja lista para pegar en tu trabajo, y en el menú ⋮ está la versión corta para el texto, como (Cormen et al., 2009).</item>
-        <item>Sí: al crear una nota elegí una plantilla: Resumen Cornell, Esquema, Cuadro comparativo o Línea de tiempo. El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
+        <item>Sí: al crear una nota elegí una plantilla: Resumen de clase, Resumen Cornell, Esquema, Cuadro comparativo, Línea de tiempo o Guía de ejercicios (una casilla por ejercicio). El contenido se llena con la estructura para que la completes, y si ya habías escrito algo no se borra. Con \"Citar una fuente de la bibliografía\" sumás la cita de un libro o apunte al texto de la nota.</item>
         <item>En Notas, arriba, tocá \"Mapas mentales\" y \"Nuevo mapa\", y escribí el tema central. Tocá una idea y elegí \"Nueva idea\" para sumarle una rama (se ubica sola). Arrastrá las ideas para acomodarlas, mové el mapa con un dedo y acercalo con dos. Cada rama tiene su color. Con \"Compartir como imagen\" lo mandás por WhatsApp o lo guardás en Drive.</item>
         <item>Es la última sección del dock (el ícono de destellos). Puede resumir una nota, explicarte un tema paso a paso, hacerte preguntas para autoevaluarte y crear tarjetas de repaso desde una nota (las revisás antes de guardarlas). También podés preguntarle lo que quieras en el chat (por ejemplo, qué clases tenés esta semana o qué entregas vencen: conoce tus materias, horarios, agenda, tareas, finales y los títulos de tus notas) y guardar una respuesta como nota. Además arma un plan de estudio para un examen (lo guarda como bloques en el calendario), crea un mapa mental desde una nota, pasa a texto la foto de un apunte, te toma un simulacro de examen (al terminarlo te da la nota, guarda los temas flojos y los pasa a tarjetas), lee PDFs y fotos de varias hojas, y con una foto de tu horario carga tus clases semanales. La respuesta se va escribiendo en vivo (podés cortarla), muestra negritas, listas y fórmulas, y le podés dar instrucciones para hacer cosas en la app: crear, cambiar, completar o borrar tareas, eventos, notas y materias, agregar temas al temario, crear tarjetas o anotar una calificación (por ejemplo \"anotame el TP para el viernes\", \"pasá el parcial al martes\" o \"borrá la nota de derivadas\"). Cada cosa aparece en una tarjeta y se hace cuando confirmás; si son varias, \"Confirmar todas\". Lo que se borra se puede deshacer. Si le preguntás algo que no está en la app, busca en internet con Google y te muestra las páginas que usó. Busca en el contenido de tus notas y te dice de cuál sacó la respuesta. Las charlas se guardan solas (botón del reloj, arriba) y, si pasaron sesiones del plan de estudio, te ofrece reacomodarlas. Te ayuda a entender, no te hace la tarea. Usa Gemini de Google con tu propia clave gratis: tocá la llave de arriba, sacá la clave en Google AI Studio con tu cuenta de Google y pegala. Se guarda cifrada solo para tu usuario. Si no querés conectar nada, el botón + del dock (en el Asistente) abre la app de Gemini con tu cuenta de Google, aunque esa no ve tus notas. Necesita internet, puede equivocarse y lo que mandás lo procesa Google, así que no mandes datos personales.</item>
+        <item>Sí: escribí una línea que empiece con \"- [ ]\" (o tocá \"Agregar casilla\" al editar la nota). En la nota abierta, cada casilla se marca y se desmarca tocándola, y la tarjeta de la lista muestra cuántas llevás hechas.</item>
+        <item>Escribí una etiqueta con # en el título o el texto, por ejemplo #parcial o #importante. Arriba de la lista de Notas aparecen todas tus etiquetas: tocá una para ver solo esas notas (y de nuevo para verlas todas). Para dejar una nota arriba de todo, usá el pin de la nota abierta o \"Fijar arriba\" en su menú ⋮; ahí también está \"Cambiar color\" para darle un color propio.</item>
+        <item>Sí: en la nota abierta, menú ⋮ → \"Grabar audio\". Mientras grabás podés pausar y tocar \"Marcar momento\" cuando digan algo importante. Al guardar, el audio queda adjunto a la nota (se escucha tocándolo) y las marcas se anotan al final del texto. Entran unos 80 minutos por grabación.</item>
+        <item>Sí: en la nota abierta, menú ⋮ → \"Historial de cambios\". Cada vez que cambiás el título o el texto, cómo estaba antes queda guardado (las últimas 20 versiones). Tocá una para verla y \"Volver a esta versión\" para recuperarla; lo que tenías también queda en el historial.</item>
     </string-array>
 
     <!-- Retoques visuales -->
@@ -925,6 +933,41 @@
     <string name="plantilla_texto_esquema">"1. Tema principal\n    1.1 \n    1.2 \n2. \n    2.1 \n    2.2 \n3. \n    3.1 \n"</string>
     <string name="plantilla_texto_comparativo">"Comparación: ____ vs ____\n\n▸ Qué es\n    A: \n    B: \n\n▸ Características\n    A: \n    B: \n\n▸ Ventajas y desventajas\n    A: \n    B: \n\n▸ En qué se parecen\n• \n\n▸ Conclusión\n"</string>
     <string name="plantilla_texto_linea_tiempo">"▸ Fecha — Hecho\n    Por qué importa: \n\n▸ Fecha — Hecho\n    Por qué importa: \n\n▸ Fecha — Hecho\n    Por qué importa: \n"</string>
+    <string name="plantilla_resumen_clase">Resumen de clase</string>
+    <string name="plantilla_guia_ejercicios">Guía de ejercicios</string>
+    <string name="plantilla_texto_resumen_clase">"Clase del ___ · Tema: \n\n▸ LO MÁS IMPORTANTE\n• \n• \n\n▸ EJEMPLOS QUE DIO\n• \n\n▸ DUDAS PARA PREGUNTAR\n- [ ] \n\n▸ PARA LA PRÓXIMA\n- [ ] \n"</string>
+    <string name="plantilla_texto_guia_ejercicios">"Guía Nº ___\n\n- [ ] Ejercicio 1\n- [ ] Ejercicio 2\n- [ ] Ejercicio 3\n- [ ] Ejercicio 4\n- [ ] Ejercicio 5\n\n▸ DUDAS\n• \n"</string>
+    <!-- Notas: casillas, etiquetas, fijar, color, historial y grabar audio -->
+    <string name="nota_agregar_casilla">Agregar casilla</string>
+    <string name="nota_ayuda_formato">Escribí #etiqueta para agrupar notas y \"- [ ]\" para una casilla que se marca tocándola.</string>
+    <string name="nota_casillas">%1$d de %2$d hechas</string>
+    <string name="nota_fijar">Fijar arriba</string>
+    <string name="nota_desfijar">Desfijar</string>
+    <string name="nota_fijada">Nota fijada</string>
+    <string name="nota_color">Cambiar color</string>
+    <string name="nota_color_titulo">Color de la nota</string>
+    <string name="nota_color_materia">El de la materia</string>
+    <string name="nota_color_elegir">Color %1$d</string>
+    <string name="nota_historial">Historial de cambios</string>
+    <string name="nota_historial_vacio">Todavía no hay versiones anteriores. Cada vez que cambies el título o el texto, cómo estaba antes queda guardado acá (las últimas 20).</string>
+    <string name="nota_historial_restaurar">Volver a esta versión</string>
+    <string name="nota_historial_cerrar">Cerrar</string>
+    <string name="nota_historial_ver">Ver versión del %1$s</string>
+    <string name="nota_etiqueta_filtrar">Ver las notas con #%1$s</string>
+    <string name="nota_etiquetas_titulo">Etiquetas</string>
+    <string name="grabar_audio">Grabar audio</string>
+    <string name="grabacion_titulo">Grabando la clase</string>
+    <string name="grabacion_explicacion">Grabá la clase y tocá \"Marcar momento\" cuando digan algo importante: el audio queda adjunto a la nota y las marcas, anotadas en el texto.</string>
+    <string name="grabacion_marcar">Marcar momento</string>
+    <string name="grabacion_marcas">Marcas: %1$s</string>
+    <string name="grabacion_guardar">Guardar</string>
+    <string name="grabacion_descartar">Descartar</string>
+    <string name="grabacion_pausar">Pausar</string>
+    <string name="grabacion_seguir">Seguir</string>
+    <string name="grabacion_sin_permiso">Sin el permiso del micrófono no se puede grabar. Podés darlo en Ajustes.</string>
+    <string name="grabacion_error">No se pudo grabar el audio</string>
+    <string name="aviso_version_restaurada">La nota volvió a la versión anterior</string>
+    <string name="aviso_grabacion_guardada">Se guardó la grabación en la nota</string>
     <string name="aviso_final_aprobado_plan">¡Felicitaciones! %1$s quedó aprobada en Mi carrera</string>
     <string name="notificacion_finales_titulo">Finales</string>
     <string name="notificacion_final_hoy">Hoy rendís %1$s. ¡Éxitos!</string>

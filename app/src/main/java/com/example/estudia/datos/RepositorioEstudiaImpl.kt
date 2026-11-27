@@ -3,6 +3,7 @@ package com.example.estudia.datos
 import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import com.example.estudia.datos.local.ArchivoDao
+import com.example.estudia.datos.local.NotaVersionEntity
 import com.example.estudia.datos.local.FeriadoDao
 import com.example.estudia.datos.local.AsistenciaEntity
 import com.example.estudia.datos.local.CarreraDao
@@ -43,6 +44,9 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.VersionNota
+import com.example.estudia.modelo.cambioParaHistorial
+import com.example.estudia.modelo.MAXIMO_VERSIONES_NOTA
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.SesionEstudio
@@ -363,8 +367,21 @@ class RepositorioEstudiaImpl(
     }
 
     override suspend fun actualizarNota(materiaId: Int, nota: Nota) {
+        // Antes de pisarla, si cambió el título o el texto, se guarda cómo era.
+        val anterior = notaDao.obtener(nota.id)
+        if (anterior != null && cambioParaHistorial(anterior.titulo, anterior.contenido, nota.titulo, nota.contenido)) {
+            notaDao.insertarVersion(
+                NotaVersionEntity(notaId = nota.id, titulo = anterior.titulo, contenido = anterior.contenido, fecha = System.currentTimeMillis())
+            )
+            notaDao.recortarVersiones(nota.id, MAXIMO_VERSIONES_NOTA)
+        }
         notaDao.actualizar(nota.aEntidad(materiaId))
     }
+
+    override fun versionesDeNota(notaId: Int): Flow<List<VersionNota>> =
+        notaDao.versiones(notaId).map { lista ->
+            lista.map { VersionNota(it.id, it.titulo, it.contenido, LocalDateTime.ofInstant(Instant.ofEpochMilli(it.fecha), ZoneId.systemDefault())) }
+        }
 
     override suspend fun eliminarNota(materiaId: Int, nota: Nota) {
         notaDao.eliminar(nota.aEntidad(materiaId))

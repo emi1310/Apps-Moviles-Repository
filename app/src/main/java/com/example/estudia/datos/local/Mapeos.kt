@@ -139,7 +139,9 @@ fun NotaEntity.aModelo(archivos: List<Archivo> = emptyList()): Nota = Nota(
     contenido = contenido,
     fechaCreacion = fechaCreacion,
     esFavorita = esFavorita,
-    archivos = archivos
+    archivos = archivos,
+    fijada = fijada,
+    color = color
 )
 
 fun ArchivoEntity.aModelo(): Archivo = Archivo(
@@ -200,7 +202,9 @@ fun Nota.aEntidad(materiaId: Int): NotaEntity = NotaEntity(
     titulo = titulo,
     contenido = contenido,
     fechaCreacion = fechaCreacion,
-    esFavorita = esFavorita
+    esFavorita = esFavorita,
+    fijada = fijada,
+    color = color
 )
 
 fun Archivo.aEntidad(materiaId: Int): ArchivoEntity = ArchivoEntity(

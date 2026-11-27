@@ -26,6 +26,8 @@ import com.example.estudia.modelo.Evento
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.MetodoAuth
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.VersionNota
+import com.example.estudia.modelo.cambioParaHistorial
 import com.example.estudia.modelo.PreferenciaTema
 import com.example.estudia.modelo.Prioridad
 import com.example.estudia.modelo.SesionEstudio
@@ -253,8 +255,19 @@ class RepositorioFalso(
     override suspend fun agregarNota(materiaId: Int, titulo: String, contenido: String) =
         cambiarMateria(materiaId) { it.copy(notas = it.notas + Nota(siguienteId++, titulo, contenido, LocalDate.now())) }
 
-    override suspend fun actualizarNota(materiaId: Int, nota: Nota) =
+    // Historial de cada nota (lo más nuevo primero), como en el repositorio real.
+    val versiones = MutableStateFlow<Map<Int, List<VersionNota>>>(emptyMap())
+
+    override suspend fun actualizarNota(materiaId: Int, nota: Nota) {
+        val anterior = usuario.value?.materias?.flatMap { it.notas }?.firstOrNull { it.id == nota.id }
+        if (anterior != null && cambioParaHistorial(anterior.titulo, anterior.contenido, nota.titulo, nota.contenido)) {
+            val version = VersionNota(siguienteId++, anterior.titulo, anterior.contenido, java.time.LocalDateTime.now())
+            versiones.value = versiones.value + (nota.id to (listOf(version) + versiones.value[nota.id].orEmpty()))
+        }
         cambiarMateria(materiaId) { m -> m.copy(notas = m.notas.map { if (it.id == nota.id) nota else it }) }
+    }
+
+    override fun versionesDeNota(notaId: Int): Flow<List<VersionNota>> = versiones.map { it[notaId].orEmpty() }
 
     override suspend fun eliminarNota(materiaId: Int, nota: Nota) =
         cambiarMateria(materiaId) { m -> m.copy(notas = m.notas.filter { it.id != nota.id }) }

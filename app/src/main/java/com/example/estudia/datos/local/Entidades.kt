@@ -214,7 +214,9 @@ data class NotaEntity(
     val titulo: String,
     val contenido: String,
     val fechaCreacion: LocalDate,
-    val esFavorita: Boolean = false
+    val esFavorita: Boolean = false,
+    val fijada: Boolean = false,
+    val color: Long? = null
 )
 
 // Archivo adjunto a una materia o a una nota. En la base solo se guardan
@@ -435,4 +437,27 @@ data class FeriadoEntity(
     @PrimaryKey
     val fecha: LocalDate,
     val nombre: String
+)
+
+// Historial de una nota: cómo era antes de cada cambio de título o texto.
+// fecha es epoch en milisegundos. Se borra junto con la nota (CASCADE).
+@Entity(
+    tableName = "nota_versiones",
+    foreignKeys = [
+        ForeignKey(
+            entity = NotaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["notaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("notaId")]
+)
+data class NotaVersionEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val notaId: Int,
+    val titulo: String,
+    val contenido: String,
+    val fecha: Long
 )

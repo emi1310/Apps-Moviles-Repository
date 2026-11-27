@@ -14,6 +14,7 @@ import com.example.estudia.datos.local.MIGRACION_8_9
 import com.example.estudia.datos.local.MIGRACION_9_10
 import com.example.estudia.datos.local.MIGRACION_10_11
 import com.example.estudia.datos.local.MIGRACION_11_12
+import com.example.estudia.datos.local.MIGRACION_12_13
 import com.example.estudia.util.Contrasenas
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -344,6 +345,34 @@ class MigracionesTest {
         db.query("SELECT titulo FROM mapas").use { c ->
             c.moveToFirst()
             assertEquals("Newton", c.getString(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrar12a13AgregaFijadaColorEHistorial() {
+        ayudante.createDatabase(nombreBase, 12).apply {
+            execSQL("INSERT INTO usuarios (id, nombreUsuario, contrasenaHash, metodoAuth, nombre) VALUES (1, 'ana', 'x', 'LOCAL', 'Ana')")
+            execSQL("INSERT INTO materias (id, usuarioId, nombre, color, archivada) VALUES (1, 1, 'Física', 123, 0)")
+            execSQL("INSERT INTO notas (id, materiaId, titulo, contenido, fechaCreacion, esFavorita) VALUES (1, 1, 'Ondas', 'texto', 20000, 0)")
+            close()
+        }
+
+        val db = ayudante.runMigrationsAndValidate(nombreBase, 13, true, MIGRACION_12_13)
+
+        // La nota que ya estaba queda sin fijar y con el color de la materia.
+        db.query("SELECT titulo, fijada, color FROM notas").use { c ->
+            c.moveToFirst()
+            assertEquals("Ondas", c.getString(0))
+            assertEquals(0, c.getInt(1))
+            assertTrue(c.isNull(2))
+        }
+        db.execSQL("INSERT INTO nota_versiones (notaId, titulo, contenido, fecha) VALUES (1, 'Ondas viejas', '', 0)")
+        // Si se borra la nota, se borra su historial.
+        db.execSQL("DELETE FROM notas WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM nota_versiones").use { c ->
+            c.moveToFirst()
+            assertEquals(0, c.getInt(0))
         }
         db.close()
     }

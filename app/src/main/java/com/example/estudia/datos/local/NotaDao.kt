@@ -33,4 +33,26 @@ interface NotaDao {
         """
     )
     fun buscar(usuarioId: Int, texto: String): Flow<List<NotaConMateriaFila>>
+
+    @Query("SELECT * FROM notas WHERE id = :id")
+    suspend fun obtener(id: Int): NotaEntity?
+
+    // ---------- Historial de versiones ----------
+
+    @Insert
+    suspend fun insertarVersion(version: NotaVersionEntity)
+
+    // De la más nueva a la más vieja.
+    @Query("SELECT * FROM nota_versiones WHERE notaId = :notaId ORDER BY fecha DESC, id DESC")
+    fun versiones(notaId: Int): Flow<List<NotaVersionEntity>>
+
+    // Deja solo las últimas "dejar" versiones de la nota.
+    @Query(
+        """
+        DELETE FROM nota_versiones WHERE notaId = :notaId AND id NOT IN (
+            SELECT id FROM nota_versiones WHERE notaId = :notaId ORDER BY fecha DESC, id DESC LIMIT :dejar
+        )
+        """
+    )
+    suspend fun recortarVersiones(notaId: Int, dejar: Int)
 }

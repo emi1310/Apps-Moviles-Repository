@@ -4,10 +4,13 @@
      - cacheDir/fotos: la foto que saca la app de cámara. Es temporal: la
        app la copia a filesDir/archivos y la borra la próxima vez.
      - cacheDir/pdf: las notas exportadas a PDF para compartirlas.
-     - cacheDir/mapas: los mapas mentales exportados como imagen. -->
+     - cacheDir/mapas: los mapas mentales exportados como imagen.
+     - cacheDir/grabaciones: el audio que se graba para una nota (se copia
+       a filesDir/archivos). -->
 <paths>
     <files-path name="archivos" path="archivos/" />
     <cache-path name="fotos" path="fotos/" />
     <cache-path name="pdf" path="pdf/" />
     <cache-path name="mapas" path="mapas/" />
+    <cache-path name="grabaciones" path="grabaciones/" />
 </paths>

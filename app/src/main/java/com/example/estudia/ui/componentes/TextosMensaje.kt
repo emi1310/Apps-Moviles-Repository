@@ -35,6 +35,8 @@ fun Mensaje.texto(): Int = when (this) {
     Mensaje.AVISO_CALENDARIO_ERROR -> R.string.aviso_calendario_error
     Mensaje.AVISO_CALENDARIO_SINCRONIZADO -> R.string.aviso_calendario_sincronizado
     Mensaje.AVISO_OCR_AGREGADO -> R.string.aviso_ocr_agregado
+    Mensaje.AVISO_VERSION_RESTAURADA -> R.string.aviso_version_restaurada
+    Mensaje.AVISO_GRABACION_GUARDADA -> R.string.aviso_grabacion_guardada
     Mensaje.AVISO_OCR_SIN_TEXTO -> R.string.aviso_ocr_sin_texto
     Mensaje.AVISO_OCR_ERROR -> R.string.aviso_ocr_error
     Mensaje.AVISO_COPIA_GUARDADA -> R.string.aviso_copia_guardada

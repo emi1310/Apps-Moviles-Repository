@@ -248,6 +248,8 @@ private fun materiaAJson(m: Materia) = JSONObject()
             .put("contenido", n.contenido)
             .put("fechaCreacion", n.fechaCreacion.toString())
             .put("esFavorita", n.esFavorita)
+            .put("fijada", n.fijada)
+            .apply { n.color?.let { put("color", it) } }
     }))
     .put("archivos", JSONArray(m.todosLosArchivos().map { a ->
         JSONObject()
@@ -397,6 +399,9 @@ private fun jsonAMateria(j: JSONObject): Materia {
                 contenido = n.getString("contenido"),
                 fechaCreacion = LocalDate.parse(n.getString("fechaCreacion")),
                 esFavorita = n.getBoolean("esFavorita"),
+                // Las copias viejas no traen estos dos.
+                fijada = n.optBoolean("fijada", false),
+                color = if (n.has("color")) n.getLong("color") else null,
                 archivos = archivos.filter { it.notaId == idNota }
             )
         },

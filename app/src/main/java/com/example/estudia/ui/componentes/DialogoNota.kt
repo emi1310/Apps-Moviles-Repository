@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.StickyNote2
@@ -32,6 +33,7 @@ import com.example.estudia.modelo.Fuente
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Nota
 import com.example.estudia.modelo.PlantillaNota
+import com.example.estudia.modelo.agregarCasilla
 import com.example.estudia.modelo.agregarCita
 import com.example.estudia.modelo.aplicarPlantilla
 import com.example.estudia.modelo.citaEnTexto
@@ -114,6 +116,19 @@ fun DialogoNota(
                 }
             }
         )
+        // Casillas y etiquetas: se escriben en el texto ("- [ ]" y #palabra).
+        BotonSuave(
+            stringResource(R.string.nota_agregar_casilla),
+            Icons.Outlined.CheckBox,
+            MaterialTheme.colorScheme.primary,
+            { contenido = agregarCasilla(contenido) },
+            Modifier.fillMaxWidth()
+        )
+        Text(
+            stringResource(R.string.nota_ayuda_formato),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         if (fuentes.isNotEmpty()) {
             val deLaMateria = (materia?.nombre ?: materiaDeLaNota)?.trim()
             val ordenadas = fuentes.sortedByDescending { it.materia.trim().equals(deLaMateria, ignoreCase = true) }
@@ -164,6 +179,8 @@ private fun nombrePlantilla(plantilla: PlantillaNota): String = stringResource(
         PlantillaNota.ESQUEMA -> R.string.plantilla_esquema
         PlantillaNota.COMPARATIVO -> R.string.plantilla_comparativo
         PlantillaNota.LINEA_TIEMPO -> R.string.plantilla_linea_tiempo
+        PlantillaNota.RESUMEN_CLASE -> R.string.plantilla_resumen_clase
+        PlantillaNota.GUIA_EJERCICIOS -> R.string.plantilla_guia_ejercicios
     }
 )
 
@@ -173,5 +190,7 @@ private fun textosPlantillas(): Map<PlantillaNota, String> = mapOf(
     PlantillaNota.CORNELL to stringResource(R.string.plantilla_texto_cornell),
     PlantillaNota.ESQUEMA to stringResource(R.string.plantilla_texto_esquema),
     PlantillaNota.COMPARATIVO to stringResource(R.string.plantilla_texto_comparativo),
-    PlantillaNota.LINEA_TIEMPO to stringResource(R.string.plantilla_texto_linea_tiempo)
+    PlantillaNota.LINEA_TIEMPO to stringResource(R.string.plantilla_texto_linea_tiempo),
+    PlantillaNota.RESUMEN_CLASE to stringResource(R.string.plantilla_texto_resumen_clase),
+    PlantillaNota.GUIA_EJERCICIOS to stringResource(R.string.plantilla_texto_guia_ejercicios)
 )

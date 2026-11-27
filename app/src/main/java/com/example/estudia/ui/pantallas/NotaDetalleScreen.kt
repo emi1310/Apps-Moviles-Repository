@@ -31,7 +31,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Notes
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.CheckBox
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -71,6 +77,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.estudia.R
 import com.example.estudia.ui.componentes.DialogoNota
+import com.example.estudia.ui.componentes.DialogoColorNota
+import com.example.estudia.ui.componentes.DialogoHistorialNota
+import com.example.estudia.ui.componentes.PastillaEtiqueta
+import com.example.estudia.ui.componentes.TextoNotaConCasillas
+import com.example.estudia.ui.componentes.grabadoraDeAudio
+import com.example.estudia.modelo.etiquetas
+import com.example.estudia.modelo.progresoCasillas
 import com.example.estudia.ui.componentes.ListaArchivos
 import com.example.estudia.ui.componentes.LocalAvisos
 import com.example.estudia.ui.componentes.MenuOpciones
@@ -90,8 +103,10 @@ import com.example.estudia.viewmodel.NotasViewModel
 
 // Una nota abierta: la materia, el título, cuándo se creó, cuánto texto
 // tiene, el texto completo (se puede seleccionar y copiar) y los adjuntos.
-// Arriba están la estrella y el menú (adjuntar, foto, PDF, copiar, compartir,
-// eliminar) y abajo el botón Editar. Usa el mismo ViewModel que la lista de
+// Arriba están fijar, la estrella y el menú (adjuntar, foto, grabar audio,
+// color, historial, PDF, copiar, compartir, eliminar). Las casillas del texto
+// se marcan tocándolas y las etiquetas llevan a la lista filtrada. Abajo
+// está el botón Editar. Usa el mismo ViewModel que la lista de
 // notas, así cualquier cambio se ve en los dos lados.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -111,6 +126,9 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
     val textoCopiado = stringResource(R.string.nota_texto_copiado)
     val tituloCompartir = stringResource(R.string.nota_compartir_texto)
     var editando by rememberSaveable { mutableStateOf(false) }
+    var eligiendoColor by rememberSaveable { mutableStateOf(false) }
+    var viendoHistorial by rememberSaveable { mutableStateOf(false) }
+    val grabar = grabadoraDeAudio { uri, cuando, marcas -> viewModel.guardarGrabacion(item, uri, cuando, marcas) }
 
     val permisoArchivosPedido by viewModel.permisoArchivosPedido.collectAsStateWithLifecycle()
     val elegirArchivo = selectorDeArchivos(permisoArchivosPedido, viewModel::marcarPermisoArchivosPedido) { uri ->
@@ -119,7 +137,9 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
     val sacarFoto = camaraDeFotos { uri -> viewModel.adjuntarArchivo(item, uri) }
 
     val nota = item.nota
-    val color = Color(item.colorMateria)
+    val color = Color(nota.color ?: item.colorMateria)
+    val etiquetas = remember(nota.titulo, nota.contenido) { nota.etiquetas }
+    val (hechas, casillas) = remember(nota.contenido) { progresoCasillas(nota.contenido) }
     val acento = colorAcentoTexto(color)
     val palabras = remember(nota.contenido) { nota.contenido.split(Regex("\\s+")).count { it.isNotBlank() } }
     val minutosLectura = ((palabras + 199) / 200).coerceAtLeast(1)
@@ -145,6 +165,13 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.volver))
                 }
                 Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = { viewModel.alternarFijada(item) }) {
+                    Icon(
+                        if (nota.fijada) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                        contentDescription = stringResource(if (nota.fijada) R.string.nota_desfijar else R.string.nota_fijar),
+                        tint = if (nota.fijada) acento else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 IconButton(onClick = { viewModel.alternarFavorita(item) }) {
                     Icon(
                         if (nota.esFavorita) Icons.Filled.Star else Icons.Outlined.StarBorder,
@@ -168,6 +195,9 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
                         },
                         OpcionMenu(stringResource(R.string.adjuntar_archivo), Icons.Outlined.AttachFile, alTocar = elegirArchivo),
                         OpcionMenu(stringResource(R.string.foto_sacar), Icons.Outlined.PhotoCamera, alTocar = sacarFoto),
+                        OpcionMenu(stringResource(R.string.grabar_audio), Icons.Outlined.Mic, alTocar = grabar),
+                        OpcionMenu(stringResource(R.string.nota_color), Icons.Outlined.Palette) { eligiendoColor = true },
+                        OpcionMenu(stringResource(R.string.nota_historial), Icons.Outlined.History) { viendoHistorial = true },
                         OpcionMenu(stringResource(R.string.exportar_pdf), Icons.Outlined.PictureAsPdf) { viewModel.exportarPdf(item) },
                         OpcionMenu(stringResource(R.string.eliminar), Icons.Outlined.Delete, destructiva = true) {
                             // Primero se vuelve: el aviso con "Deshacer" sale en la lista.
@@ -206,6 +236,19 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
                 Dato(Icons.AutoMirrored.Outlined.Notes, pluralStringResource(R.plurals.nota_palabras, palabras, palabras), acento, color)
                 if (palabras > 0) Dato(Icons.Outlined.Schedule, stringResource(R.string.nota_minutos_lectura, minutosLectura), acento, color)
                 if (nota.archivos.isNotEmpty()) Dato(Icons.Outlined.AttachFile, pluralStringResource(R.plurals.nota_adjuntos, nota.archivos.size, nota.archivos.size), acento, color)
+                if (casillas > 0) Dato(Icons.Outlined.CheckBox, stringResource(R.string.nota_casillas, hechas, casillas), acento, color)
+            }
+            // Etiquetas: tocar una vuelve a la lista mostrando solo esas notas.
+            if (etiquetas.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                    etiquetas.forEach { etiqueta ->
+                        PastillaEtiqueta(etiqueta, color) {
+                            viewModel.filtrarPorEtiqueta(etiqueta)
+                            onVolver()
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -223,12 +266,8 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    SelectionContainer {
-                        Text(
-                            text = nota.contenido,
-                            style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp)
-                        )
-                    }
+                    // Las casillas ("- [ ]") se marcan tocándolas.
+                    TextoNotaConCasillas(nota.contenido, acento) { linea -> viewModel.alternarCasilla(item, linea) }
                 }
             }
 
@@ -270,6 +309,30 @@ fun NotaDetalleScreen(notaId: Int, viewModel: NotasViewModel, onVolver: () -> Un
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.editar), color = Color.White, style = MaterialTheme.typography.labelLarge)
         }
+    }
+
+    if (eligiendoColor) {
+        DialogoColorNota(
+            actual = nota.color,
+            colorMateria = item.colorMateria,
+            onElegir = {
+                viewModel.cambiarColor(item, it)
+                eligiendoColor = false
+            },
+            onCancelar = { eligiendoColor = false }
+        )
+    }
+
+    if (viendoHistorial) {
+        val versiones by remember(nota.id) { viewModel.versiones(nota.id) }.collectAsStateWithLifecycle(emptyList())
+        DialogoHistorialNota(
+            versiones = versiones,
+            onRestaurar = {
+                viewModel.restaurarVersion(item, it)
+                viendoHistorial = false
+            },
+            onCerrar = { viendoHistorial = false }
+        )
     }
 
     if (editando) {

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.TextFields
@@ -65,6 +66,7 @@ fun ListaArchivos(
                     imageVector = when {
                         archivo.esImagen -> Icons.Outlined.Image
                         archivo.esPdf -> Icons.Outlined.PictureAsPdf
+                        archivo.tipoMime.startsWith("audio/") -> Icons.Outlined.GraphicEq
                         else -> Icons.AutoMirrored.Outlined.InsertDriveFile
                     },
                     contentDescription = null,

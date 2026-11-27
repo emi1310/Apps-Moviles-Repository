@@ -23,6 +23,8 @@
          uses-feature con required="false": la app se puede instalar en
          teléfonos sin cámara (el botón avisa que no hay cámara). -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Grabar audio (la clase) para adjuntarlo a una nota. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />

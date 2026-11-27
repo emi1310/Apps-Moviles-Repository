@@ -344,3 +344,23 @@ val MIGRACION_11_12 = object : Migration(11, 12) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_mapas_usuarioId` ON `mapas` (`usuarioId`)")
     }
 }
+
+// Versión 12 -> 13: notas fijadas y con color propio, e historial de
+// versiones de cada nota (tabla "nota_versiones"). Las notas que ya existían
+// quedan sin fijar, con el color de su materia y sin historial.
+val MIGRACION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `notas` ADD COLUMN `fijada` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `notas` ADD COLUMN `color` INTEGER")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `nota_versiones` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`notaId` INTEGER NOT NULL, " +
+                "`titulo` TEXT NOT NULL, " +
+                "`contenido` TEXT NOT NULL, " +
+                "`fecha` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`notaId`) REFERENCES `notas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_nota_versiones_notaId` ON `nota_versiones` (`notaId`)")
+    }
+}

@@ -6,7 +6,9 @@ package com.example.estudia.modelo
 //  - Esquema: temas y subtemas numerados.
 //  - Cuadro comparativo: dos conceptos punto por punto.
 //  - Línea de tiempo: hechos en orden con por qué importan.
-enum class PlantillaNota { LIBRE, CORNELL, ESQUEMA, COMPARATIVO, LINEA_TIEMPO }
+//  - Resumen de clase: lo importante, ejemplos, dudas y lo de la próxima.
+//  - Guía de ejercicios: una casilla por ejercicio para ir marcándolos.
+enum class PlantillaNota { LIBRE, RESUMEN_CLASE, CORNELL, ESQUEMA, COMPARATIVO, LINEA_TIEMPO, GUIA_EJERCICIOS }
 
 // Pone la plantilla en el contenido. Si está vacío (o tiene sin tocar la
 // plantilla que se eligió antes), la reemplaza; si ya hay algo escrito, la

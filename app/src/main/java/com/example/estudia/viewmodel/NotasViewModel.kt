@@ -7,6 +7,12 @@ import com.example.estudia.modelo.Archivo
 import com.example.estudia.modelo.Materia
 import com.example.estudia.modelo.Fuente
 import com.example.estudia.modelo.Nota
+import com.example.estudia.modelo.VersionNota
+import com.example.estudia.modelo.alternarCasilla
+import com.example.estudia.modelo.etiquetas
+import com.example.estudia.modelo.textoMarcasGrabacion
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,7 +37,11 @@ data class NotasUiState(
     val busqueda: String = "",
     val materiasActivas: List<Materia> = emptyList(),
     // La bibliografía, para "Citar" desde una nota.
-    val fuentes: List<Fuente> = emptyList()
+    val fuentes: List<Fuente> = emptyList(),
+    // Las etiquetas (#palabra) de todas las notas, las más usadas primero,
+    // y la elegida para filtrar (null = todas).
+    val etiquetas: List<String> = emptyList(),
+    val etiqueta: String? = null
 )
 
 // ViewModel de "Mis Notas": filtros, buscador y adjuntos de cada nota.
@@ -43,6 +53,7 @@ class NotasViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     private val filtro = MutableStateFlow(FiltroNotas.TODAS)
     private val busqueda = MutableStateFlow("")
+    private val etiqueta = MutableStateFlow<String?>(null)
 
     // Ids de las notas que coinciden con la búsqueda (LIKE en NotaDao), o
     // null si no se está buscando.
@@ -54,7 +65,7 @@ class NotasViewModel(
         }
 
     val uiState: StateFlow<NotasUiState> =
-        combine(usuario, filtro, busqueda, idsEncontrados) { u, filtroActual, texto, ids ->
+        combine(usuario, filtro, busqueda, idsEncontrados, etiqueta) { u, filtroActual, texto, ids, etiquetaElegida ->
             val todas = u?.materias.orEmpty().flatMap { materia ->
                 materia.notas.map { NotaConMateria(it, materia.id, materia.nombre, materia.color) }
             }
@@ -64,18 +75,36 @@ class NotasViewModel(
                 FiltroNotas.RECIENTES -> buscadas.sortedByDescending { it.nota.fechaCreacion }
                 FiltroNotas.FAVORITAS -> buscadas.filter { it.nota.esFavorita }
             }
+            val etiquetas = todas.flatMap { it.nota.etiquetas }.groupingBy { it }.eachCount()
+                .entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key }).map { it.key }
+            // Si la etiqueta elegida ya no está en ninguna nota, no se filtra.
+            val etiquetaActiva = etiquetaElegida?.takeIf { it in etiquetas }
+            val conEtiqueta = if (etiquetaActiva == null) filtradas else filtradas.filter { etiquetaActiva in it.nota.etiquetas }
             NotasUiState(
                 cargando = u == null,
-                notas = filtradas,
+                // Las fijadas van arriba (sin cambiar el orden entre ellas).
+                notas = conEtiqueta.sortedByDescending { it.nota.fijada },
                 filtro = filtroActual,
                 busqueda = texto,
                 materiasActivas = u?.materias.orEmpty().filter { !it.archivada },
-                fuentes = u?.fuentes.orEmpty()
+                fuentes = u?.fuentes.orEmpty(),
+                etiquetas = etiquetas,
+                etiqueta = etiquetaActiva
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NotasUiState())
 
     fun cambiarFiltro(nuevo: FiltroNotas) {
         filtro.value = nuevo
+    }
+
+    // Desde una nota abierta: muestra la lista con esa etiqueta.
+    fun filtrarPorEtiqueta(nueva: String) {
+        etiqueta.value = nueva
+    }
+
+    // Tocar la etiqueta elegida la suelta.
+    fun elegirEtiqueta(nueva: String?) {
+        etiqueta.value = if (nueva == etiqueta.value) null else nueva
     }
 
     fun cambiarBusqueda(texto: String) {
@@ -181,4 +210,59 @@ class NotasViewModel(
             }
         }
     }
+
+    // ---------- Fijar, color y casillas ----------
+
+    fun alternarFijada(item: NotaConMateria) {
+        viewModelScope.launch {
+            repositorio.actualizarNota(item.materiaId, item.nota.copy(fijada = !item.nota.fijada))
+        }
+    }
+
+    // color null = vuelve al color de la materia.
+    fun cambiarColor(item: NotaConMateria, color: Long?) {
+        viewModelScope.launch {
+            repositorio.actualizarNota(item.materiaId, item.nota.copy(color = color))
+        }
+    }
+
+    // Marca o desmarca una casilla ("- [ ]") del texto de la nota.
+    fun alternarCasilla(item: NotaConMateria, linea: Int) {
+        viewModelScope.launch {
+            val contenido = alternarCasilla(item.nota.contenido, linea)
+            if (contenido != item.nota.contenido) repositorio.actualizarNota(item.materiaId, item.nota.copy(contenido = contenido))
+        }
+    }
+
+    // ---------- Historial de versiones ----------
+
+    fun versiones(notaId: Int): Flow<List<VersionNota>> = repositorio.versionesDeNota(notaId)
+
+    // Vuelve a una versión vieja. Lo que había queda en el historial, así que
+    // también se puede deshacer desde el aviso.
+    fun restaurarVersion(item: NotaConMateria, version: VersionNota) {
+        viewModelScope.launch {
+            repositorio.actualizarNota(item.materiaId, item.nota.copy(titulo = version.titulo, contenido = version.contenido))
+            avisar(Aviso(Mensaje.AVISO_VERSION_RESTAURADA, alDeshacer = { repositorio.actualizarNota(item.materiaId, item.nota) }))
+        }
+    }
+
+    // ---------- Grabar audio ----------
+
+    // La grabación queda como adjunto de la nota. Si se marcaron momentos
+    // mientras se grababa, se anotan al final del texto.
+    fun guardarGrabacion(item: NotaConMateria, uri: String, cuando: String, marcas: List<String>) {
+        viewModelScope.launch {
+            val ok = repositorio.adjuntarArchivo(item.materiaId, item.nota.id, uri)
+            if (ok && marcas.isNotEmpty()) {
+                val actual = repositorio.usuarioActual.firstOrNullNota(item.nota.id) ?: item.nota
+                repositorio.actualizarNota(item.materiaId, actual.copy(contenido = textoMarcasGrabacion(actual.contenido, cuando, marcas)))
+            }
+            avisar(Aviso(if (ok) Mensaje.AVISO_GRABACION_GUARDADA else Mensaje.AVISO_ARCHIVO_ERROR))
+        }
+    }
 }
+
+// La nota como está ahora en la base (con el adjunto recién agregado).
+private suspend fun Flow<com.example.estudia.modelo.Usuario?>.firstOrNullNota(id: Int): Nota? =
+    first()?.materias?.flatMap { it.notas }?.firstOrNull { it.id == id }
