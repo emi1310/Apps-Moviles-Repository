@@ -1,5 +1,7 @@
 package com.example.estudia.ui.componentes
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -126,8 +128,10 @@ fun DialogoNota(
                 DropdownMenu(
                     expanded = eligiendoCita,
                     onDismissRequest = { eligiendoCita = false },
-                    containerColor = colorVentanaVidrio(),
-                    border = bordeVidrio()
+                    shape = RoundedCornerShape(20.dp),
+                    containerColor = Color.Transparent,
+                    shadowElevation = 10.dp,
+                    modifier = Modifier.vidrioVentana(RoundedCornerShape(20.dp))
                 ) {
                     DesenfocarDetrasDelPopup()
                     ordenadas.forEach { fuente ->

@@ -76,6 +76,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
@@ -453,12 +454,25 @@ private fun BotonCrear(accion: AccionRapida, onCrear: (AccionRapida) -> Unit) {
         ) { actual ->
             val giro = remember { Animatable(-90f) }
             LaunchedEffect(Unit) { giro.animateTo(0f, tween(280, easing = FastOutSlowInEasing)) }
-            Icon(
-                imageVector = iconoAccion(actual),
-                contentDescription = descripcion,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = giro.value }
-            )
+            if (actual == AccionRapida.GEMINI) {
+                // En el Asistente: el ícono de Gemini, sobre un círculo blanco.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(34.dp)
+                        .graphicsLayer { rotationZ = giro.value }
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .semantics { contentDescription = descripcion }
+                ) { IconoGemini(30.dp) }
+            } else {
+                Icon(
+                    imageVector = iconoAccion(actual),
+                    contentDescription = descripcion,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = giro.value }
+                )
+            }
         }
     }
 }

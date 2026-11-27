@@ -65,19 +65,18 @@ fun DialogoApp(
     // blanco no se leería encima.
     val rojo = RojoPeligro
     Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        // Lo de atrás (la app) queda desenfocado y el diálogo es de vidrio:
-        // translúcido si el teléfono puede desenfocar; si no, opaco.
+        // Lo de atrás (la app) queda desenfocado y el diálogo es de vidrio
+        // líquido, como las tarjetas (ver vidrioVentana).
         DesenfocarDetras()
-        val fondoVentana = colorVentanaVidrio()
+        val formaVentana = RoundedCornerShape(32.dp)
         // Adentro, los campos y bloques (que usan surfaceVariant o
         // surfaceContainer) pasan a ser un velo suave, así se ve el vidrio.
         val relleno = rellenoVidrio()
         MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(surfaceVariant = relleno, surfaceContainer = relleno)) {
         Surface(
-            shape = RoundedCornerShape(32.dp),
-            color = fondoVentana,
-            border = bordeVidrio(),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            shape = formaVentana,
+            color = Color.Transparent,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).vidrioVentana(formaVentana)
         ) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(

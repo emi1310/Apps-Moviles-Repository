@@ -511,7 +511,11 @@ private fun AvisoSinClave(onConectar: () -> Unit) {
                 .clickable(role = androidx.compose.ui.semantics.Role.Button) { abrirGemini(contexto) }
                 .padding(vertical = 12.dp)
         ) {
-            Text(stringResource(R.string.abrir_gemini), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                com.example.estudia.ui.componentes.IconoGemini(18.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.abrir_gemini), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }

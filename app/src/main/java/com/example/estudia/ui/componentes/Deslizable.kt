@@ -108,7 +108,8 @@ fun Deslizable(
         state = estado,
         enableDismissFromStartToEnd = onCompletar != null,
         enableDismissFromEndToStart = onEliminar != null,
-        modifier = modifier.onSizeChanged { ancho = it.width }.semantics {
+        // Un deslizón rápido y corto cambia de sección (la fila vuelve a su lugar).
+        modifier = modifier.onSizeChanged { ancho = it.width }.deslizonCambiaSeccion { ancho * RECORRIDO_MINIMO }.semantics {
             customActions = listOfNotNull(
                 onCompletar?.let { CustomAccessibilityAction(textoCompletar) { it(); true } },
                 onEliminar?.let { CustomAccessibilityAction(textoEliminar) { it(); true } }

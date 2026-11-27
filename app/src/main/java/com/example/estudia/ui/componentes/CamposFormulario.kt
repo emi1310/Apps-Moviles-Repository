@@ -73,11 +73,12 @@ fun CampoFecha(
     }
     if (abierto) {
         val estado = rememberDatePickerState(initialSelectedDateMillis = (fecha ?: LocalDate.now()).aMilisUtc())
-        // Ventana de vidrio, como los demás diálogos.
-        val fondo = colorVentanaVidrio()
+        // Ventana de vidrio líquido, como los demás diálogos.
         DatePickerDialog(
             onDismissRequest = { abierto = false },
-            colors = DatePickerDefaults.colors(containerColor = fondo),
+            modifier = Modifier.vidrioVentana(MaterialTheme.shapes.extraLarge),
+            shape = MaterialTheme.shapes.extraLarge,
+            colors = DatePickerDefaults.colors(containerColor = Color.Transparent),
             tonalElevation = 0.dp,
             confirmButton = {
                 TextButton(onClick = {
@@ -115,7 +116,9 @@ fun CampoHora(
         val estado = rememberTimePickerState(initialHour = hora.hour, initialMinute = hora.minute, is24Hour = true)
         AlertDialog(
             onDismissRequest = { abierto = false },
-            containerColor = colorVentanaVidrio(),
+            modifier = Modifier.vidrioVentana(MaterialTheme.shapes.extraLarge),
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = Color.Transparent,
             tonalElevation = 0.dp,
             confirmButton = {
                 TextButton(onClick = {

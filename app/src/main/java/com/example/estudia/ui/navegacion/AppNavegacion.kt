@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import com.example.estudia.ui.componentes.guardarFondoLiquido
 import com.example.estudia.ui.componentes.rememberFondoLiquido
 import com.example.estudia.ui.componentes.rememberLuzDelTelefono
 import com.example.estudia.ui.componentes.deslizarEntreSecciones
+import com.example.estudia.ui.componentes.LocalCambiarSeccion
 import com.example.estudia.ui.componentes.seccionVecina
 import com.example.estudia.ui.componentes.LocalLuz
 import androidx.compose.ui.graphics.graphicsLayer
@@ -247,13 +249,21 @@ fun AppNavegacion(
         ) { espacioInterno ->
           // El contenido pasa por detrás del dock flotante: solo se respeta el
           // espacio de arriba y las listas suman LocalEspacioDock abajo.
-          CompositionLocalProvider(LocalEspacioDock provides if (mostrarBarra) espacioInterno.calculateBottomPadding() else 0.dp) {
           // Deslizando a la izquierda o a la derecha se pasa a la sección de al
           // lado del dock (no mientras se busca).
+          val navegarDeslizando = mostrarBarra && !buscando
+          // Siempre la misma función (llama a la versión más nueva): si cambiara,
+          // se volverían a armar todas las pantallas que la reciben.
+          val cambiarActual by rememberUpdatedState<(Int) -> Unit> { paso -> seccionVecina(rutaActual, paso)?.let(irA) }
+          val cambiarSeccion: (Int) -> Unit = remember { { paso -> cambiarActual(paso) } }
+          CompositionLocalProvider(
+            LocalEspacioDock provides if (mostrarBarra) espacioInterno.calculateBottomPadding() else 0.dp,
+            LocalCambiarSeccion provides if (navegarDeslizando) cambiarSeccion else null
+          ) {
           Box(
             modifier = Modifier
               .fillMaxSize()
-              .deslizarEntreSecciones(mostrarBarra && !buscando) { paso -> seccionVecina(rutaActual, paso)?.let(irA) }
+              .deslizarEntreSecciones(navegarDeslizando, cambiarSeccion)
               .guardarFondoLiquido(fondoLiquido)
               .hazeSource(haze)
           ) {

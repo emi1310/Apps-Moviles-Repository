@@ -1,5 +1,6 @@
 package com.example.estudia.ui.componentes
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,9 +58,10 @@ fun MenuOpciones(opciones: List<OpcionMenu>, descripcion: String = stringResourc
             expanded = abierto,
             onDismissRequest = { abierto = false },
             shape = RoundedCornerShape(24.dp),
-            // Vidrio: translúcido, con lo de atrás desenfocado y el borde brillante.
-            containerColor = colorVentanaVidrio(),
-            border = bordeVidrio()
+            // Vidrio líquido, como las tarjetas y los diálogos.
+            containerColor = Color.Transparent,
+            shadowElevation = 10.dp,
+            modifier = Modifier.vidrioVentana(RoundedCornerShape(24.dp))
         ) {
             DesenfocarDetrasDelPopup()
             Column(

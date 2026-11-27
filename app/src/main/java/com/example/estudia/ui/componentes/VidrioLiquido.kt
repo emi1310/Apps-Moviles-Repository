@@ -68,6 +68,9 @@ import kotlin.math.sqrt
 
 class FondoLiquido(val capa: GraphicsLayer, val capaAurora: GraphicsLayer) {
     var origen by mutableStateOf(Offset.Zero)
+    // La misma posición pero en la pantalla: la usan los diálogos y menús,
+    // que son otra ventana.
+    var origenPantalla by mutableStateOf(Offset.Zero)
     // Cambia cada vez que se vuelve a guardar la pantalla, para que el dock
     // se redibuje con lo nuevo (por ejemplo al hacer scroll).
     var version by mutableIntStateOf(0)
@@ -91,7 +94,10 @@ fun rememberFondoLiquido(): FondoLiquido? {
 fun Modifier.guardarFondoLiquido(fondo: FondoLiquido?): Modifier =
     if (fondo == null) this
     else this
-        .onGloballyPositioned { fondo.origen = it.positionInRoot() }
+        .onGloballyPositioned {
+            fondo.origen = it.positionInRoot()
+            fondo.origenPantalla = it.localToScreen(Offset.Zero)
+        }
         .drawWithContent {
             fondo.capa.record { this@drawWithContent.drawContent() }
             drawLayer(fondo.capa)
@@ -202,6 +208,24 @@ fun Modifier.superficieVidrio(
     return this.then(pieza).border(bordeLiquido(), forma)
 }
 
+// Diálogos y menús: son otra ventana, así que dibujan la pantalla de la app
+// guardada (la capa con todo) según dónde quedan en la pantalla, refractada
+// en los bordes y bastante desenfocada para que se lea lo de adentro.
+// Sin vidrio líquido queda el vidrio translúcido de siempre. Y si el teléfono
+// no llegara a dibujar la capa, detrás del velo se ve el desenfoque de la
+// ventana, que también queda bien.
+@Composable
+fun Modifier.vidrioVentana(forma: Shape): Modifier {
+    val fondo = LocalFondoLiquido.current
+    val oscuro = esTemaOscuro()
+    val velo = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = if (oscuro) 0.62f else 0.58f)
+    val pieza = if (fondo != null && vidrioLiquidoDisponible()) {
+        piezaLiquida(fondo, fondo.capa, forma, velo, fuerza = 16.dp, desenfoque = 14.dp, leerVersion = false, enPantalla = true, hinchar = false)
+    } else null
+    if (pieza == null) return this.clip(forma).background(colorVentanaVidrio()).border(bordeVidrio(), forma)
+    return this.then(pieza).border(bordeLiquido(), forma)
+}
+
 @Composable
 private fun piezaLiquida(
     fondo: FondoLiquido,
@@ -210,10 +234,12 @@ private fun piezaLiquida(
     velo: Color,
     fuerza: Dp,
     desenfoque: Dp,
-    leerVersion: Boolean
+    leerVersion: Boolean,
+    enPantalla: Boolean = false,
+    hinchar: Boolean = true
 ): Modifier? {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return null
-    return piezaLiquida33(fondo, capaFuente, forma, velo, fuerza, desenfoque, leerVersion)
+    return piezaLiquida33(fondo, capaFuente, forma, velo, fuerza, desenfoque, leerVersion, enPantalla, hinchar)
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -225,7 +251,9 @@ private fun piezaLiquida33(
     velo: Color,
     fuerza: Dp,
     desenfoque: Dp,
-    leerVersion: Boolean
+    leerVersion: Boolean,
+    enPantalla: Boolean,
+    hinchar: Boolean
 ): Modifier? {
     // Si el teléfono no pudiera compilar el shader, queda el vidrio de siempre.
     val shader = remember { runCatching { RuntimeShader(SHADER_REFRACCION) }.getOrNull() } ?: return null
@@ -244,7 +272,7 @@ private fun piezaLiquida33(
     )
     val brillo = Color.White.copy(alpha = if (oscuro) 0.16f else 0.40f)
     val brilloArriba = Color.White.copy(alpha = if (oscuro) 0.05f else 0.16f)
-    return Modifier
+    val alTocar = if (!hinchar) Modifier else Modifier
         .pointerInput(Unit) {
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -254,17 +282,18 @@ private fun piezaLiquida33(
                 tocado = false
             }
         }
+    return alTocar
         .graphicsLayer {
             val escala = 1f + 0.025f * presion
             scaleX = escala
             scaleY = escala
         }
-        .onGloballyPositioned { posicion = it.positionInRoot() }
+        .onGloballyPositioned { posicion = if (enPantalla) it.localToScreen(Offset.Zero) else it.positionInRoot() }
         .clip(forma)
         .drawBehind {
             // El dock se redibuja cada vez que cambia lo de atrás.
             if (leerVersion) fondo.version
-            val origen = fondo.origen
+            val origen = if (enPantalla) fondo.origenPantalla else fondo.origen
             val luzX = luz?.x ?: 0.82f
             val luzY = luz?.y ?: 0f
             // Dirección de la luz (desde el centro de la pieza hacia el reflejo).
